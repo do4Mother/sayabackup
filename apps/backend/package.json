@@ -7,7 +7,9 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"migrate:local": "wrangler d1 migrations apply sayabackup --local",
+		"studio": "LOCAL_DB_PATH=$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) drizzle-kit studio"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
@@ -21,6 +23,9 @@
 		"wrangler": "^4.46.0"
 	},
 	"dependencies": {
-		"@trpc/server": "^11.7.1"
+		"@trpc/server": "^11.7.1",
+		"drizzle-orm": "^0.44.7",
+		"jose": "^6.1.0",
+		"zod": "^4.1.12"
 	}
 }
