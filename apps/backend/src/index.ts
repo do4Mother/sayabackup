@@ -12,74 +12,87 @@
  */
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:8081", // Replace with your frontend's actual origin
-  "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type", // Add any custom headers your frontend sends
-  "Access-Control-Max-Age": "86400", // Cache preflight results for 24 hours
-  "Access-Control-Allow-Credentials": "true", // If you need to send cookies or authentication headers
+	"Access-Control-Allow-Origin": "http://localhost:8081", // Replace with your frontend's actual origin
+	"Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type", // Add any custom headers your frontend sends
+	"Access-Control-Max-Age": "86400", // Cache preflight results for 24 hours
+	"Access-Control-Allow-Credentials": "true", // If you need to send cookies or authentication headers
 };
 
-import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { drizzle } from 'drizzle-orm/d1';
-import { appRouter } from './routers/routers';
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { drizzle } from "drizzle-orm/d1";
+import { appRouter } from "./routers/routers";
 
 export default {
 	async fetch(request, env): Promise<Response> {
-	 // Handle OPTIONS requests (CORS preflight)
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders });
-    }
+		// Handle OPTIONS requests (CORS preflight)
+		if (request.method === "OPTIONS") {
+			return new Response(null, { status: 204, headers: corsHeaders });
+		}
 
-    // Add CORS headers to all responses
-    const newHeaders = new Headers();
-    for (const [key, value] of Object.entries(corsHeaders)) {
-      newHeaders.set(key, value);
-    }
+		// Add CORS headers to all responses
+		const newHeaders = new Headers();
+		for (const [key, value] of Object.entries(corsHeaders)) {
+			newHeaders.set(key, value);
+		}
 
-    // Handle tRPC requests
-    const response = await fetchRequestHandler({
-      req: request,
-      endpoint: "/trpc", // Adjust if your tRPC endpoint is different
-      router: appRouter,
-      onError({ error, path }) {
-        console.error(`tRPC Error on '${path}'`, error);
-      },
-      createContext() {
-        return {
-          env: env,
-          db: drizzle(env.DB, {logger: true}),
-          getCookie(name) {
-            const cookieHeader = request.headers.get('Cookie');
-            if (!cookieHeader) return null;
-            const cookies = cookieHeader.split('; ').reduce((acc, cookieStr) => {
-              const [cookieName, cookieValue] = cookieStr.split('=');
-              acc[cookieName] = decodeURIComponent(cookieValue);
-              return acc;
-            }, {} as Record<string, string>);
-            return cookies[name] || null;
-          },
-          setCookie(name, value, options) {
-            const cookieParts = [`${name}=${encodeURIComponent(value)}`];
-            if (options) {
-              if (options.httpOnly) cookieParts.push(`HttpOnly`);
-              if (options.secure) cookieParts.push(`Secure`);
-              if (options.sameSite) cookieParts.push(`SameSite=${options.sameSite}`);
-              if (options.maxAge) cookieParts.push(`Max-Age=${options.maxAge}`);
-            }
-            newHeaders.append('Set-Cookie', cookieParts.join('; '));
-          },
-        };
-      }
-    });
+		// Handle tRPC requests
+		const response = await fetchRequestHandler({
+			req: request,
+			endpoint: "/trpc", // Adjust if your tRPC endpoint is different
+			router: appRouter,
+			onError({ error, path }) {
+				console.error(`tRPC Error on '${path}'`, error);
+			},
+			createContext() {
+				return {
+					env: env,
+					db: drizzle(env.DB, { logger: true }),
+					getCookie(name) {
+						const cookieHeader = request.headers.get("Cookie");
+						if (!cookieHeader) {
+							return null;
+						}
+						const cookies = cookieHeader.split("; ").reduce(
+							(acc, cookieStr) => {
+								const [cookieName, cookieValue] = cookieStr.split("=");
+								acc[cookieName] = decodeURIComponent(cookieValue);
+								return acc;
+							},
+							{} as Record<string, string>,
+						);
+						return cookies[name] || null;
+					},
+					setCookie(name, value, options) {
+						const cookieParts = [`${name}=${encodeURIComponent(value)}`];
+						if (options) {
+							if (options.httpOnly) {
+								cookieParts.push(`HttpOnly`);
+							}
+							if (options.secure) {
+								cookieParts.push(`Secure`);
+							}
+							if (options.sameSite) {
+								cookieParts.push(`SameSite=${options.sameSite}`);
+							}
+							if (options.maxAge) {
+								cookieParts.push(`Max-Age=${options.maxAge}`);
+							}
+						}
+						newHeaders.append("Set-Cookie", cookieParts.join("; "));
+					},
+				};
+			},
+		});
 
-    for (const [key, value] of response.headers) {
-      newHeaders.set(key, value);
-    }
+		for (const [key, value] of response.headers) {
+			newHeaders.set(key, value);
+		}
 
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newHeaders,
-    });
+		return new Response(response.body, {
+			status: response.status,
+			statusText: response.statusText,
+			headers: newHeaders,
+		});
 	},
 } satisfies ExportedHandler<Env>;
