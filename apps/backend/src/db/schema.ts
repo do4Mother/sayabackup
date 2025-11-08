@@ -12,7 +12,7 @@ export const user_providers = sqliteTable("user_providers", {
   id: int().primaryKey(),
   ...timestampColumn,
   user_id: int().notNull().references(() => users.id),
-  provider: int().notNull(),
+  provider: text().notNull(),
   provider_user_id: text().notNull(),
 })
 
