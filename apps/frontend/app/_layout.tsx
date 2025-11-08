@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
+import "../assets/css/global.css";
 
 export default function RootLayout() {
   return (
@@ -24,7 +25,7 @@ function StackRootLayout() {
   useEffect(() => {
     if (user.data) {
       setUser(user.data.user);
-      router.replace("/home");
+      router.replace("/home/photo");
     }
   }, [user.data]);
 

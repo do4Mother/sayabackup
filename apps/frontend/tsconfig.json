@@ -13,6 +13,7 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "../backend/src/routers/routers.ts"
+    "../backend/src/routers/routers.ts",
+    "nativewind-env.d.ts"
   ]
 }
