@@ -20,6 +20,7 @@ const corsHeaders = {
 };
 
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { drizzle } from 'drizzle-orm/d1';
 import { appRouter } from './routers/routers';
 
 export default {
@@ -46,6 +47,7 @@ export default {
       createContext() {
         return {
           env: env,
+          db: drizzle(env.DB, {logger: true}),
           getCookie(name) {
             const cookieHeader = request.headers.get('Cookie');
             if (!cookieHeader) return null;
