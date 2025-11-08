@@ -1,5 +1,6 @@
 import { useApp } from "@/hooks/use_app";
 import { client, queryClient, trpc, TRPCProvider } from "@/trpc/trpc";
+import { PortalHost } from "@rn-primitives/portal";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
@@ -11,6 +12,7 @@ export default function RootLayout() {
     <TRPCProvider client={client} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <StackRootLayout />
+        <PortalHost />
       </QueryClientProvider>
     </TRPCProvider>
   );
