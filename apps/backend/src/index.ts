@@ -12,20 +12,27 @@
  */
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Replace with your frontend's origin or "*" for all origins
+  "Access-Control-Allow-Origin": "http://localhost:8081", // Replace with your frontend's actual origin
   "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization", // Add any custom headers your frontend sends
+  "Access-Control-Allow-Headers": "Content-Type", // Add any custom headers your frontend sends
   "Access-Control-Max-Age": "86400", // Cache preflight results for 24 hours
+  "Access-Control-Allow-Credentials": "true", // If you need to send cookies or authentication headers
 };
 
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter } from './routers/routers';
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
+	async fetch(request, env): Promise<Response> {
 	 // Handle OPTIONS requests (CORS preflight)
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    // Add CORS headers to all responses
+    const newHeaders = new Headers();
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      newHeaders.set(key, value);
     }
 
     // Handle tRPC requests
@@ -36,11 +43,34 @@ export default {
       onError({ error, path }) {
         console.error(`tRPC Error on '${path}'`, error);
       },
+      createContext() {
+        return {
+          env: env,
+          getCookie(name) {
+            const cookieHeader = request.headers.get('Cookie');
+            if (!cookieHeader) return null;
+            const cookies = cookieHeader.split('; ').reduce((acc, cookieStr) => {
+              const [cookieName, cookieValue] = cookieStr.split('=');
+              acc[cookieName] = decodeURIComponent(cookieValue);
+              return acc;
+            }, {} as Record<string, string>);
+            return cookies[name] || null;
+          },
+          setCookie(name, value, options) {
+            const cookieParts = [`${name}=${encodeURIComponent(value)}`];
+            if (options) {
+              if (options.httpOnly) cookieParts.push(`HttpOnly`);
+              if (options.secure) cookieParts.push(`Secure`);
+              if (options.sameSite) cookieParts.push(`SameSite=${options.sameSite}`);
+              if (options.maxAge) cookieParts.push(`Max-Age=${options.maxAge}`);
+            }
+            newHeaders.append('Set-Cookie', cookieParts.join('; '));
+          },
+        };
+      }
     });
 
-    // Add CORS headers to all responses
-    const newHeaders = new Headers(response.headers);
-    for (const [key, value] of Object.entries(corsHeaders)) {
+    for (const [key, value] of response.headers) {
       newHeaders.set(key, value);
     }
 
