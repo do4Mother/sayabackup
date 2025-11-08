@@ -1,5 +1,5 @@
-import React from "react";
-import { Pressable, Text } from "react-native";
+import { Button } from "../ui/button";
+import { Text } from "../ui/text";
 
 type FloatingActionButtonProps = {
   onPress?: () => void;
@@ -9,23 +9,14 @@ type FloatingActionButtonProps = {
 
 export default function FloatingActionButton(props: FloatingActionButtonProps) {
   return (
-    <Pressable
+    <Button
       onPress={props.onPress}
-      style={{
-        position: "fixed",
-        bottom: 55 + 20,
-        right: 20,
-        backgroundColor: "#6200ee",
-        borderRadius: 30,
-        padding: 15,
-        flexDirection: "row",
-        alignItems: "center",
-        elevation: 5,
-        zIndex: 100,
-      }}
+      className="fixed bottom-20 right-4 z-10"
+      variant={"outline"}
+      size={"lg"}
     >
-      {props.icon}
+      {props.icon && <>{props.icon}</>}
       {props.label && <Text>{props.label}</Text>}
-    </Pressable>
+    </Button>
   );
 }

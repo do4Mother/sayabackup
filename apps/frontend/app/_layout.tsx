@@ -1,3 +1,4 @@
+import "@/assets/css/global.css";
 import { useApp } from "@/hooks/use_app";
 import { client, queryClient, trpc, TRPCProvider } from "@/trpc/trpc";
 import { PortalHost } from "@rn-primitives/portal";
@@ -5,7 +6,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import "../assets/css/global.css";
 
 export default function RootLayout() {
   return (
@@ -40,7 +40,11 @@ function StackRootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Protected guard={appState != null}>
         <Stack.Screen name="(protected)" />
       </Stack.Protected>

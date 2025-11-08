@@ -1,4 +1,4 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Tabs } from "expo-router";
 import React from "react";
 
@@ -17,7 +17,7 @@ export default function HomePageLayout() {
         options={{
           title: "Photos",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="photo" size={24} color={color} />
+            <FontAwesome6 name="photo-film" size={16} color={color} />
           ),
         }}
       />
@@ -26,7 +26,7 @@ export default function HomePageLayout() {
         options={{
           title: "Upload",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="upload" size={24} color={color} />
+            <FontAwesome6 name="upload" size={16} color={color} />
           ),
         }}
       />
@@ -35,7 +35,7 @@ export default function HomePageLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="settings" size={24} color={color} />
+            <FontAwesome6 name="gears" size={16} color={color} />
           ),
         }}
       />

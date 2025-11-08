@@ -1,18 +1,17 @@
 import Heading from "@/components/app/Heading";
 import FloatingActionButton from "@/components/buttons/FloatingActionButton";
 import { FontAwesome6 } from "@expo/vector-icons";
-import React from "react";
 import { FlatList, Image, ScrollView, View } from "react-native";
 
 export default function HomeTabPage() {
   return (
-    <View style={{ flex: 1, overflowY: "scroll" }}>
+    <View className="bg-background">
       <FloatingActionButton
-        icon={<FontAwesome6 name="camera" size={24} color="white" />}
         label="Upload"
+        icon={<FontAwesome6 name="upload" size={16} />}
       />
       <ScrollView>
-        <Heading title="Photos" style={{ padding: 16 }} />
+        <Heading title="Gallery" />
         <FlatList
           data={Array.from({ length: 200 }, (_, i) => ({ key: i.toString() }))}
           numColumns={4}

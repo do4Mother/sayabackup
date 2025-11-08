@@ -1,12 +1,15 @@
-import { StyleProp, Text, TextStyle } from "react-native";
+import { cn } from "@/lib/utils";
+import { Text } from "../ui/text";
 
 type HeadingProps = {
   title: string;
-  style?: StyleProp<TextStyle>;
+  className?: string;
 };
 
-export default function Heading({ title, style }: HeadingProps) {
+export default function Heading({ title, className }: HeadingProps) {
   return (
-    <Text style={[{ fontWeight: "bold", fontSize: 24 }, style]}>{title}</Text>
+    <Text className={cn("text-left p-4", className)} variant={"h1"}>
+      {title}
+    </Text>
   );
 }
