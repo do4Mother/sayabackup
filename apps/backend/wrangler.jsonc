@@ -14,7 +14,8 @@
 		{
 			"binding": "DB",
 			"database_name": "sayabackup",
-			"database_id": "e6904555-525d-415a-93cb-937255eac9cd"
+			"database_id": "e6904555-525d-415a-93cb-937255eac9cd",
+			"migrations_dir": "drizzle"
 		}
 	]
 	/**
