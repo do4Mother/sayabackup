@@ -13,8 +13,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "app-db",
-			"database_id": "e3f1b2c3d4e5f6g7h8i9j0k1l2m3n4o5"
+			"database_name": "sayabackup",
+			"database_id": "e6904555-525d-415a-93cb-937255eac9cd"
 		}
 	]
 	/**
