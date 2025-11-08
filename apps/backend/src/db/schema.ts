@@ -8,6 +8,10 @@ export const users = sqliteTable("users", {
 	email: int().notNull().unique(),
 });
 
+export const USER_PROVIDERS = {
+	GOOGLE: "google",
+} as const;
+
 export const user_providers = sqliteTable("user_providers", {
 	id: int().primaryKey(),
 	...timestampColumn,
