@@ -1,4 +1,5 @@
 import { initTRPC } from '@trpc/server'
+import { DrizzleD1Database } from 'drizzle-orm/d1'
 
 
 type SetCookieOptions = {
@@ -11,7 +12,8 @@ type SetCookieOptions = {
 export type Context = {
   env: Env,
   setCookie: (name: string, value: string, options?: SetCookieOptions) => void,
-  getCookie: (name: string) => string | null
+  getCookie: (name: string) => string | null,
+  db: DrizzleD1Database
 }
 
 export const t = initTRPC.context<Context>().create()
