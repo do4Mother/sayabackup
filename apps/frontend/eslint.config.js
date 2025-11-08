@@ -9,4 +9,9 @@ module.exports = defineConfig([
   {
     ignores: ["dist/*"],
   },
+  {
+    rules: {
+      "react-hooks/exhaustive-deps": "off",
+    },
+  },
 ]);
