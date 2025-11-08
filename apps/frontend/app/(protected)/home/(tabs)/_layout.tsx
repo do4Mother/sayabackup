@@ -13,9 +13,9 @@ export default function HomePageLayout() {
       }}
     >
       <Tabs.Screen
-        name="photo"
+        name="gallery"
         options={{
-          title: "Photos",
+          title: "Gallery",
           tabBarIcon: ({ color }) => (
             <FontAwesome6 name="photo-film" size={16} color={color} />
           ),

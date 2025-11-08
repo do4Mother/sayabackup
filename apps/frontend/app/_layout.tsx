@@ -27,7 +27,7 @@ function StackRootLayout() {
   useEffect(() => {
     if (user.data) {
       setUser(user.data.user);
-      router.replace("/home/photo");
+      router.replace("/home/gallery");
     }
   }, [user.data]);
 
