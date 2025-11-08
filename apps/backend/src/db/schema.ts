@@ -5,12 +5,8 @@ import { timestampColumn } from "./column.helper";
 export const users = sqliteTable("users", {
 	id: int().primaryKey(),
 	...timestampColumn,
-	email: int().notNull().unique(),
+	email: text().notNull().unique(),
 });
-
-export const USER_PROVIDERS = {
-	GOOGLE: "google",
-} as const;
 
 export const user_providers = sqliteTable("user_providers", {
 	id: int().primaryKey(),
