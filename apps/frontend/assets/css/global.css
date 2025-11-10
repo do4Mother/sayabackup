@@ -63,6 +63,10 @@ div {
   overflow-y: scroll;
 }
 
+* {
+  min-width: 0;
+}
+
 div::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
