@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, eq, getTableColumns } from "drizzle-orm";
 import { createRemoteJWKSet, jwtVerify, SignJWT } from "jose";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import { user_providers, users } from "../../db/schema";
 import { publicProcedure } from "../../middlewares/public";
@@ -61,6 +62,7 @@ export const google = publicProcedure
 				.insert(users)
 				.values({
 					email: payloadDto.email,
+					key: nanoid(),
 				})
 				.returning();
 
