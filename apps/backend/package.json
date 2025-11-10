@@ -9,13 +9,14 @@
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
 		"migrate:local": "wrangler d1 migrations apply sayabackup --local",
-		"studio": "LOCAL_DB_PATH=$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) drizzle-kit studio"
+		"studio": "cross-env LOCAL_DB_PATH=$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) drizzle-kit studio"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"@eslint/js": "^9.39.1",
 		"@types/crypto-js": "^4.2.2",
 		"@types/node": "^24.10.0",
+		"cross-env": "^10.1.0",
 		"drizzle-kit": "^0.31.6",
 		"eslint": "^9.39.1",
 		"eslint-config-prettier": "^10.1.8",
