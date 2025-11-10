@@ -9,18 +9,20 @@
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
 		"migrate:local": "wrangler d1 migrations apply sayabackup --local",
-		"studio": "cross-env LOCAL_DB_PATH=$(find .wrangler/state/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) drizzle-kit studio"
+		"studio": "node -e \"const {execSync}=require('child_process');const {globSync}=require('glob');const p=globSync('.wrangler/state/v3/d1/miniflare-D1DatabaseObject/**/*.sqlite')[0];process.env.LOCAL_DB_PATH=p;execSync('drizzle-kit studio',{stdio:'inherit'})\""
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"@eslint/js": "^9.39.1",
 		"@types/crypto-js": "^4.2.2",
 		"@types/node": "^24.10.0",
+		"better-sqlite3": "^12.4.1",
 		"cross-env": "^10.1.0",
 		"drizzle-kit": "^0.31.6",
 		"eslint": "^9.39.1",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.4",
+		"glob": "^11.0.3",
 		"globals": "^16.5.0",
 		"jiti": "^2.6.1",
 		"prettier": "^3.6.2",
