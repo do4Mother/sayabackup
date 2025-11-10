@@ -29,7 +29,9 @@
 		"wrangler": "^4.46.0"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.927.0",
 		"@trpc/server": "^11.7.1",
+		"crypto-js": "^4.2.0",
 		"drizzle-orm": "^0.44.7",
 		"jose": "^6.1.0",
 		"zod": "^4.1.12"
