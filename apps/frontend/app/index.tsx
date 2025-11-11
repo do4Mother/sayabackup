@@ -1,10 +1,7 @@
 import GoogleSignInButton from "@/components/buttons/GoogleSignInButton";
-import { trpc } from "@/trpc/trpc";
 import { Text, View } from "react-native";
 
 export default function Index() {
-  const { data } = trpc.hello.useQuery();
-
   return (
     <View
       style={{
@@ -16,7 +13,7 @@ export default function Index() {
     >
       <Text style={{ fontSize: 28, fontWeight: 800 }}>SayaBackup</Text>
       <Text style={{ fontSize: 20, textAlign: "center", marginTop: 10 }}>
-        Your personal backup solution for photos and videos. {data}
+        Your personal backup solution for photos and videos.
       </Text>
 
       <View style={{ marginTop: 80 }}>
