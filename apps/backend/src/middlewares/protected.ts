@@ -22,7 +22,7 @@ export const protectedProcdure = publicProcedure.use(async ({ ctx, next }) => {
 		});
 	});
 
-	const userPayload = userDto.safeParse(payload);
+	const userPayload = userDto({ masking: false }).safeParse(payload);
 
 	if (!userPayload.success) {
 		throw new TRPCError({
