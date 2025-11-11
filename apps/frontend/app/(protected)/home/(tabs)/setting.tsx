@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
+import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
 import { trpc } from "@/trpc/trpc";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRef } from "react";
@@ -20,7 +21,7 @@ type FormData = {
 
 export default function SettingTabpage() {
   const credentials = trpc.auth.decryptS3.useQuery({
-    credentials: localStorage.getItem("s3credentials") || "",
+    credentials: localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY) || "",
   });
   const saveCredentials = trpc.auth.s3credentials.useMutation();
   const defaultValues = useRef({
@@ -40,7 +41,7 @@ export default function SettingTabpage() {
     saveCredentials.mutate(data, {
       onSuccess(data) {
         alert("Settings saved successfully!");
-        localStorage.setItem("s3credentials", data.credentials);
+        localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, data.credentials);
       },
     });
   };
