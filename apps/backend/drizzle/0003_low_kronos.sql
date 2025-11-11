@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `key` text NOT NULL;
