@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import CryptoJS from "crypto-js";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
@@ -10,6 +11,13 @@ export const decryptS3 = protectedProcdure
 		}),
 	)
 	.query(async ({ input, ctx }) => {
+		if (!ctx.user?.key) {
+			throw new TRPCError({
+				code: "NOT_FOUND",
+				message: "Decryption key not found for user",
+			});
+		}
+
 		const decrypted = CryptoJS.AES.decrypt(input.credentials, ctx.user.key);
 		const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
 
