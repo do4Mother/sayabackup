@@ -22,7 +22,9 @@ export const upload = protectedProcdure
 		});
 
 		const s3 = new S3Client({
-			endpoint: s3Credentials.endpoint,
+			endpoint: s3Credentials.endpoint.includes("https")
+				? s3Credentials.endpoint
+				: `https://${s3Credentials.endpoint}`,
 			region: s3Credentials.region,
 			credentials: {
 				accessKeyId: s3Credentials.access_key_id,
@@ -43,7 +45,7 @@ export const upload = protectedProcdure
 			s3,
 			new PutObjectCommand({
 				Bucket: s3Credentials.bucket_name,
-				Key: `thumbnails/${input.path}`,
+				Key: `thumbnails${input.path}`,
 				ContentType: input.type,
 			}),
 		);
