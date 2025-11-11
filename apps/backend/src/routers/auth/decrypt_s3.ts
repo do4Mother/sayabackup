@@ -1,8 +1,21 @@
-import { TRPCError } from "@trpc/server";
 import CryptoJS from "crypto-js";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
 import { s3CredentialsDto } from "./dto/s3credentials.dto";
+
+export function decryptS3Credentials(
+	data: {
+		encrypted: string;
+		key: string;
+		masking: boolean;
+	} = { encrypted: "", key: "", masking: false },
+) {
+	const decrypted = CryptoJS.AES.decrypt(data.encrypted, data.key);
+	const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
+	return s3CredentialsDto({ masking: data.masking }).parse(
+		JSON.parse(decryptedString),
+	);
+}
 
 export const decryptS3 = protectedProcdure
 	.input(
@@ -11,17 +24,11 @@ export const decryptS3 = protectedProcdure
 		}),
 	)
 	.query(async ({ input, ctx }) => {
-		if (!ctx.user?.key) {
-			throw new TRPCError({
-				code: "NOT_FOUND",
-				message: "Decryption key not found for user",
-			});
-		}
-
-		const decrypted = CryptoJS.AES.decrypt(input.credentials, ctx.user.key);
-		const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
-
 		return {
-			credentials: s3CredentialsDto.parse(JSON.parse(decryptedString)),
+			credentials: decryptS3Credentials({
+				encrypted: input.credentials,
+				key: ctx.user.key,
+				masking: true,
+			}),
 		};
 	});
