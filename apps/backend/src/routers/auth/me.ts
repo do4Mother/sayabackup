@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { users } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
+import { userDto } from "./dto/user.dto";
 
 export const me = protectedProcdure.query(async ({ ctx }) => {
 	const [user] = await ctx.db
@@ -13,5 +14,5 @@ export const me = protectedProcdure.query(async ({ ctx }) => {
 		throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 	}
 
-	return { user };
+	return { user: userDto({ masking: true }).parse(user) };
 });

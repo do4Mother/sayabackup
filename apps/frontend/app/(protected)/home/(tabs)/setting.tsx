@@ -4,7 +4,9 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
+import { trpc } from "@/trpc/trpc";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
 
@@ -17,18 +19,30 @@ type FormData = {
 };
 
 export default function SettingTabpage() {
+  const credentials = trpc.auth.decryptS3.useQuery({
+    credentials: localStorage.getItem("s3credentials") || "",
+  });
+  const saveCredentials = trpc.auth.s3credentials.useMutation();
+  const defaultValues = useRef({
+    endpoint: "",
+    access_key_id: "",
+    secret_access_key: "",
+    bucket_name: "",
+    region: "",
+  });
+
   const { control, handleSubmit } = useForm<FormData>({
-    defaultValues: {
-      endpoint: "",
-      access_key_id: "",
-      secret_access_key: "",
-      bucket_name: "",
-      region: "",
-    },
+    defaultValues: defaultValues.current,
+    values: credentials.data?.credentials,
   });
 
   const onSubmit = (data: FormData) => {
-    console.log(data);
+    saveCredentials.mutate(data, {
+      onSuccess(data) {
+        alert("Settings saved successfully!");
+        localStorage.setItem("s3credentials", data.credentials);
+      },
+    });
   };
 
   return (

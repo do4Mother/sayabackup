@@ -20,6 +20,7 @@ const corsHeaders = {
 };
 
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import CryptoJS from "crypto-js";
 import { drizzle } from "drizzle-orm/d1";
 import { appRouter } from "./routers/routers";
 
@@ -56,7 +57,10 @@ export default {
 						const cookies = cookieHeader.split("; ").reduce(
 							(acc, cookieStr) => {
 								const [cookieName, cookieValue] = cookieStr.split("=");
-								acc[cookieName] = decodeURIComponent(cookieValue);
+								acc[cookieName] = CryptoJS.AES.decrypt(
+									cookieValue,
+									env.CRYPTO_SECRET,
+								).toString(CryptoJS.enc.Utf8);
 								return acc;
 							},
 							{} as Record<string, string>,
@@ -64,7 +68,9 @@ export default {
 						return cookies[name] || null;
 					},
 					setCookie(name, value, options) {
-						const cookieParts = [`${name}=${encodeURIComponent(value)}`];
+						const cookieParts = [
+							`${name}=${CryptoJS.AES.encrypt(value, env.CRYPTO_SECRET).toString()}`,
+						];
 						if (options) {
 							if (options.httpOnly) {
 								cookieParts.push(`HttpOnly`);
