@@ -1,6 +1,6 @@
-import CryptoJS from "crypto-js";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
+import { encrypt } from "../../utils/crypto";
 
 export const s3credentials = protectedProcdure
 	.input(
@@ -13,10 +13,7 @@ export const s3credentials = protectedProcdure
 		}),
 	)
 	.mutation(async ({ input, ctx }) => {
-		const encrypted = CryptoJS.AES.encrypt(
-			JSON.stringify(input),
-			ctx.user.key,
-		).toString();
+		const encrypted = encrypt(JSON.stringify(input), ctx.user.key);
 
 		return {
 			credentials: encrypted,

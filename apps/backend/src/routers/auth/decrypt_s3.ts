@@ -1,6 +1,6 @@
-import CryptoJS from "crypto-js";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
+import { decrypt } from "../../utils/crypto";
 import { s3CredentialsDto } from "./dto/s3credentials.dto";
 
 export function decryptS3Credentials(
@@ -10,10 +10,9 @@ export function decryptS3Credentials(
 		masking: boolean;
 	} = { encrypted: "", key: "", masking: false },
 ) {
-	const decrypted = CryptoJS.AES.decrypt(data.encrypted, data.key);
-	const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
+	const decrypted = decrypt(data.encrypted, data.key);
 	return s3CredentialsDto({ masking: data.masking }).parse(
-		JSON.parse(decryptedString),
+		JSON.parse(decrypted),
 	);
 }
 
