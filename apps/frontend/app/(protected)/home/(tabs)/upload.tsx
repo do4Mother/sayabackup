@@ -10,11 +10,19 @@ import axios from "axios";
 import { ImageManipulator } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { FlatList, Image, ScrollView, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 type Media = {
   file: File;
   uri: string;
+  thumbnail: Blob;
   mimeType: string;
   name: string;
   size: number;
@@ -35,15 +43,64 @@ export default function UploadTabpage() {
     });
 
     if (!result.canceled) {
-      const selectedMedia: Media[] = result.assets.map((asset) => ({
-        file: asset.file!,
-        uri: asset.uri,
-        mimeType: asset.mimeType || "image/jpeg",
-        name: asset.fileName || `media-${Date.now()}`,
-        size: asset.fileSize || 0,
-        processedBytes: 0,
-      }));
-      setMedia((prevMedia) => [...prevMedia, ...selectedMedia]);
+      const selectedMedia: Media[] = await Promise.all(
+        result.assets.map(async (asset) => {
+          // resize image for thumbnail
+          let uri = asset.uri;
+          let thumbnailBlob: Blob | null = null;
+          if (asset.mimeType?.startsWith("image")) {
+            const manipulate = ImageManipulator.manipulate(asset.uri);
+            const image = await manipulate.resize({ width: 200 }).renderAsync();
+            const thumbnail = await image.saveAsync();
+            thumbnailBlob = await fetch(thumbnail.uri).then((res) =>
+              res.blob(),
+            );
+          }
+
+          if (asset.mimeType?.startsWith("video")) {
+            if (Platform.OS === "web") {
+              const video = document.createElement("video");
+              video.src = asset.uri;
+              await new Promise((resolve) => {
+                video.addEventListener("loadeddata", () => {
+                  resolve(true);
+                });
+              });
+
+              video.muted = true;
+              video.currentTime = 1;
+              await new Promise((resolve) =>
+                video.addEventListener("seeked", () => resolve(true)),
+              );
+
+              const canvas = document.createElement("canvas");
+              canvas.width = 200;
+              canvas.height = (video.videoHeight / video.videoWidth) * 200;
+              const ctx = canvas.getContext("2d");
+              ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const image = canvas.toDataURL("image/jpg");
+              uri = image;
+              thumbnailBlob = await fetch(image).then((res) => res.blob());
+            }
+          }
+
+          if (!thumbnailBlob) {
+            throw new Error("fail generate thumbnail");
+          }
+
+          return {
+            file: asset.file!,
+            uri: uri,
+            thumbnail: thumbnailBlob,
+            mimeType: asset.mimeType || "image/jpeg",
+            name: asset.fileName || `media-${Date.now()}`,
+            size: asset.fileSize || 0,
+            processedBytes: 0,
+          };
+        }),
+      );
+
+      setMedia((prev) => [...prev, ...selectedMedia]);
 
       const credentials = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
 
@@ -59,16 +116,8 @@ export default function UploadTabpage() {
           type: media.mimeType,
         });
 
-        // resize image for thumbnail
-        const manipulate = ImageManipulator.manipulate(media.uri);
-        const image = await manipulate.resize({ width: 200 }).renderAsync();
-        const thumbnail = await image.saveAsync();
-        const thumbnailBlob = await fetch(thumbnail.uri).then((res) =>
-          res.blob(),
-        );
-
         // upload thumbnail
-        await axios.put(upload.thumbnail, thumbnailBlob, {
+        await axios.put(upload.thumbnail, media.thumbnail, {
           headers: {
             "Content-Type": media.mimeType,
           },
