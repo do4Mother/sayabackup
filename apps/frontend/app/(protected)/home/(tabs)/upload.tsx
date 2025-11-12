@@ -24,6 +24,8 @@ type Media = {
 export default function UploadTabpage() {
   const [media, setMedia] = useState<Media[]>([]);
   const uploadMutation = trpc.s3.upload.useMutation();
+  const createGalleryMutation = trpc.gallery.create.useMutation();
+  const clientUtils = trpc.useUtils();
 
   const pickMedia = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -84,6 +86,21 @@ export default function UploadTabpage() {
                 m.uri === media.uri ? { ...m, processedBytes } : m,
               ),
             );
+
+            if (processedBytes === media.size) {
+              // create gallery record when upload is complete
+              createGalleryMutation.mutate(
+                {
+                  filePath: `general/${media.name}`,
+                  thumbnailPath: `thumbnails/${media.name}`,
+                },
+                {
+                  onSuccess() {
+                    clientUtils.gallery.get.invalidate();
+                  },
+                },
+              );
+            }
           },
         });
       }
