@@ -36,7 +36,7 @@ export const upload = protectedProcdure
 			s3,
 			new PutObjectCommand({
 				Bucket: s3Credentials.bucket_name,
-				Key: input.path,
+				Key: `originals/${input.path}`,
 				ContentType: input.type,
 			}),
 		);
@@ -45,7 +45,7 @@ export const upload = protectedProcdure
 			s3,
 			new PutObjectCommand({
 				Bucket: s3Credentials.bucket_name,
-				Key: `thumbnails${input.path}`,
+				Key: `thumbnails/${input.path}`,
 				ContentType: input.type,
 			}),
 		);

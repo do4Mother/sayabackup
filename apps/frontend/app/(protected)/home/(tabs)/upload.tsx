@@ -53,7 +53,7 @@ export default function UploadTabpage() {
       for await (const media of selectedMedia) {
         const upload = await uploadMutation.mutateAsync({
           credentials: credentials,
-          path: `/general/${media.name}`,
+          path: media.name,
           type: media.mimeType,
         });
 
