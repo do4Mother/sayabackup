@@ -6,10 +6,17 @@ export default function HomePageLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
+        tabBarVariant: "uikit",
+        tabBarPosition: "bottom",
         tabBarStyle: {
           height: 55,
         },
-        headerShown: false,
+        tabBarItemStyle: {
+          alignItems: "center",
+        },
+        tabBarIconStyle: { width: 20, height: 20, flex: 1 },
+        tabBarLabelStyle: { fontSize: 12, paddingBottom: 4 },
       }}
     >
       <Tabs.Screen
