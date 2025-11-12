@@ -1,7 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
+import { createS3Client } from "../../utils/s3_client";
 import { decryptS3Credentials } from "../auth/decrypt_s3";
 
 export const upload = protectedProcdure
@@ -21,19 +22,10 @@ export const upload = protectedProcdure
 			masking: false,
 		});
 
-		const s3 = new S3Client({
-			endpoint: s3Credentials.endpoint.includes("https")
-				? s3Credentials.endpoint
-				: `https://${s3Credentials.endpoint}`,
-			region: s3Credentials.region,
-			credentials: {
-				accessKeyId: s3Credentials.access_key_id,
-				secretAccessKey: s3Credentials.secret_access_key,
-			},
-		});
+		const client = createS3Client(s3Credentials);
 
 		const originalPreSignedUrl = await getSignedUrl(
-			s3,
+			client,
 			new PutObjectCommand({
 				Bucket: s3Credentials.bucket_name,
 				Key: `originals/${input.path}`,
@@ -42,7 +34,7 @@ export const upload = protectedProcdure
 		);
 
 		const thumbnailPreSignedUrl = await getSignedUrl(
-			s3,
+			client,
 			new PutObjectCommand({
 				Bucket: s3Credentials.bucket_name,
 				Key: `thumbnails/${input.path}`,

@@ -13,3 +13,5 @@ export const s3CredentialsDto = (
 			.transform((v) => (props.masking ? "" : v)),
 		endpoint: z.string().min(1),
 	});
+
+export type S3CredentialsDto = z.infer<ReturnType<typeof s3CredentialsDto>>;
