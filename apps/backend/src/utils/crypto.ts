@@ -7,7 +7,7 @@ export function encrypt(data: string, secret: string): string {
 
 export function decrypt(encrypted: string, secret: string): string {
 	const decrypted = CryptoJS.AES.decrypt(encrypted, secret).toString(
-		CryptoJS.enc.Utf8,
+		CryptoJS.enc.Latin1,
 	);
 	return decrypted;
 }
