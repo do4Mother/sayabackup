@@ -29,6 +29,20 @@
       "when": 1762785744856,
       "tag": "0003_low_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1762958442486,
+      "tag": "0004_heavy_ulik",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1762958617816,
+      "tag": "0005_useful_violations",
+      "breakpoints": true
     }
   ]
 }

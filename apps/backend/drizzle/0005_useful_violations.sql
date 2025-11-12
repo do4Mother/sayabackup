@@ -1,0 +1,1 @@
+ALTER TABLE `gallery` RENAME COLUMN "image_path" TO "file_path";
