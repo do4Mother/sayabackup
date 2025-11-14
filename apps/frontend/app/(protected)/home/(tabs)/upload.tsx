@@ -146,7 +146,7 @@ export default function UploadTabpage() {
       {match(media.length === 0)
         .with(true, () => (
           <View className="flex-1 items-center justify-center gap-y-4">
-            <Text className="font-medium text-lg">Upload your media files</Text>
+            <Text className="font-medium text-lg">Share Your Moments ✨</Text>
             <Button onPress={pickMedia}>
               <Ionicons name="cloud-upload" size={22} color="white" />
               <Text>Choose file</Text>
