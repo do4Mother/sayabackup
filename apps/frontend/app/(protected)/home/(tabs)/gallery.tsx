@@ -1,8 +1,8 @@
 import Heading from "@/components/app/Heading";
 import FloatingActionButton from "@/components/buttons/FloatingActionButton";
-import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
 import { trpc } from "@/trpc/trpc";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { Link } from "expo-router";
 import {
   ActivityIndicator,
   Dimensions,
@@ -14,11 +14,9 @@ import {
 import { match, P } from "ts-pattern";
 
 export default function HomeTabPage() {
-  const images = trpc.gallery.get.useQuery({
-    credentials: localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY) || "",
-  });
+  const images = trpc.gallery.get.useQuery();
 
-  const imageWidth = Dimensions.get("window").width / 4 - 16; // 4 columns with some spacing
+  const imageWidth = Dimensions.get("window").width / 4 - 8; // 4 columns with some spacing
 
   return (
     <View className="bg-background flex-1">
@@ -37,15 +35,25 @@ export default function HomeTabPage() {
           <FlatList
             data={images.data}
             numColumns={4}
-            className="p-4"
+            className="py-4 px-1"
             contentContainerClassName="gap-y-4"
             columnWrapperClassName="gap-2"
             renderItem={({ item }) => (
-              <Image
-                source={{ uri: item.thumbnail_url }}
-                className="aspect-square rounded-lg"
-                style={{ width: imageWidth }}
-              />
+              <Link
+                href={{
+                  pathname: "/gallery/[id]",
+                  params: {
+                    id: item.id,
+                  },
+                }}
+                asChild
+              >
+                <Image
+                  source={{ uri: item.thumbnail_url }}
+                  className="aspect-square"
+                  style={{ width: imageWidth }}
+                />
+              </Link>
             )}
           />
         ))
