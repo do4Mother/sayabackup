@@ -1,4 +1,3 @@
-import Heading from "@/components/app/Heading";
 import FloatingActionButton from "@/components/buttons/FloatingActionButton";
 import { trpc } from "@/trpc/trpc";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -24,7 +23,6 @@ export default function HomeTabPage() {
         label="Upload"
         icon={<FontAwesome6 name="upload" size={16} />}
       />
-      <Heading title="Gallery" />
       {match([images.isLoading, images.data])
         .with([false, []], () => (
           <View className="flex-1 justify-center items-center">

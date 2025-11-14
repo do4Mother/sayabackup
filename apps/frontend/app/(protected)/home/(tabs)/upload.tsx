@@ -1,4 +1,3 @@
-import Heading from "@/components/app/Heading";
 import FloatingActionButton from "@/components/buttons/FloatingActionButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -156,7 +155,6 @@ export default function UploadTabpage() {
       />
 
       <ScrollView>
-        <Heading title="Upload" />
         <FlatList
           data={media}
           contentContainerClassName="gap-4 px-4 mt-4"

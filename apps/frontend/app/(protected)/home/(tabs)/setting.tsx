@@ -1,4 +1,3 @@
-import Heading from "@/components/app/Heading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,7 +48,6 @@ export default function SettingTabpage() {
   return (
     <View className="bg-background flex-1">
       <ScrollView>
-        <Heading title="Settings" />
         <Card className="mx-4">
           <CardContent className="gap-y-4">
             <Controller

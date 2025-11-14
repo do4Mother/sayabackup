@@ -8,7 +8,7 @@ type HeadingProps = {
 
 export default function Heading({ title, className }: HeadingProps) {
   return (
-    <Text className={cn("text-left p-4", className)} variant={"h1"}>
+    <Text className={cn("text-left p-4 capitalize", className)} variant={"h1"}>
       {title}
     </Text>
   );
