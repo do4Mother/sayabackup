@@ -38,6 +38,7 @@ export default function ImageList(props: ImageListProps) {
               pathname: "/gallery/[id]",
               params: {
                 id: item.id,
+                albumId: props.albumId,
               },
             }}
             asChild
