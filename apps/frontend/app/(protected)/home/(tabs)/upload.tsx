@@ -156,7 +156,13 @@ export default function UploadTabpage() {
         .otherwise(() => (
           <>
             <View className="items-end px-4">
-              <Button className="gap-x-1" variant={"ghost"}>
+              <Button
+                className="gap-x-1"
+                variant={"ghost"}
+                onPress={() => {
+                  setMedia([]);
+                }}
+              >
                 <Ionicons name="close" size={22} className="mt-0.5" />
                 <Text className="leading-none">Clear</Text>
               </Button>
