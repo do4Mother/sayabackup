@@ -56,17 +56,3 @@
     --chart-5: 340 75% 55%;
   }
 }
-
-div {
-  -ms-overflow-style: none; /* Edge, Internet Explorer */
-  scrollbar-width: none; /* Firefox */
-  overflow-y: scroll;
-}
-
-* {
-  min-width: 0;
-}
-
-div::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
