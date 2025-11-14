@@ -11,6 +11,8 @@ export const TRPCProvider = trpc.Provider;
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
       retry(failureCount, error) {
         if (error instanceof TRPCClientError) {
           const errorData = z
