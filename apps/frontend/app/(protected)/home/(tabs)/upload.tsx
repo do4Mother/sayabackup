@@ -2,7 +2,6 @@ import Heading from "@/components/app/Heading";
 import FloatingActionButton from "@/components/buttons/FloatingActionButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
 import { formatFileSize } from "@/lib/file_size";
 import { trpc } from "@/trpc/trpc";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
@@ -102,16 +101,8 @@ export default function UploadTabpage() {
 
       setMedia((prev) => [...prev, ...selectedMedia]);
 
-      const credentials = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
-
-      /**
-       * TODO: implement alert when credentials is not set
-       */
-      if (!credentials) return;
-
       for await (const media of selectedMedia) {
         const upload = await uploadMutation.mutateAsync({
-          credentials: credentials,
           path: media.name,
           type: media.mimeType,
         });
