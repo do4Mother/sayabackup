@@ -1,4 +1,5 @@
 import { trpc } from "@/trpc/trpc";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -7,6 +8,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Text,
   View,
 } from "react-native";
 
@@ -35,7 +37,7 @@ export default function GalleryDetailPage() {
         ref={flatListRef}
         data={images}
         className="bg-background"
-        contentContainerClassName="gap-4"
+        contentContainerClassName="gap-4 items-center"
         snapToAlignment="center"
         snapToInterval={dimensions.width}
         decelerationRate={"fast"}
@@ -50,7 +52,6 @@ export default function GalleryDetailPage() {
             key={item.id}
             style={{
               width: dimensions.width,
-              height: dimensions.height - 100,
               flex: 1,
               alignItems: "center",
               justifyContent: "center",
@@ -60,6 +61,20 @@ export default function GalleryDetailPage() {
           </View>
         )}
       />
+      <View className="h-[55px] bg-background border-t border-slate-200 flex-row px-4 py-2 gap-x-4 justify-around">
+        <View className="items-center justify-center">
+          <AntDesign name="cloud-download" size={22} />
+          <Text className="text-xs">Download</Text>
+        </View>
+        <View className="items-center justify-center">
+          <Ionicons name="albums-outline" size={22} />
+          <Text className="text-xs">Add to Album</Text>
+        </View>
+        <View className="items-center justify-center">
+          <Ionicons name="trash-outline" size={22} />
+          <Text className="text-xs">Delete</Text>
+        </View>
+      </View>
     </>
   );
 }
