@@ -13,6 +13,7 @@ export type Context = {
 	setCookie: (name: string, value: string, options?: SetCookieOptions) => void;
 	getCookie: (name: string) => string | null;
 	db: DrizzleD1Database;
+	request: Request;
 };
 
 export const t = initTRPC.context<Context>().create();

@@ -1,33 +1,23 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import z from "zod";
-import { protectedProcdure } from "../../middlewares/protected";
+import { protectedWithS3 } from "../../middlewares/protected-with-s3";
 import { createS3Client } from "../../utils/s3_client";
-import { decryptS3Credentials } from "../auth/decrypt_s3";
 
-export const upload = protectedProcdure
+export const upload = protectedWithS3
 	.input(
 		z.object({
-			credentials: z.string(),
 			path: z.string(),
 			type: z.string(),
 		}),
 	)
 	.mutation(async ({ input, ctx }) => {
-		const { credentials } = input;
-
-		const s3Credentials = decryptS3Credentials({
-			encrypted: credentials,
-			key: ctx.user.key,
-			masking: false,
-		});
-
-		const client = createS3Client(s3Credentials);
+		const client = createS3Client(ctx.s3credentials);
 
 		const originalPreSignedUrl = await getSignedUrl(
 			client,
 			new PutObjectCommand({
-				Bucket: s3Credentials.bucket_name,
+				Bucket: ctx.s3credentials.bucket_name,
 				Key: `originals/${input.path}`,
 				ContentType: input.type,
 			}),
@@ -36,7 +26,7 @@ export const upload = protectedProcdure
 		const thumbnailPreSignedUrl = await getSignedUrl(
 			client,
 			new PutObjectCommand({
-				Bucket: s3Credentials.bucket_name,
+				Bucket: ctx.s3credentials.bucket_name,
 				Key: `thumbnails/${input.path}`,
 				ContentType: input.type,
 			}),

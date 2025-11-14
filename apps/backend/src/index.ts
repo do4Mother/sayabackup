@@ -14,7 +14,7 @@
 const corsHeaders = {
 	"Access-Control-Allow-Origin": "http://localhost:8081", // Replace with your frontend's actual origin
 	"Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-	"Access-Control-Allow-Headers": "Content-Type", // Add any custom headers your frontend sends
+	"Access-Control-Allow-Headers": "Content-Type, x-s3-credentials", // Add any custom headers your frontend sends
 	"Access-Control-Max-Age": "86400", // Cache preflight results for 24 hours
 	"Access-Control-Allow-Credentials": "true", // If you need to send cookies or authentication headers
 };
@@ -47,6 +47,7 @@ export default {
 			},
 			createContext() {
 				return {
+					request: request,
 					env: env,
 					db: drizzle(env.DB, { logger: true }),
 					getCookie(name) {
