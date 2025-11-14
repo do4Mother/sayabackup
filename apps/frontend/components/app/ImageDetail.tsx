@@ -8,13 +8,28 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Pressable,
   View,
 } from "react-native";
+import { AppRouterOutput } from "../../../backend/src/routers/routers";
+import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Text } from "../ui/text";
+import AlbumList from "./AlbumList";
 
 type ImageDetailProps = {
   albumId?: string;
 };
+
+type ImageItem = AppRouterOutput["gallery"]["get"][number];
 
 export default function ImageDetail(props: ImageDetailProps) {
   const dimensions = Dimensions.get("window");
@@ -24,23 +39,38 @@ export default function ImageDetail(props: ImageDetailProps) {
   const images = trpc.gallery.get.useQuery({
     albumId: props.albumId,
   });
-  const initialIndex =
-    images.data?.findIndex((item) => item.id === params.id) ?? 0;
-  const isHaveAlbum = images.data?.[activeIndex]?.album_id !== null;
+  const [data, setData] = useState<ImageItem[]>([]);
+  const image: ImageItem | undefined = data?.[activeIndex];
+  const isHaveAlbum = data?.[activeIndex]?.album_id !== null;
 
   useEffect(() => {
     if (!images.data) return;
 
-    flatListRef.current?.scrollToOffset({
-      offset: initialIndex * dimensions.width,
-    });
+    setData(images.data);
+
+    const initialIndex =
+      images.data?.findIndex((item) => item.id === params.id) ?? 0;
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToOffset({
+        offset: initialIndex * dimensions.width,
+      });
+    }, 100);
   }, [images.data]);
+
+  const onUpdateData = (id: string, updatedImage: Partial<ImageItem>) => {
+    setData((prevData) =>
+      prevData.map((item) =>
+        item.id === id ? { ...item, ...updatedImage } : item,
+      ),
+    );
+  };
 
   return (
     <>
       <FlatList
         ref={flatListRef}
-        data={images.data}
+        data={data}
         className="bg-background"
         contentContainerClassName="gap-4 items-center"
         snapToAlignment="center"
@@ -77,21 +107,15 @@ export default function ImageDetail(props: ImageDetailProps) {
           <AntDesign name="cloud-download" size={20} />
           <Text className="text-xs font-semibold">Download</Text>
         </View>
-        <View className="items-center justify-center">
-          <Ionicons
-            name="albums-outline"
-            size={20}
-            className={isHaveAlbum ? "text-gray-400" : ""}
-          />
-          <Text
-            className={cn(
-              "text-xs font-semibold",
-              isHaveAlbum && "text-gray-400",
-            )}
-          >
-            Add to Album
-          </Text>
-        </View>
+        <AddToAlbum
+          disabled={isHaveAlbum}
+          galleryId={image?.id ?? ""}
+          onUpdate={(albumId) => {
+            onUpdateData(image?.id ?? "", {
+              album_id: albumId,
+            });
+          }}
+        />
         <View className="items-center justify-center">
           <Ionicons name="trash-outline" size={20} />
           <Text className="text-xs font-semibold">Delete</Text>
@@ -140,5 +164,81 @@ function ImageScalable(props: { source: { uri: string } }) {
     />
   ) : (
     <ActivityIndicator />
+  );
+}
+
+type AddToAlbumProps = {
+  galleryId?: string;
+  disabled?: boolean;
+  onUpdate?: (albumId: string | null) => void;
+};
+function AddToAlbum(props: AddToAlbumProps) {
+  const [open, setOpen] = useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const updateMutation = trpc.gallery.update.useMutation();
+
+  const onAddAlbum = (albumId: string | null) => {
+    if (!albumId || !props.galleryId) return;
+
+    updateMutation.mutate(
+      {
+        id: props.galleryId,
+        albumId: albumId,
+      },
+      {
+        onSuccess() {
+          setOpen(false);
+          setSelectedAlbumId(null);
+          props.onUpdate?.(albumId);
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Pressable disabled={props.disabled}>
+          <View className="items-center justify-center">
+            <Ionicons
+              name="albums-outline"
+              size={20}
+              className={props.disabled ? "text-gray-400" : ""}
+            />
+            <Text
+              className={cn(
+                "text-xs font-semibold",
+                props.disabled && "text-gray-400",
+              )}
+            >
+              Add to Album
+            </Text>
+          </View>
+        </Pressable>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Select Album</DialogTitle>
+          <DialogDescription>
+            Select an album to add this image to your collection.
+          </DialogDescription>
+        </DialogHeader>
+        <AlbumList
+          selectMode="single"
+          itemClassName="px-0 py-2"
+          value={selectedAlbumId}
+          onChange={setSelectedAlbumId}
+        />
+        <DialogFooter className="items-end">
+          <Button
+            disabled={!selectedAlbumId || updateMutation.isPending}
+            onPress={() => onAddAlbum(selectedAlbumId)}
+          >
+            <Text>Select</Text>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
