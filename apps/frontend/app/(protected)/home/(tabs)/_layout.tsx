@@ -1,5 +1,5 @@
 import Heading from "@/components/app/Heading";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { Ionicons } from "@expo/vector-icons";
 import { Stack, Tabs } from "expo-router";
 import React from "react";
 import { View } from "react-native";
@@ -34,7 +34,16 @@ export default function HomePageLayout() {
           options={{
             title: "Gallery",
             tabBarIcon: ({ color }) => (
-              <FontAwesome6 name="photo-film" size={16} color={color} />
+              <Ionicons name="images-outline" size={20} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="albums"
+          options={{
+            title: "Albums",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="albums-outline" size={20} color={color} />
             ),
           }}
         />
@@ -43,7 +52,7 @@ export default function HomePageLayout() {
           options={{
             title: "Upload",
             tabBarIcon: ({ color }) => (
-              <FontAwesome6 name="upload" size={16} color={color} />
+              <Ionicons name="cloud-upload-outline" size={20} color={color} />
             ),
           }}
         />
@@ -52,7 +61,7 @@ export default function HomePageLayout() {
           options={{
             title: "Settings",
             tabBarIcon: ({ color }) => (
-              <FontAwesome6 name="gears" size={16} color={color} />
+              <Ionicons name="settings-outline" size={20} color={color} />
             ),
           }}
         />
