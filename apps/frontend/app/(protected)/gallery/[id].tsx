@@ -64,15 +64,15 @@ export default function GalleryDetailPage() {
       <View className="h-[55px] bg-background border-t border-slate-200 flex-row px-4 py-2 gap-x-4 justify-around">
         <View className="items-center justify-center">
           <AntDesign name="cloud-download" size={22} />
-          <Text className="text-xs">Download</Text>
+          <Text className="text-xs font-semibold">Download</Text>
         </View>
         <View className="items-center justify-center">
           <Ionicons name="albums-outline" size={22} />
-          <Text className="text-xs">Add to Album</Text>
+          <Text className="text-xs font-semibold">Add to Album</Text>
         </View>
         <View className="items-center justify-center">
           <Ionicons name="trash-outline" size={22} />
-          <Text className="text-xs">Delete</Text>
+          <Text className="text-xs font-semibold">Delete</Text>
         </View>
       </View>
     </>
