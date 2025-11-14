@@ -1,3 +1,4 @@
+import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
 import { QueryClient } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
@@ -42,6 +43,12 @@ export const client = trpc.createClient({
           ...options,
           credentials: "include",
         }),
+      headers() {
+        return {
+          "x-s3-credentials":
+            localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY) || "",
+        };
+      },
     }),
   ],
 });
