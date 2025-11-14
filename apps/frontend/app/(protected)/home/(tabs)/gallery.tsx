@@ -1,6 +1,4 @@
-import FloatingActionButton from "@/components/buttons/FloatingActionButton";
 import { trpc } from "@/trpc/trpc";
-import { FontAwesome6 } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import {
   ActivityIndicator,
@@ -19,10 +17,6 @@ export default function HomeTabPage() {
 
   return (
     <View className="bg-background flex-1">
-      <FloatingActionButton
-        label="Upload"
-        icon={<FontAwesome6 name="upload" size={16} />}
-      />
       {match([images.isLoading, images.data])
         .with([false, []], () => (
           <View className="flex-1 justify-center items-center">

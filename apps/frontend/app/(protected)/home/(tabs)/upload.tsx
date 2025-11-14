@@ -1,21 +1,16 @@
-import FloatingActionButton from "@/components/buttons/FloatingActionButton";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Text } from "@/components/ui/text";
 import { formatFileSize } from "@/lib/file_size";
 import { trpc } from "@/trpc/trpc";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { ImageManipulator } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import {
-  FlatList,
-  Image,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { FlatList, Image, Platform, View } from "react-native";
+import { match } from "ts-pattern";
 
 type Media = {
   file: File;
@@ -148,44 +143,57 @@ export default function UploadTabpage() {
 
   return (
     <View className="bg-background flex-1">
-      <FloatingActionButton
-        label="Upload"
-        icon={<FontAwesome6 name="upload" size={16} />}
-        onPress={pickMedia}
-      />
+      {match(media.length === 0)
+        .with(true, () => (
+          <View className="flex-1 items-center justify-center gap-y-4">
+            <Text className="font-medium text-lg">Upload your media files</Text>
+            <Button onPress={pickMedia}>
+              <Ionicons name="cloud-upload" size={22} color="white" />
+              <Text>Choose file</Text>
+            </Button>
+          </View>
+        ))
+        .otherwise(() => (
+          <>
+            <View className="items-end px-4">
+              <Button className="gap-x-1" variant={"ghost"}>
+                <Ionicons name="close" size={22} className="mt-0.5" />
+                <Text className="leading-none">Clear</Text>
+              </Button>
+            </View>
 
-      <ScrollView>
-        <FlatList
-          data={media}
-          contentContainerClassName="gap-4 px-4 mt-4"
-          renderItem={({ item }) => (
-            <Card className="gap-4 flex-row px-4">
-              <Image
-                source={{
-                  uri: item.uri,
-                }}
-                className="size-20 rounded-md"
-              />
-              <View className="flex-1">
-                <CardHeader className="px-0 flex-1">
-                  <CardTitle className="leading-5">{item.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="px-0 mt-2">
-                  <Progress
-                    value={(item.processedBytes / item.size) * 100}
-                    className="my-0"
+            <FlatList
+              data={media}
+              contentContainerClassName="gap-4 px-4 mt-4"
+              renderItem={({ item }) => (
+                <Card className="gap-4 flex-row px-4">
+                  <Image
+                    source={{
+                      uri: item.uri,
+                    }}
+                    className="size-20 rounded-md"
                   />
-                  <Text className="mt-1">
-                    {((item.processedBytes / item.size) * 100).toFixed(0)}% (
-                    {formatFileSize(item.processedBytes)} of{" "}
-                    {formatFileSize(item.size)})
-                  </Text>
-                </CardContent>
-              </View>
-            </Card>
-          )}
-        />
-      </ScrollView>
+                  <View className="flex-1">
+                    <CardHeader className="px-0 flex-1">
+                      <CardTitle className="leading-5">{item.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-0 mt-2">
+                      <Progress
+                        value={(item.processedBytes / item.size) * 100}
+                        className="my-0"
+                      />
+                      <Text className="mt-1">
+                        {((item.processedBytes / item.size) * 100).toFixed(0)}%
+                        ({formatFileSize(item.processedBytes)} of{" "}
+                        {formatFileSize(item.size)})
+                      </Text>
+                    </CardContent>
+                  </View>
+                </Card>
+              )}
+            />
+          </>
+        ))}
     </View>
   );
 }
