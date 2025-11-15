@@ -125,8 +125,8 @@ export default function UploadTabpage() {
               // create gallery record when upload is complete
               createGalleryMutation.mutate(
                 {
-                  filePath: `general/${media.name}`,
-                  thumbnailPath: `thumbnails/${media.name}`,
+                  filePath: upload.original_path,
+                  thumbnailPath: upload.thumbnail_path,
                 },
                 {
                   onSuccess() {
@@ -170,7 +170,7 @@ export default function UploadTabpage() {
 
             <FlatList
               data={media}
-              contentContainerClassName="gap-4 px-4 mt-4"
+              contentContainerClassName="gap-4 px-4"
               renderItem={({ item }) => (
                 <Card className="gap-4 flex-row px-4">
                   <Image
