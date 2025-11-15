@@ -127,6 +127,7 @@ export default function UploadTabpage() {
                 {
                   filePath: upload.original_path,
                   thumbnailPath: upload.thumbnail_path,
+                  mimeType: media.mimeType,
                 },
                 {
                   onSuccess() {

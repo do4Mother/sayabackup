@@ -35,6 +35,7 @@ export const gallery = sqliteTable("gallery", {
 		.references(() => users.id),
 	file_path: text().notNull(),
 	thumbnail_path: text().notNull(),
+	mime_type: text(),
 	album_id: text().references(() => albums.id),
 });
 

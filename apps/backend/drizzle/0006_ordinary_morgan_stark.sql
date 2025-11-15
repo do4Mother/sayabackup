@@ -1,0 +1,1 @@
+ALTER TABLE `gallery` ADD `mime_type` text;
