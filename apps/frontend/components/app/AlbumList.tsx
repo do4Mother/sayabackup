@@ -83,7 +83,10 @@ export default function AlbumList(props: AlbumListProps) {
         <Text>{albums.error?.message}</Text>
       </View>
     ))
-    .with({ data: P.when((v) => (v?.length ?? 0) === 0) }, () => <NoData />)
+    .with(
+      { isPending: false, data: P.when((v) => (v?.length ?? 0) === 0) },
+      () => <NoData />,
+    )
     .otherwise(() => (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator />
