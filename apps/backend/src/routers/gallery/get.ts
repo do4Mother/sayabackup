@@ -1,6 +1,6 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { match, P } from "ts-pattern";
 import z from "zod";
 import { gallery } from "../../db/schema";
@@ -29,7 +29,8 @@ export const get = protectedWithS3
 						.with(P.string, (v) => eq(gallery.album_id, v))
 						.otherwise(() => undefined),
 				),
-			);
+			)
+			.orderBy(desc(gallery.created_at));
 
 		/**
 		 * Create presigned URLs for each gallery item
