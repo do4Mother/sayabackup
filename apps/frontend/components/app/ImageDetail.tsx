@@ -47,16 +47,15 @@ export default function ImageDetail(props: ImageDetailProps) {
     if (!images.data) return;
 
     setData(images.data);
+  }, [images.data]);
 
+  useEffect(() => {
     const initialIndex =
       images.data?.findIndex((item) => item.id === params.id) ?? 0;
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToOffset({
-        offset: initialIndex * dimensions.width,
-      });
-    }, 100);
-  }, [images.data]);
+    flatListRef.current?.scrollToOffset({
+      offset: initialIndex * dimensions.width,
+    });
+  }, [data]);
 
   const onUpdateData = (id: string, updatedImage: Partial<ImageItem>) => {
     setData((prevData) =>
