@@ -52,6 +52,11 @@ export default function ImageList(props: ImageListProps) {
         )}
       />
     ))
+    .with({ isError: true }, () => (
+      <View className="flex-1 items-center justify-center p-4 bg-background">
+        <Text>{images.error?.message}</Text>
+      </View>
+    ))
     .otherwise(() => (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator />

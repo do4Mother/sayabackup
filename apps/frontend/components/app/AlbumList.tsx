@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -36,46 +36,54 @@ export default function AlbumList(props: AlbumListProps) {
   const albums = trpc.album.get.useQuery();
   const router = useRouter();
 
-  return match([(albums.data?.length ?? 0) > 0, albums.isPending])
-    .with([true, false], () => (
-      <FlatList
-        data={albums.data}
-        className={cn("bg-background", props.className)}
-        renderItem={({ item }) =>
-          match(selectMode)
-            .with("single", () => (
-              <Item
-                item={item}
-                className={props.itemClassName}
-                selected={selectedId === item.id}
-                onPress={() => {
-                  const value = match(selectedId)
-                    .with(item.id, () => null)
-                    .otherwise(() => item.id);
+  return match(albums)
+    .with(
+      { isPending: false, data: P.when((v) => (v?.length ?? 0) > 0) },
+      () => (
+        <FlatList
+          data={albums.data}
+          className={cn("bg-background", props.className)}
+          renderItem={({ item }) =>
+            match(selectMode)
+              .with("single", () => (
+                <Item
+                  item={item}
+                  className={props.itemClassName}
+                  selected={selectedId === item.id}
+                  onPress={() => {
+                    const value = match(selectedId)
+                      .with(item.id, () => null)
+                      .otherwise(() => item.id);
 
-                  props.onChange?.(value);
-                  setSelectedId(value);
-                }}
-              />
-            ))
-            .otherwise(() => (
-              <Item
-                item={item}
-                className={props.itemClassName}
-                onPress={() => {
-                  router.push({
-                    pathname: "/albums/[id]",
-                    params: {
-                      id: item.id,
-                    },
-                  });
-                }}
-              />
-            ))
-        }
-      />
+                    props.onChange?.(value);
+                    setSelectedId(value);
+                  }}
+                />
+              ))
+              .otherwise(() => (
+                <Item
+                  item={item}
+                  className={props.itemClassName}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/albums/[id]",
+                      params: {
+                        id: item.id,
+                      },
+                    });
+                  }}
+                />
+              ))
+          }
+        />
+      ),
+    )
+    .with({ isError: true }, () => (
+      <View className="flex-1 items-center justify-center p-4 bg-background">
+        <Text>{albums.error?.message}</Text>
+      </View>
     ))
-    .with([false, false], () => <NoData />)
+    .with({ data: P.when((v) => (v?.length ?? 0) === 0) }, () => <NoData />)
     .otherwise(() => (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator />
