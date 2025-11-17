@@ -1,11 +1,14 @@
+import { useSelectedImage } from "@/hooks/use_select_image";
+import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
+  Pressable,
   View,
 } from "react-native";
 import { match, P } from "ts-pattern";
@@ -18,6 +21,11 @@ type ImageListProps = {
 export default function ImageList(props: ImageListProps) {
   const images = trpc.gallery.get.useQuery({ albumId: props.albumId });
   const imageWidth = Dimensions.get("window").width / 4 - 8; // 4 columns with some spacing
+  const router = useRouter();
+  const selectedImages = useSelectedImage((state) => state.selectedImages);
+  const setSelectedImages = useSelectedImage(
+    (state) => state.setSelectedImages,
+  );
 
   return match(images)
     .with({ data: P.when((v) => v?.length === 0) }, () => (
@@ -33,22 +41,54 @@ export default function ImageList(props: ImageListProps) {
         contentContainerClassName="gap-y-4"
         columnWrapperClassName="gap-2"
         renderItem={({ item }) => (
-          <Link
-            href={{
-              pathname: "/gallery/[id]",
-              params: {
-                id: item.id,
-                albumId: props.albumId,
-              },
+          <Pressable
+            onPress={() => {
+              if (selectedImages.length > 0) {
+                if (selectedImages.includes(item.id)) {
+                  // Deselect image
+                  setSelectedImages(
+                    selectedImages.filter((id) => id !== item.id),
+                  );
+                } else {
+                  // Select image
+                  setSelectedImages([...selectedImages, item.id]);
+                }
+              } else {
+                router.push({
+                  pathname: "/gallery/[id]",
+                  params: {
+                    id: item.id,
+                    albumId: props.albumId,
+                  },
+                });
+              }
             }}
-            asChild
+            onLongPress={() => {
+              if (selectedImages.length === 0) {
+                setSelectedImages([item.id]);
+              }
+            }}
           >
-            <Image
-              source={{ uri: item.thumbnail_url }}
-              className="aspect-square"
-              style={{ width: imageWidth }}
-            />
-          </Link>
+            <View className="relative">
+              {selectedImages.includes(item.id) && (
+                <View className="absolute top-1 right-1 bg-blue-500 rounded-full w-5 h-5 items-center justify-center z-10">
+                  <Text className="text-white font-medium text-xs">
+                    {selectedImages.indexOf(item.id) + 1}
+                  </Text>
+                </View>
+              )}
+              <Image
+                source={{ uri: item.thumbnail_url }}
+                className={cn(
+                  "aspect-square",
+                  selectedImages.includes(item.id)
+                    ? "opacity-50"
+                    : "opacity-100",
+                )}
+                style={{ width: imageWidth }}
+              />
+            </View>
+          </Pressable>
         )}
       />
     ))
