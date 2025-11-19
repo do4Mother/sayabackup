@@ -189,7 +189,7 @@ export default function UploadTabpage() {
                         value={(item.processedBytes / item.size) * 100}
                         className="my-0"
                       />
-                      <Text className="mt-1">
+                      <Text className="mt-1 text-sm">
                         {((item.processedBytes / item.size) * 100).toFixed(0)}%
                         ({formatFileSize(item.processedBytes)} of{" "}
                         {formatFileSize(item.size)})
