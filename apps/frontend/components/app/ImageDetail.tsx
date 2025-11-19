@@ -133,10 +133,7 @@ export default function ImageDetail(props: ImageDetailProps) {
         ))
         .otherwise(() => null)}
       <View className="h-[55px] bg-background border-t border-slate-200 flex-row px-4 py-2 gap-x-4 justify-around">
-        <View className="items-center justify-center">
-          <AntDesign name="cloud-download" size={20} />
-          <Text className="text-xs font-semibold">Download</Text>
-        </View>
+        <DownloadButton item={image} />
         <AddToAlbum item={image} />
         <DeleteButton item={image} />
       </View>
@@ -188,7 +185,7 @@ function AddToAlbum(props: AddToAlbumProps) {
           <View
             className={cn(
               "items-center justify-center",
-              props.item && "opacity-50",
+              !props.item && "opacity-50",
             )}
           >
             <Ionicons name="albums-outline" size={20} />
@@ -248,7 +245,7 @@ function DeleteButton(props: { item?: ImageItem }) {
           <View
             className={cn(
               "items-center justify-center",
-              props.item && "opacity-50",
+              !props.item && "opacity-50",
             )}
           >
             <Ionicons name="trash-outline" size={20} />
@@ -281,5 +278,36 @@ function DeleteButton(props: { item?: ImageItem }) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+function DownloadButton(props: { item?: ImageItem }) {
+  const getOriginalMutation = trpc.gallery.original.useMutation();
+
+  const handleDownload = () => {
+    if (!props.item) return;
+
+    getOriginalMutation.mutate(
+      { id: props.item.id, forceDownload: true },
+      {
+        onSuccess(data) {
+          window.open(data, "_blank");
+        },
+      },
+    );
+  };
+
+  return (
+    <Pressable onPress={handleDownload}>
+      <View
+        className={cn(
+          "items-center justify-center",
+          !props.item && "opacity-50",
+        )}
+      >
+        <AntDesign name="cloud-download" size={20} />
+        <Text className="text-xs font-semibold">Download</Text>
+      </View>
+    </Pressable>
   );
 }
