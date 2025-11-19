@@ -2,7 +2,10 @@ import ImageDetail from "@/components/app/ImageDetail";
 import { Stack, useLocalSearchParams } from "expo-router";
 
 export default function GalleryDetailPage() {
-  const { albumId } = useLocalSearchParams();
+  const { albumId, id } = useLocalSearchParams<{
+    id: string;
+    albumId?: string;
+  }>();
 
   return (
     <>
@@ -11,7 +14,7 @@ export default function GalleryDetailPage() {
           title: "",
         }}
       />
-      <ImageDetail albumId={albumId as string | undefined} />
+      <ImageDetail imageId={id} albumId={albumId} />
     </>
   );
 }
