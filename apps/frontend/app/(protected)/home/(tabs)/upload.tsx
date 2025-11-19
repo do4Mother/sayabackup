@@ -67,8 +67,8 @@ export default function UploadTabpage() {
               );
 
               const canvas = document.createElement("canvas");
-              canvas.width = 200;
-              canvas.height = (video.videoHeight / video.videoWidth) * 200;
+              canvas.width = 1024;
+              canvas.height = (video.videoHeight / video.videoWidth) * 1024;
               const ctx = canvas.getContext("2d");
               ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
               const image = canvas.toDataURL("image/jpg");
