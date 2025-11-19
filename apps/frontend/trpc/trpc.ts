@@ -36,10 +36,15 @@ export const queryClient = new QueryClient({
   },
 });
 
+const baseURL =
+  process.env.NODE_ENV === "production"
+    ? "/trpc"
+    : "http://localhost:8787/trpc";
+
 export const client = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "http://localhost:8787/trpc",
+      url: baseURL,
       fetch: (url, options) =>
         fetch(url, {
           ...options,
