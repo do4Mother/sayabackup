@@ -5,7 +5,7 @@ import React from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "../ui/text";
 
-type HeaderProps = {
+export type HeaderProps = {
   variant?: "default" | "large";
   title: string;
   disableBackButton?: boolean;
