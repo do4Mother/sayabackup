@@ -35,9 +35,8 @@ export default function ImageDetail(props: ImageDetailProps) {
   const images = trpc.gallery.get.useQuery({
     albumId: props.albumId,
   });
-  const [data, setData] = useState<ImageItem[]>([]);
+  const [data, setData] = useState<ImageItem[] | null>(null);
   const image: ImageItem | undefined = data?.[activeIndex];
-  const isHaveAlbum = data?.[activeIndex]?.album_id !== null;
 
   useEffect(() => {
     if (!images.data) return;
@@ -54,10 +53,11 @@ export default function ImageDetail(props: ImageDetailProps) {
   }, [data]);
 
   const onUpdateData = (id: string, updatedImage: Partial<ImageItem>) => {
-    setData((prevData) =>
-      prevData.map((item) =>
-        item.id === id ? { ...item, ...updatedImage } : item,
-      ),
+    setData(
+      (prevData) =>
+        prevData?.map((item) =>
+          item.id === id ? { ...item, ...updatedImage } : item,
+        ) ?? [],
     );
   };
 
@@ -113,8 +113,7 @@ export default function ImageDetail(props: ImageDetailProps) {
           <Text className="text-xs font-semibold">Download</Text>
         </View>
         <AddToAlbum
-          disabled={isHaveAlbum}
-          galleryId={image?.id ?? ""}
+          item={image}
           onUpdate={(albumId) => {
             onUpdateData(image?.id ?? "", {
               album_id: albumId,
@@ -131,21 +130,25 @@ export default function ImageDetail(props: ImageDetailProps) {
 }
 
 type AddToAlbumProps = {
-  galleryId?: string;
-  disabled?: boolean;
+  item?: ImageItem;
   onUpdate?: (albumId: string | null) => void;
 };
 function AddToAlbum(props: AddToAlbumProps) {
   const [open, setOpen] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const updateMutation = trpc.gallery.update.useMutation();
+  const clientUtils = trpc.useUtils();
+
+  useEffect(() => {
+    setSelectedAlbumId(props.item?.album_id ?? null);
+  }, [props.item]);
 
   const onAddAlbum = (albumId: string | null) => {
-    if (!albumId || !props.galleryId) return;
+    if (!props.item) return;
 
     updateMutation.mutate(
       {
-        id: props.galleryId,
+        id: props.item.id,
         albumId: albumId,
       },
       {
@@ -153,6 +156,7 @@ function AddToAlbum(props: AddToAlbumProps) {
           setOpen(false);
           setSelectedAlbumId(null);
           props.onUpdate?.(albumId);
+          clientUtils.gallery.get.invalidate();
         },
       },
     );
@@ -161,21 +165,10 @@ function AddToAlbum(props: AddToAlbumProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Pressable disabled={props.disabled}>
+        <Pressable>
           <View className="items-center justify-center">
-            <Ionicons
-              name="albums-outline"
-              size={20}
-              className={props.disabled ? "text-gray-400" : ""}
-            />
-            <Text
-              className={cn(
-                "text-xs font-semibold",
-                props.disabled && "text-gray-400",
-              )}
-            >
-              Add to Album
-            </Text>
+            <Ionicons name="albums-outline" size={20} />
+            <Text className={cn("text-xs font-semibold")}>Add to Album</Text>
           </View>
         </Pressable>
       </DialogTrigger>
@@ -195,7 +188,7 @@ function AddToAlbum(props: AddToAlbumProps) {
         />
         <DialogFooter className="items-end">
           <Button
-            disabled={!selectedAlbumId || updateMutation.isPending}
+            disabled={updateMutation.isPending}
             onPress={() => onAddAlbum(selectedAlbumId)}
           >
             <Text>Select</Text>
