@@ -1,23 +1,19 @@
 import Header from "@/components/app/Header";
 import { Ionicons } from "@expo/vector-icons";
+import { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
 import { Stack, Tabs } from "expo-router";
 import React from "react";
+import { Dimensions } from "react-native";
 
 export default function HomePageLayout() {
-  return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <Tabs
-        screenOptions={{
-          header(props) {
-            return (
-              <Header
-                title={props.route.name}
-                variant="large"
-                disableBackButton
-              />
-            );
-          },
+  const dimensions = Dimensions.get("window");
+
+  const tabbarConfig: BottomTabNavigationOptions =
+    dimensions.width > 600
+      ? {
+          tabBarPosition: "left",
+        }
+      : {
           tabBarVariant: "uikit",
           tabBarPosition: "bottom",
           tabBarStyle: {
@@ -28,6 +24,23 @@ export default function HomePageLayout() {
           },
           tabBarIconStyle: { width: 20, height: 20, flex: 1 },
           tabBarLabelStyle: { fontSize: 12, paddingBottom: 4 },
+        };
+
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Tabs
+        screenOptions={{
+          ...tabbarConfig,
+          header(props) {
+            return (
+              <Header
+                title={props.route.name}
+                variant="large"
+                disableBackButton
+              />
+            );
+          },
         }}
       >
         <Tabs.Screen
