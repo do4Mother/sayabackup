@@ -1,8 +1,7 @@
-import Heading from "@/components/app/Heading";
+import Header from "@/components/app/Header";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, Tabs } from "expo-router";
 import React from "react";
-import { View } from "react-native";
 
 export default function HomePageLayout() {
   return (
@@ -12,9 +11,11 @@ export default function HomePageLayout() {
         screenOptions={{
           header(props) {
             return (
-              <View className="bg-background">
-                <Heading title={props.route.name} />
-              </View>
+              <Header
+                title={props.route.name}
+                variant="large"
+                disableBackButton
+              />
             );
           },
           tabBarVariant: "uikit",
