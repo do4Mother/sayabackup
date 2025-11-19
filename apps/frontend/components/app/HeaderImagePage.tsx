@@ -1,0 +1,98 @@
+import { useSelectedImage } from "@/hooks/use_select_image";
+import { trpc } from "@/trpc/trpc";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { Pressable, View } from "react-native";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import { Text } from "../ui/text";
+import Header, { HeaderProps } from "./Header";
+
+export default function HeaderImagePage(props: HeaderProps) {
+  const selectedImages = useSelectedImage((state) => state.selectedImages);
+  const setSelectedImages = useSelectedImage(
+    (state) => state.setSelectedImages,
+  );
+  if (selectedImages.length > 0) {
+    return (
+      <View className="bg-blue-500 flex-row px-4 h-14 items-center justify-between">
+        <View className="flex-row items-center gap-2">
+          <Pressable onPress={() => setSelectedImages([])}>
+            <Ionicons name="close" size={20} color="white" className="mt-0.5" />
+          </Pressable>
+          <Text className="text-white font-medium text-lg h-7">
+            {selectedImages.length} Selected
+          </Text>
+        </View>
+        <View>
+          <DeleteButton />
+        </View>
+      </View>
+    );
+  }
+
+  return <Header {...props} />;
+}
+
+function DeleteButton() {
+  const [open, setOpen] = useState(false);
+  const removeMutation = trpc.gallery.remove.useMutation();
+  const setSelectedImages = useSelectedImage(
+    (state) => state.setSelectedImages,
+  );
+  const clientUtils = trpc.useUtils();
+
+  const handleDelete = async () => {
+    const selectedImages = useSelectedImage.getState().selectedImages;
+    await removeMutation.mutateAsync({ ids: selectedImages });
+    setSelectedImages([]);
+    setOpen(false);
+    await clientUtils.gallery.get.invalidate();
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Pressable>
+          <Ionicons
+            name="trash-outline"
+            size={20}
+            color="white"
+            className="h-5"
+          />
+        </Pressable>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            <Text>Are you sure you want to delete selected images?</Text>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            <Text>This action cannot be undone.</Text>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            <Text>Cancel</Text>
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onPress={handleDelete}
+            disabled={removeMutation.isPending}
+          >
+            <Text>Delete</Text>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}

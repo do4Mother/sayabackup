@@ -1,3 +1,4 @@
+import HeaderImagePage from "@/components/app/HeaderImagePage";
 import ImageList from "@/components/app/ImageList";
 import { trpc } from "@/trpc/trpc";
 import { Stack, useLocalSearchParams } from "expo-router";
@@ -9,7 +10,13 @@ export default function AlbumDetailPage() {
 
   return (
     <>
-      <Stack.Screen options={{ title: album.data?.name ?? "" }} />
+      <Stack.Screen
+        options={{
+          header: () => {
+            return <HeaderImagePage title={album.data?.name ?? ""} />;
+          },
+        }}
+      />
       <ImageList albumId={params.id as string} />
     </>
   );
