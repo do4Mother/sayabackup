@@ -8,7 +8,7 @@ import { protectedWithS3 } from "../../middlewares/protected-with-s3";
 import { createS3Client } from "../../utils/s3_client";
 
 export const original = protectedWithS3
-	.input(z.object({ id: z.string() }))
+	.input(z.object({ id: z.string(), forceDownload: z.boolean().optional() }))
 	.mutation(async ({ ctx, input }) => {
 		const [file] = await ctx.db
 			.select()
@@ -29,11 +29,16 @@ export const original = protectedWithS3
 		}
 
 		const client = createS3Client(ctx.s3credentials);
+		const originalName = file.file_path.split("/").pop();
+
 		const signedUrl = await getSignedUrl(
 			client,
 			new GetObjectCommand({
 				Bucket: ctx.s3credentials.bucket_name,
 				Key: file.file_path,
+				ResponseContentDisposition: input.forceDownload
+					? `attachment; filename="${originalName}"`
+					: undefined,
 			}),
 		);
 
