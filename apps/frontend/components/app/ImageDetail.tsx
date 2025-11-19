@@ -11,6 +11,17 @@ import {
 } from "react-native";
 import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -127,10 +138,7 @@ export default function ImageDetail(props: ImageDetailProps) {
           <Text className="text-xs font-semibold">Download</Text>
         </View>
         <AddToAlbum item={image} />
-        <View className="items-center justify-center">
-          <Ionicons name="trash-outline" size={20} />
-          <Text className="text-xs font-semibold">Delete</Text>
-        </View>
+        <DeleteButton item={image} />
       </View>
     </>
   );
@@ -204,5 +212,66 @@ function AddToAlbum(props: AddToAlbumProps) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function DeleteButton(props: { item?: ImageItem }) {
+  const [open, setOpen] = useState(false);
+  const removeMutation = trpc.gallery.remove.useMutation();
+  const clientUtils = trpc.useUtils();
+
+  const handleDelete = async () => {
+    if (!props.item) return;
+
+    await removeMutation.mutateAsync({ ids: [props.item.id] });
+    await clientUtils.gallery.get.invalidate();
+    if (props.item.album_id) {
+      await clientUtils.gallery.get.invalidate({
+        albumId: props.item.album_id,
+      });
+    }
+    setOpen(false);
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Pressable>
+          <View
+            className={cn(
+              "items-center justify-center",
+              props.item ? "" : "opacity-50",
+            )}
+          >
+            <Ionicons name="trash-outline" size={20} />
+            <Text className="text-xs font-semibold">Delete</Text>
+          </View>
+        </Pressable>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Are you sure you want to delete this image?
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            <Text>Cancel</Text>
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-500"
+            onPress={handleDelete}
+            disabled={removeMutation.isPending}
+          >
+            <Text>Delete</Text>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
