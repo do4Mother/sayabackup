@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "dev": "expo start --web --clear"
+    "dev": "expo start --web --clear",
+    "deploy": "expo export -p web --output-dir '../backend/dist'"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
