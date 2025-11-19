@@ -24,8 +24,6 @@ function StackRootLayout() {
   const router = useRouter();
   const pathname = usePathname();
 
-  console.log("Current pathname:", pathname);
-
   useEffect(() => {
     if (user.data) {
       setUser(user.data.user);
