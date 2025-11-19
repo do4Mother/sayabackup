@@ -17,7 +17,8 @@ export default function AlbumDetailPage() {
     );
   }
 
-  const album = trpc.album.find.useQuery({ id: hash });
+  const id = hash.substring(1);
+  const album = trpc.album.find.useQuery({ id });
 
   return (
     <>
@@ -28,7 +29,7 @@ export default function AlbumDetailPage() {
           },
         }}
       />
-      <ImageList albumId={hash} />
+      <ImageList albumId={id} />
     </>
   );
 }

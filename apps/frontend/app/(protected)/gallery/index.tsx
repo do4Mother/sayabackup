@@ -17,6 +17,8 @@ export default function GalleryDetailPage() {
     );
   }
 
+  const id = hash.substring(1);
+
   return (
     <>
       <Stack.Screen
@@ -24,7 +26,7 @@ export default function GalleryDetailPage() {
           title: "",
         }}
       />
-      <ImageDetail imageId={hash} albumId={albumId} />
+      <ImageDetail imageId={id} albumId={albumId} />
     </>
   );
 }
