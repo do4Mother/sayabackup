@@ -55,9 +55,9 @@ export default function ImageList(props: ImageListProps) {
                 }
               } else {
                 router.push({
-                  pathname: "/gallery/[id]",
+                  pathname: "/gallery",
                   params: {
-                    id: item.id,
+                    "#": item.id,
                     albumId: props.albumId,
                   },
                 });

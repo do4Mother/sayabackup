@@ -66,9 +66,9 @@ export default function AlbumList(props: AlbumListProps) {
                   className={props.itemClassName}
                   onPress={() => {
                     router.push({
-                      pathname: "/albums/[id]",
+                      pathname: "/albums",
                       params: {
-                        id: item.id,
+                        "#": item.id,
                       },
                     });
                   }}
@@ -136,7 +136,7 @@ function NoData() {
     createMutation.mutate(data, {
       onSuccess(album) {
         setOpen(false);
-        router.push({ pathname: "/albums/[id]", params: { id: album.id } });
+        router.push({ pathname: "/albums", params: { "#": album.id } });
       },
     });
   };

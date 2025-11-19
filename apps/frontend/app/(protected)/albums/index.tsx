@@ -1,12 +1,23 @@
 import HeaderImagePage from "@/components/app/HeaderImagePage";
 import ImageList from "@/components/app/ImageList";
+import { Text } from "@/components/ui/text";
 import { trpc } from "@/trpc/trpc";
 import { Stack, useLocalSearchParams } from "expo-router";
 import React from "react";
+import { View } from "react-native";
 
 export default function AlbumDetailPage() {
-  const params = useLocalSearchParams();
-  const album = trpc.album.find.useQuery({ id: params.id as string });
+  const { "#": hash } = useLocalSearchParams<{ "#"?: string }>();
+
+  if (!hash) {
+    return (
+      <View className="bg-background flex-1 items-center justify-center">
+        <Text className=" text-slate-500">Couldn&apos;t find album.</Text>
+      </View>
+    );
+  }
+
+  const album = trpc.album.find.useQuery({ id: hash });
 
   return (
     <>
@@ -17,7 +28,7 @@ export default function AlbumDetailPage() {
           },
         }}
       />
-      <ImageList albumId={params.id as string} />
+      <ImageList albumId={hash} />
     </>
   );
 }
