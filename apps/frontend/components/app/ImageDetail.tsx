@@ -1,9 +1,14 @@
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Dimensions, FlatList, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Pressable,
+  View,
+} from "react-native";
 import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
 import { Button } from "../ui/button";
@@ -22,6 +27,7 @@ import ImageScalable from "./ImageScalable";
 import VideoPlayer from "./VideoPlayer";
 
 type ImageDetailProps = {
+  imageId: string;
   albumId?: string;
 };
 
@@ -31,95 +37,96 @@ export default function ImageDetail(props: ImageDetailProps) {
   const dimensions = Dimensions.get("window");
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const params = useLocalSearchParams();
   const images = trpc.gallery.get.useQuery({
     albumId: props.albumId,
   });
-  const [data, setData] = useState<ImageItem[] | null>(null);
-  const image: ImageItem | undefined = data?.[activeIndex];
+  const image: ImageItem | undefined = images.data?.[activeIndex];
+  const onMounted = useRef(false);
 
   useEffect(() => {
-    if (!images.data) return;
+    if (!images.data || onMounted.current) return;
 
-    setData(images.data);
-  }, [images.data]);
-
-  useEffect(() => {
-    const initialIndex =
-      images.data?.findIndex((item) => item.id === params.id) ?? 0;
-    flatListRef.current?.scrollToOffset({
-      offset: initialIndex * dimensions.width,
-    });
-  }, [data]);
-
-  const onUpdateData = (id: string, updatedImage: Partial<ImageItem>) => {
-    setData(
-      (prevData) =>
-        prevData?.map((item) =>
-          item.id === id ? { ...item, ...updatedImage } : item,
-        ) ?? [],
+    const initialIndex = images.data?.findIndex(
+      (item) => item.id === props.imageId,
     );
-  };
+    if (initialIndex && initialIndex > 0 && flatListRef.current) {
+      flatListRef.current.scrollToOffset({
+        offset: initialIndex * dimensions.width,
+        animated: false,
+      });
+    }
+
+    onMounted.current = true;
+  }, [images.data]);
 
   return (
     <>
-      <FlatList<ImageItem>
-        ref={flatListRef}
-        data={data}
-        className="bg-background"
-        contentContainerClassName="gap-4 items-center"
-        snapToAlignment="center"
-        snapToInterval={dimensions.width}
-        onScroll={(event) => {
-          const index = Math.round(
-            event.nativeEvent.contentOffset.x / dimensions.width,
-          );
-          setActiveIndex(index);
-        }}
-        decelerationRate={"fast"}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        viewabilityConfig={{
-          itemVisiblePercentThreshold: 50,
-        }}
-        renderItem={({ item }) => (
-          <View
-            key={item.id}
-            style={{
-              width: dimensions.width,
-              height: dimensions.height - 110,
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {match(item)
-              .with({ mime_type: P.string.includes("image") }, () => (
-                <ImageScalable source={{ uri: item.thumbnail_url }} />
-              ))
-              .with({ mime_type: P.string.includes("video") }, () => (
-                <VideoPlayer item={item} />
-              ))
-              .otherwise(() => (
-                <Text>Unsupported media type: {item.mime_type}</Text>
-              ))}
+      {match(images)
+        .with(
+          { isPending: false, data: P.when((v) => v && v.length > 0) },
+          ({ data }) => (
+            <FlatList<ImageItem>
+              ref={flatListRef}
+              data={data}
+              className="bg-background"
+              contentContainerClassName="gap-4 items-center"
+              snapToAlignment="center"
+              onScroll={(event) => {
+                const index = Math.round(
+                  event.nativeEvent.contentOffset.x / dimensions.width,
+                );
+                setActiveIndex(index);
+              }}
+              decelerationRate={"fast"}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <View
+                  key={item.id}
+                  style={{
+                    width: dimensions.width,
+                    height: dimensions.height - 110,
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {match(item)
+                    .with({ mime_type: P.string.includes("image") }, () => (
+                      <ImageScalable source={{ uri: item.thumbnail_url }} />
+                    ))
+                    .with({ mime_type: P.string.includes("video") }, () => (
+                      <VideoPlayer item={item} />
+                    ))
+                    .otherwise(() => (
+                      <Text>Unsupported media type: {item.mime_type}</Text>
+                    ))}
+                </View>
+              )}
+            />
+          ),
+        )
+        .with(
+          { isPending: false, data: P.when((v) => v?.length === 0) },
+          () => (
+            <View className="bg-background flex-1 items-center justify-center">
+              <Text className=" text-slate-500">No images found.</Text>
+            </View>
+          ),
+        )
+        .with({ isPending: true, isRefetching: false }, () => (
+          <View className="bg-background flex-1 items-center justify-center">
+            <ActivityIndicator />
           </View>
-        )}
-      />
+        ))
+        .otherwise(() => null)}
       <View className="h-[55px] bg-background border-t border-slate-200 flex-row px-4 py-2 gap-x-4 justify-around">
         <View className="items-center justify-center">
           <AntDesign name="cloud-download" size={20} />
           <Text className="text-xs font-semibold">Download</Text>
         </View>
-        <AddToAlbum
-          item={image}
-          onUpdate={(albumId) => {
-            onUpdateData(image?.id ?? "", {
-              album_id: albumId,
-            });
-          }}
-        />
+        <AddToAlbum item={image} />
         <View className="items-center justify-center">
           <Ionicons name="trash-outline" size={20} />
           <Text className="text-xs font-semibold">Delete</Text>
@@ -131,7 +138,6 @@ export default function ImageDetail(props: ImageDetailProps) {
 
 type AddToAlbumProps = {
   item?: ImageItem;
-  onUpdate?: (albumId: string | null) => void;
 };
 function AddToAlbum(props: AddToAlbumProps) {
   const [open, setOpen] = useState(false);
@@ -155,8 +161,10 @@ function AddToAlbum(props: AddToAlbumProps) {
         onSuccess() {
           setOpen(false);
           setSelectedAlbumId(null);
-          props.onUpdate?.(albumId);
-          clientUtils.gallery.get.invalidate();
+          clientUtils.gallery.get.refetch({
+            albumId: selectedAlbumId ?? undefined,
+          });
+          clientUtils.gallery.get.refetch({});
         },
       },
     );
