@@ -9,6 +9,21 @@
     "dev": {
       "persistent": true,
       "cache": false
+    },
+    "backend#deploy": {
+      "dependsOn": [
+        "frontend#deploy"
+      ]
+    },
+    "frontend#deploy": {
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "deploy": {
+      "dependsOn": [
+        "deploy"
+      ]
     }
   }
 }
