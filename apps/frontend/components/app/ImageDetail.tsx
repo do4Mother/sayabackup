@@ -169,10 +169,13 @@ function AddToAlbum(props: AddToAlbumProps) {
         onSuccess() {
           setOpen(false);
           setSelectedAlbumId(null);
-          clientUtils.gallery.get.refetch({
-            albumId: selectedAlbumId ?? undefined,
-          });
           clientUtils.gallery.get.refetch({});
+          const albumId = props.item?.album_id ?? selectedAlbumId;
+          if (albumId) {
+            clientUtils.gallery.get.refetch({
+              albumId: albumId,
+            });
+          }
         },
       },
     );
@@ -182,7 +185,12 @@ function AddToAlbum(props: AddToAlbumProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Pressable>
-          <View className="items-center justify-center">
+          <View
+            className={cn(
+              "items-center justify-center",
+              props.item && "opacity-50",
+            )}
+          >
             <Ionicons name="albums-outline" size={20} />
             <Text className={cn("text-xs font-semibold")}>Add to Album</Text>
           </View>
@@ -240,7 +248,7 @@ function DeleteButton(props: { item?: ImageItem }) {
           <View
             className={cn(
               "items-center justify-center",
-              props.item ? "" : "opacity-50",
+              props.item && "opacity-50",
             )}
           >
             <Ionicons name="trash-outline" size={20} />
