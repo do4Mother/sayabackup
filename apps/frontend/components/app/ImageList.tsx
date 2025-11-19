@@ -1,13 +1,13 @@
 import { useSelectedImage } from "@/hooks/use_select_image";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
-  Image,
   Pressable,
   View,
 } from "react-native";

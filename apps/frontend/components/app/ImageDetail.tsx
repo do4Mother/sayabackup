@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -34,7 +35,6 @@ import {
 } from "../ui/dialog";
 import { Text } from "../ui/text";
 import AlbumList from "./AlbumList";
-import ImageScalable from "./ImageScalable";
 import VideoPlayer from "./VideoPlayer";
 
 type ImageDetailProps = {
@@ -105,7 +105,11 @@ export default function ImageDetail(props: ImageDetailProps) {
                 >
                   {match(item)
                     .with({ mime_type: P.string.includes("image") }, () => (
-                      <ImageScalable source={{ uri: item.thumbnail_url }} />
+                      <Image
+                        source={{ uri: item.thumbnail_url }}
+                        className="w-full flex-1"
+                        contentFit="contain"
+                      />
                     ))
                     .with({ mime_type: P.string.includes("video") }, () => (
                       <VideoPlayer item={item} />

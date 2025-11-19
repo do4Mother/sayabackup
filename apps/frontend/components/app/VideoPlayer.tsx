@@ -1,12 +1,12 @@
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useEvent } from "expo";
+import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { match } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
-import ImageScalable from "./ImageScalable";
 
 type Gallery = AppRouterOutput["gallery"]["get"][number];
 
@@ -45,8 +45,12 @@ export default function VideoPlayer(props: VideoPlayerProps) {
 
   return match(showThumbnail)
     .with(true, () => (
-      <View className="relative">
-        <ImageScalable source={{ uri: props.item.thumbnail_url }} />
+      <View className="relative w-full flex-1">
+        <Image
+          source={{ uri: props.item.thumbnail_url }}
+          className="w-full flex-1"
+          contentFit="contain"
+        />
         <Pressable
           onPress={onPlayVideo}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
