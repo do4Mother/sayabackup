@@ -39,7 +39,7 @@ import VideoPlayer from "./VideoPlayer";
 
 type ImageDetailProps = {
   imageId: string;
-  albumId?: string;
+  albumId?: string | null;
 };
 
 type ImageItem = AppRouterOutput["gallery"]["get"][number];
