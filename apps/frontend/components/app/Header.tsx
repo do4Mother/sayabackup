@@ -23,7 +23,7 @@ export default function Header(props: HeaderProps) {
   }
 
   return (
-    <View className="items-center flex-row h-14 px-4 gap-4 bg-background">
+    <View className="items-center flex-row h-14 px-4 gap-2 bg-background">
       {!props.disableBackButton && router.canGoBack() && (
         <Pressable onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} />
@@ -33,8 +33,8 @@ export default function Header(props: HeaderProps) {
         className={cn(
           props.variant === "large"
             ? "text-2xl font-bold"
-            : "text-base font-semibold",
-          "capitalize leading-none",
+            : "text-lg font-semibold",
+          "capitalize",
         )}
       >
         {props.title}
