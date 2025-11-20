@@ -11,7 +11,7 @@ import { createS3Client } from "../../utils/s3_client";
 export const get = protectedWithS3
 	.input(
 		z.object({
-			albumId: z.string().optional(),
+			albumId: z.string().nullish(),
 		}),
 	)
 	.query(async ({ ctx, input }) => {
