@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "../ui/text";
 
@@ -9,6 +9,7 @@ export type HeaderProps = {
   variant?: "default" | "large";
   title: string;
   disableBackButton?: boolean;
+  action?: ReactNode;
 };
 
 export default function Header(props: HeaderProps) {
@@ -38,11 +39,13 @@ export default function Header(props: HeaderProps) {
           props.variant === "large"
             ? "text-2xl font-bold"
             : "text-lg font-semibold",
-          "capitalize",
+          "capitalize flex-1",
         )}
       >
         {props.title}
       </Text>
+
+      {props.action}
     </View>
   );
 }
