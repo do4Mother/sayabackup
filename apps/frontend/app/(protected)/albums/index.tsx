@@ -8,8 +8,10 @@ import { View } from "react-native";
 
 export default function AlbumDetailPage() {
   const { "#": hash } = useLocalSearchParams<{ "#"?: string }>();
+  const search = new URLSearchParams(`#${hash}`);
+  const id = search.get("#");
 
-  if (!hash) {
+  if (!id) {
     return (
       <>
         <Stack.Screen options={{ title: "Album Not Found" }} />
@@ -20,7 +22,6 @@ export default function AlbumDetailPage() {
     );
   }
 
-  const id = hash.substring(1);
   const album = trpc.album.find.useQuery({ id });
 
   return (
