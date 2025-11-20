@@ -75,10 +75,10 @@ function DeleteButton() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            <Text>Are you sure you want to delete selected images?</Text>
+            Are you sure you want to delete selected images?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <Text>This action cannot be undone.</Text>
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
