@@ -130,13 +130,13 @@ function NoData() {
       name: "",
     },
   });
-  const router = useRouter();
+  const clientUtils = trpc.useUtils();
 
   const onCreateAlbum = (data: { name: string }) => {
     createMutation.mutate(data, {
       onSuccess(album) {
         setOpen(false);
-        router.push({ pathname: "/albums", params: { "#": album.id } });
+        clientUtils.album.get.invalidate();
       },
     });
   };
