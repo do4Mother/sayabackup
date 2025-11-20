@@ -4,20 +4,23 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 
 export default function GalleryDetailPage() {
-  const { albumId, "#": hash } = useLocalSearchParams<{
+  const { "#": hash } = useLocalSearchParams<{
     "#"?: string;
-    albumId?: string;
   }>();
+  const search = new URLSearchParams(`#${hash}`);
+  const id = search.get("#");
+  const albumId = search.get("albumId");
 
-  if (!hash) {
+  if (!id) {
     return (
-      <View className="bg-background flex-1 items-center justify-center">
-        <Text className=" text-slate-500">Couldn&apos;t find image.</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ title: "Image Not Found" }} />
+        <View className="bg-background flex-1 items-center justify-center">
+          <Text className=" text-slate-500">Couldn&apos;t find image.</Text>
+        </View>
+      </>
     );
   }
-
-  const id = hash.substring(1);
 
   return (
     <>
