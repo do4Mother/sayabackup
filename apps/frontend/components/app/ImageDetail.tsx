@@ -273,7 +273,6 @@ function DeleteButton(props: { item?: ImageItem }) {
             <Text>Cancel</Text>
           </AlertDialogCancel>
           <AlertDialogAction
-            className="bg-red-500"
             onPress={handleDelete}
             disabled={removeMutation.isPending}
           >
