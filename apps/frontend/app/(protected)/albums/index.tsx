@@ -11,9 +11,12 @@ export default function AlbumDetailPage() {
 
   if (!hash) {
     return (
-      <View className="bg-background flex-1 items-center justify-center">
-        <Text className=" text-slate-500">Couldn&apos;t find album.</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ title: "Album Not Found" }} />
+        <View className="bg-background flex-1 items-center justify-center">
+          <Text className=" text-slate-500">Couldn&apos;t find album.</Text>
+        </View>
+      </>
     );
   }
 
