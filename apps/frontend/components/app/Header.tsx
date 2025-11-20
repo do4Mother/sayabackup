@@ -17,7 +17,11 @@ export default function Header(props: HeaderProps) {
   if (!router.canGoBack() && props.title === "") {
     return (
       <View className="h-14 bg-background items-center justify-center">
-        <Text className="font-bold text-xl">SayaBackup</Text>
+        <Pressable
+          onPress={() => router.replace("/(protected)/home/(tabs)/gallery")}
+        >
+          <Text className="font-bold text-xl">SayaBackup</Text>
+        </Pressable>
       </View>
     );
   }
