@@ -14,11 +14,19 @@ export type HeaderProps = {
 export default function Header(props: HeaderProps) {
   const router = useRouter();
 
+  if (!router.canGoBack() && props.title === "") {
+    return (
+      <View className="h-14 bg-background items-center justify-center">
+        <Text className="font-bold text-xl">SayaBackup</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="items-center flex-row h-14 px-4 gap-4 bg-background">
       {!props.disableBackButton && router.canGoBack() && (
         <Pressable onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} className="mt-px" />
+          <Ionicons name="chevron-back" size={24} />
         </Pressable>
       )}
       <Text
