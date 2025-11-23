@@ -24,6 +24,7 @@
     "@rn-primitives/portal": "^1.3.0",
     "@rn-primitives/progress": "^1.2.0",
     "@rn-primitives/slot": "^1.2.0",
+    "@sayabackup/utils": "workspace:*",
     "@tanstack/react-query": "^5.90.7",
     "@trpc/client": "^11.7.1",
     "@trpc/react-query": "^11.7.1",
