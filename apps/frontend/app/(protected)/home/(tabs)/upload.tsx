@@ -5,7 +5,7 @@ import { Text } from "@/components/ui/text";
 import { formatFileSize } from "@/lib/file_size";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
+import axios, { CanceledError } from "axios";
 import { ImageManipulator } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
@@ -20,6 +20,7 @@ type Media = {
   name: string;
   size: number;
   processedBytes: number;
+  abortController?: AbortController;
 };
 
 export default function UploadTabpage() {
@@ -89,6 +90,7 @@ export default function UploadTabpage() {
             name: asset.fileName || `media-${Date.now()}`,
             size: asset.fileSize || 0,
             processedBytes: 0,
+            abortController: new AbortController(),
           };
         }),
       );
@@ -102,44 +104,66 @@ export default function UploadTabpage() {
         });
 
         // upload thumbnail
-        await axios.put(upload.thumbnail, media.thumbnail, {
-          headers: {
-            "Content-Type": media.mimeType,
-          },
-        });
+        const isSuccess = await axios
+          .put(upload.thumbnail, media.thumbnail, {
+            headers: {
+              "Content-Type": media.mimeType,
+            },
+            signal: media.abortController?.signal,
+          })
+          .then(() => true)
+          .catch((error) => {
+            if (error instanceof CanceledError) {
+              return false;
+            }
+          });
+
+        if (!isSuccess) {
+          // skip uploading original if thumbnail upload is cancelled
+          continue;
+        }
 
         // upload original file with progress tracking
-        await axios.put(upload.original, media.file, {
-          headers: {
-            "Content-Type": media.mimeType,
-          },
-          onUploadProgress: (progressEvent) => {
-            const processedBytes = progressEvent.loaded;
-            setMedia((prevMedia) =>
-              prevMedia.map((m) =>
-                m.uri === media.uri ? { ...m, processedBytes } : m,
-              ),
-            );
-
-            if (processedBytes === media.size) {
-              // create gallery record when upload is complete
-              createGalleryMutation.mutate(
-                {
-                  filePath: upload.original_path,
-                  thumbnailPath: upload.thumbnail_path,
-                  mimeType: media.mimeType,
-                },
-                {
-                  onSuccess() {
-                    clientUtils.gallery.get.invalidate();
-                  },
-                },
+        await axios
+          .put(upload.original, media.file, {
+            headers: {
+              "Content-Type": media.mimeType,
+            },
+            signal: media.abortController?.signal,
+            onUploadProgress: (progressEvent) => {
+              const processedBytes = progressEvent.loaded;
+              setMedia((prevMedia) =>
+                prevMedia.map((m) =>
+                  m.uri === media.uri ? { ...m, processedBytes } : m,
+                ),
               );
-            }
-          },
-        });
+
+              if (processedBytes === media.size) {
+                // create gallery record when upload is complete
+                createGalleryMutation.mutate(
+                  {
+                    filePath: upload.original_path,
+                    thumbnailPath: upload.thumbnail_path,
+                    mimeType: media.mimeType,
+                  },
+                  {
+                    onSuccess() {
+                      clientUtils.gallery.get.invalidate();
+                    },
+                  },
+                );
+              }
+            },
+          })
+          .catch(() => {});
       }
     }
+  };
+
+  const onCancelUpload = (mediaItem: Media) => {
+    mediaItem.abortController?.abort();
+
+    setMedia((prevMedia) => prevMedia.filter((m) => m.uri !== mediaItem.uri));
   };
 
   return (
@@ -181,8 +205,21 @@ export default function UploadTabpage() {
                     className="size-20 rounded-md"
                   />
                   <View className="flex-1">
-                    <CardHeader className="px-0 flex-1">
-                      <CardTitle className="leading-5">{item.name}</CardTitle>
+                    <CardHeader className="px-0 flex-1 flex-row">
+                      <CardTitle className="leading-5 flex-1 break-all">
+                        {item.name}
+                      </CardTitle>
+                      <Button
+                        size="icon"
+                        variant={"ghost"}
+                        onPress={() => onCancelUpload(item)}
+                      >
+                        <Ionicons
+                          name="trash"
+                          className="text-red-500"
+                          size={18}
+                        />
+                      </Button>
                     </CardHeader>
                     <CardContent className="px-0 mt-2">
                       <Progress
