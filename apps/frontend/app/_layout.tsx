@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAlert } from "@/hooks/use_alert";
 import { useApp } from "@/hooks/use_app";
+import { createUploadStore, UploadProvider } from "@/hooks/use_upload";
 import { client, queryClient, trpc, TRPCProvider } from "@/trpc/trpc";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, usePathname, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { PropsWithChildren, useEffect, useRef } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useShallow } from "zustand/react/shallow";
 
@@ -22,9 +23,11 @@ export default function RootLayout() {
   return (
     <TRPCProvider client={client} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <StackRootLayout />
-        <PortalHost />
-        <RootAlertDialog />
+        <CreateUploadProvider>
+          <StackRootLayout />
+          <PortalHost />
+          <RootAlertDialog />
+        </CreateUploadProvider>
       </QueryClientProvider>
     </TRPCProvider>
   );
@@ -60,6 +63,12 @@ function StackRootLayout() {
       }}
     />
   );
+}
+
+function CreateUploadProvider(props: PropsWithChildren<unknown>) {
+  const uploadStore = useRef(createUploadStore()).current;
+
+  return <UploadProvider value={uploadStore}>{props.children}</UploadProvider>;
 }
 
 function RootAlertDialog() {

@@ -3,16 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Text } from "@/components/ui/text";
+import { useUpload } from "@/hooks/use_upload";
 import { formatFileSize } from "@/lib/file_size";
-import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
-import { randomString } from "@sayabackup/utils";
-import axios, { CanceledError } from "axios";
-import { ImageManipulator } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { Stack } from "expo-router";
-import { useState } from "react";
-import { FlatList, Image, Platform, View } from "react-native";
+import { FlatList, Image, View } from "react-native";
 import { match } from "ts-pattern";
 
 type Media = {
@@ -28,10 +24,7 @@ type Media = {
 };
 
 export default function UploadTabpage() {
-  const [media, setMedia] = useState<Media[]>([]);
-  const uploadMutation = trpc.s3.upload.useMutation();
-  const createGalleryMutation = trpc.gallery.create.useMutation();
-  const clientUtils = trpc.useUtils();
+  const { upload, data: media, setData: setMedia } = useUpload();
 
   const pickMedia = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -41,134 +34,15 @@ export default function UploadTabpage() {
     });
 
     if (!result.canceled) {
-      const selectedMedia: Media[] = await Promise.all(
-        result.assets.map(async (asset) => {
-          // resize image for thumbnail
-          let uri = asset.uri;
-          let thumbnailBlob: Blob | null = null;
-          if (asset.mimeType?.startsWith("image")) {
-            const manipulate = ImageManipulator.manipulate(asset.uri);
-            const image = await manipulate.resize({ width: 200 }).renderAsync();
-            const thumbnail = await image.saveAsync();
-            thumbnailBlob = await fetch(thumbnail.uri).then((res) =>
-              res.blob(),
-            );
-          }
-
-          if (asset.mimeType?.startsWith("video")) {
-            if (Platform.OS === "web") {
-              const video = document.createElement("video");
-              video.src = asset.uri;
-              await new Promise((resolve) => {
-                video.addEventListener("loadeddata", () => {
-                  resolve(true);
-                });
-              });
-
-              video.muted = true;
-              video.currentTime = 1;
-              await new Promise((resolve) =>
-                video.addEventListener("seeked", () => resolve(true)),
-              );
-
-              const canvas = document.createElement("canvas");
-              canvas.width = 1024;
-              canvas.height = (video.videoHeight / video.videoWidth) * 1024;
-              const ctx = canvas.getContext("2d");
-              ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-              const image = canvas.toDataURL("image/jpg");
-              uri = image;
-              thumbnailBlob = await fetch(image).then((res) => res.blob());
-            }
-          }
-
-          if (!thumbnailBlob) {
-            throw new Error("fail generate thumbnail");
-          }
-
-          return {
-            id: randomString(12),
-            file: asset.file!,
-            uri: uri,
-            thumbnail: thumbnailBlob,
-            mimeType: asset.mimeType || "image/jpeg",
-            name: asset.fileName || `media-${Date.now()}`,
-            size: asset.fileSize || 0,
-            processedBytes: 0,
-            abortController: new AbortController(),
-          };
-        }),
-      );
-
-      setMedia((prev) => [...prev, ...selectedMedia]);
-
-      for await (const media of selectedMedia) {
-        const upload = await uploadMutation.mutateAsync({
-          path: media.name,
-          type: media.mimeType,
-        });
-
-        // upload thumbnail
-        const isSuccess = await axios
-          .put(upload.thumbnail, media.thumbnail, {
-            headers: {
-              "Content-Type": media.mimeType,
-            },
-            signal: media.abortController?.signal,
-          })
-          .then(() => true)
-          .catch((error) => {
-            if (error instanceof CanceledError) {
-              return false;
-            }
-          });
-
-        if (!isSuccess) {
-          // skip uploading original if thumbnail upload is cancelled
-          continue;
-        }
-
-        // upload original file with progress tracking
-        await axios
-          .put(upload.original, media.file, {
-            headers: {
-              "Content-Type": media.mimeType,
-            },
-            signal: media.abortController?.signal,
-            onUploadProgress: (progressEvent) => {
-              const processedBytes = progressEvent.loaded;
-              setMedia((prevMedia) =>
-                prevMedia.map((m) =>
-                  m.id === media.id ? { ...m, processedBytes } : m,
-                ),
-              );
-
-              if (processedBytes === media.size) {
-                // create gallery record when upload is complete
-                createGalleryMutation.mutate(
-                  {
-                    filePath: upload.original_path,
-                    thumbnailPath: upload.thumbnail_path,
-                    mimeType: media.mimeType,
-                  },
-                  {
-                    onSuccess() {
-                      clientUtils.gallery.get.invalidate();
-                    },
-                  },
-                );
-              }
-            },
-          })
-          .catch(() => {});
-      }
+      await upload(result.assets);
     }
   };
 
   const onCancelUpload = (mediaItem: Media) => {
     mediaItem.abortController?.abort();
 
-    setMedia((prevMedia) => prevMedia.filter((m) => m.id !== mediaItem.id));
+    const newMedia = media.filter((item) => item.id !== mediaItem.id);
+    setMedia(newMedia);
   };
 
   const onClearAll = () => {
