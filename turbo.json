@@ -10,12 +10,21 @@
       "persistent": true,
       "cache": false
     },
+    "@sayabackup/utils#deploy": {
+      "outputs": [
+        "dist/**"
+      ]
+    },
     "backend#deploy": {
       "dependsOn": [
+        "@sayabackup/utils#deploy",
         "frontend#deploy"
       ]
     },
     "frontend#deploy": {
+      "dependsOn": [
+        "@sayabackup/utils#deploy"
+      ],
       "outputs": [
         "dist/**"
       ]
