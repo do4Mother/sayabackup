@@ -18,8 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Text } from "@/components/ui/text";
+import { useUpload } from "@/hooks/use_upload";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
+import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { View } from "react-native";
@@ -29,6 +31,7 @@ export default function AlbumDetailPage() {
   const search = new URLSearchParams(`#${hash}`);
   const id = search.get("#");
   const router = useRouter();
+  const { upload } = useUpload();
 
   if (!id) {
     return (
@@ -44,6 +47,19 @@ export default function AlbumDetailPage() {
   const album = trpc.album.find.useQuery({ id });
   const removeMutation = trpc.album.remove.useMutation();
   const clientUtils = trpc.useUtils();
+
+  const onUpload = async () => {
+    const result = await launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      upload(result.assets, id);
+      router.replace("/(protected)/home/(tabs)/upload");
+    }
+  };
 
   const onDeleteAlbum = (withImages: boolean) => {
     removeMutation.mutate(
@@ -79,6 +95,9 @@ export default function AlbumDetailPage() {
                       <Ionicons name="ellipsis-vertical" size={20} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
+                      <DropdownMenuLabel>
+                        <Text onPress={onUpload}>Upload</Text>
+                      </DropdownMenuLabel>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuLabel>

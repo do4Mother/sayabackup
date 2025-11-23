@@ -6,7 +6,7 @@ import { Text } from "@/components/ui/text";
 import { useUpload } from "@/hooks/use_upload";
 import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
+import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack } from "expo-router";
 import { FlatList, Image, View } from "react-native";
 import { match } from "ts-pattern";
@@ -27,7 +27,7 @@ export default function UploadTabpage() {
   const { upload, data: media, setData: setMedia } = useUpload();
 
   const pickMedia = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
       allowsMultipleSelection: true,
       quality: 1,

@@ -1,7 +1,10 @@
 import { useSelectedImage } from "@/hooks/use_select_image";
+import { useUpload } from "@/hooks/use_upload";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { launchImageLibraryAsync } from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -12,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { match, P } from "ts-pattern";
+import { Button } from "../ui/button";
 import { Text } from "../ui/text";
 
 type ImageListProps = {
@@ -26,11 +30,32 @@ export default function ImageList(props: ImageListProps) {
   const setSelectedImages = useSelectedImage(
     (state) => state.setSelectedImages,
   );
+  const { upload } = useUpload();
+
+  const onUpload = async () => {
+    const result = await launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      upload(result.assets);
+      router.replace("/(protected)/home/(tabs)/upload");
+    }
+  };
 
   return match(images)
     .with({ data: P.when((v) => v?.length === 0) }, () => (
-      <View className="flex-1 justify-center items-center bg-background">
-        <Text>No images found</Text>
+      <View className="flex-1 justify-center items-center bg-background p-4">
+        <Text className="text-center font-medium text-lg">
+          Your gallery is empty.
+          <br /> Add some images to get started!
+        </Text>
+        <Button className="mt-4" onPress={onUpload}>
+          <Ionicons name="image" size={20} className="mr-2 text-white" />
+          <Text>Add Images</Text>
+        </Button>
       </View>
     ))
     .with({ data: P.when((v) => (v?.length ?? 0) > 0) }, () => (

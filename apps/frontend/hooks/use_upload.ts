@@ -26,7 +26,7 @@ type State = {
 
 type Action = {
   setData: (data: Item[]) => void;
-  upload: (data: ImagePickerAsset[]) => Promise<void>;
+  upload: (data: ImagePickerAsset[], albumId?: string) => Promise<void>;
 };
 
 async function generateThumbnail(
@@ -84,7 +84,7 @@ export const createUploadStore = () =>
     return {
       data: [],
       setData: (data: Item[]) => set({ data }),
-      upload: async (data: ImagePickerAsset[]) => {
+      upload: async (data: ImagePickerAsset[], albumId) => {
         const assets = data.map(async (asset) => {
           const { uri, thumbnailBlob } = await generateThumbnail(asset);
           return {
@@ -152,9 +152,15 @@ export const createUploadStore = () =>
                       filePath: upload.original_path,
                       thumbnailPath: upload.thumbnail_path,
                       mimeType: media.mimeType,
+                      albumId: albumId,
                     },
                     {
                       onSuccess() {
+                        if (albumId) {
+                          clientUtils.gallery.get.invalidate({
+                            albumId: albumId,
+                          });
+                        }
                         clientUtils.gallery.get.invalidate();
                       },
                     },
