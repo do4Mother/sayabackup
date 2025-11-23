@@ -66,7 +66,6 @@ export default function ImageList(props: ImageListProps) {
           justifyContent: "flex-start",
         }}
         onLayout={(event) => {
-          console.log("Layout width:", event.nativeEvent.layout.width);
           setResponsiveLayout(
             createResponsiveLayout({ width: event.nativeEvent.layout.width }),
           );
@@ -138,6 +137,24 @@ export default function ImageList(props: ImageListProps) {
 type ResponsiveLayout = ReturnType<typeof createResponsiveLayout>;
 
 function createResponsiveLayout(props: { width: number }) {
+  if (props.width > 1200) {
+    const spacing = (8 * 9) / 10; // 8px gap between 10 columns
+    return {
+      numOfColumns: 10,
+      spacing,
+      imageWidth: props.width / 10 - spacing,
+    };
+  }
+
+  if (props.width > 900) {
+    const spacing = (8 * 7) / 8; // 8px gap between 8 columns
+    return {
+      numOfColumns: 8,
+      spacing,
+      imageWidth: props.width / 8 - spacing,
+    };
+  }
+
   if (props.width > 750) {
     const spacing = (8 * 5) / 6; // 8px gap between 6 columns
     return {
