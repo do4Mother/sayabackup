@@ -6,14 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React from "react";
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Pressable,
-  View,
-} from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
@@ -24,7 +18,9 @@ type ImageListProps = {
 
 export default function ImageList(props: ImageListProps) {
   const images = trpc.gallery.get.useQuery({ albumId: props.albumId });
-  const imageWidth = Dimensions.get("window").width / 4 - 8; // 4 columns with some spacing
+  const [responsiveLayout, setResponsiveLayout] = useState<ResponsiveLayout>(
+    createResponsiveLayout({ width: 0 }),
+  );
   const router = useRouter();
   const selectedImages = useSelectedImage((state) => state.selectedImages);
   const setSelectedImages = useSelectedImage(
@@ -60,11 +56,21 @@ export default function ImageList(props: ImageListProps) {
     ))
     .with({ data: P.when((v) => (v?.length ?? 0) > 0) }, () => (
       <FlatList
+        key={responsiveLayout.numOfColumns}
         data={images.data}
-        numColumns={4}
-        className="py-4 px-1 bg-background"
+        numColumns={responsiveLayout.numOfColumns}
+        className="py-4 px-4 bg-background"
         contentContainerClassName="gap-y-4"
-        columnWrapperClassName="gap-2"
+        columnWrapperStyle={{
+          gap: responsiveLayout.spacing,
+          justifyContent: "flex-start",
+        }}
+        onLayout={(event) => {
+          console.log("Layout width:", event.nativeEvent.layout.width);
+          setResponsiveLayout(
+            createResponsiveLayout({ width: event.nativeEvent.layout.width }),
+          );
+        }}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => {
@@ -110,7 +116,7 @@ export default function ImageList(props: ImageListProps) {
                     ? "opacity-50"
                     : "opacity-100",
                 )}
-                style={{ width: imageWidth }}
+                style={{ width: responsiveLayout.imageWidth - 8 }}
               />
             </View>
           </Pressable>
@@ -127,4 +133,41 @@ export default function ImageList(props: ImageListProps) {
         <ActivityIndicator />
       </View>
     ));
+}
+
+type ResponsiveLayout = ReturnType<typeof createResponsiveLayout>;
+
+function createResponsiveLayout(props: { width: number }) {
+  if (props.width > 750) {
+    const spacing = (8 * 5) / 6; // 8px gap between 6 columns
+    return {
+      numOfColumns: 6,
+      spacing,
+      imageWidth: props.width / 6 - spacing,
+    };
+  }
+
+  if (props.width > 600) {
+    const spacing = (8 * 4) / 5; // 8px gap between 5 columns
+    return {
+      numOfColumns: 5,
+      spacing,
+      imageWidth: props.width / 5 - spacing,
+    };
+  }
+  if (props.width > 350) {
+    const spacing = (8 * 3) / 4; // 8px gap between 4 columns
+    return {
+      numOfColumns: 4,
+      spacing,
+      imageWidth: props.width / 4 - spacing,
+    };
+  }
+  const spacing = (8 * 1) / 2; // 8px gap between 2 columns
+
+  return {
+    numOfColumns: 2,
+    spacing,
+    imageWidth: props.width / 2 - spacing,
+  };
 }

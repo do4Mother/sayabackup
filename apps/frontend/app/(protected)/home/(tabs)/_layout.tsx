@@ -4,27 +4,44 @@ import { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
 import { Stack, Tabs } from "expo-router";
 import React from "react";
 import { Dimensions } from "react-native";
+import { match } from "ts-pattern";
 
 export default function HomePageLayout() {
   const dimensions = Dimensions.get("window");
 
-  const tabbarConfig: BottomTabNavigationOptions =
-    dimensions.width > 600
-      ? {
-          tabBarPosition: "left",
-        }
-      : {
-          tabBarVariant: "uikit",
-          tabBarPosition: "bottom",
-          tabBarStyle: {
-            height: 55,
-          },
-          tabBarItemStyle: {
-            alignItems: "center",
-          },
-          tabBarIconStyle: { width: 20, height: 20, flex: 1 },
-          tabBarLabelStyle: { fontSize: 12, paddingBottom: 4 },
-        };
+  const tabbarConfig = match(dimensions.width)
+    .returnType<BottomTabNavigationOptions>()
+    .when(
+      (v) => v > 1000,
+      () => ({
+        tabBarVariant: "material",
+        tabBarPosition: "left",
+        tabBarLabelPosition: "beside-icon",
+        tabBarStyle: {
+          minWidth: 200,
+        },
+      }),
+    )
+    .when(
+      (v) => v > 600,
+      () => ({
+        tabBarVariant: "material",
+        tabBarPosition: "left",
+        tabBarLabelPosition: "below-icon",
+      }),
+    )
+    .otherwise(() => ({
+      tabBarVariant: "uikit",
+      tabBarPosition: "bottom",
+      tabBarStyle: {
+        height: 55,
+      },
+      tabBarItemStyle: {
+        alignItems: "center",
+      },
+      tabBarIconStyle: { width: 20, height: 20, flex: 1 },
+      tabBarLabelStyle: { fontSize: 12, paddingBottom: 4 },
+    }));
 
   return (
     <>
