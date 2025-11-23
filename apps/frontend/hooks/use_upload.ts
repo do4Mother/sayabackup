@@ -156,12 +156,7 @@ export const createUploadStore = () =>
                     },
                     {
                       onSuccess() {
-                        if (albumId) {
-                          clientUtils.gallery.get.invalidate({
-                            albumId: albumId,
-                          });
-                        }
-                        clientUtils.gallery.get.invalidate();
+                        clientUtils.invalidate();
                       },
                     },
                   );
