@@ -81,7 +81,7 @@ export default function SettingTabpage() {
     logout.mutate(void 0, {
       onSuccess() {
         localStorage.clear();
-        router.push("/");
+        router.replace("/");
       },
     });
   };
