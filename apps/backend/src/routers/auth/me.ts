@@ -14,5 +14,5 @@ export const me = protectedProcdure.query(async ({ ctx }) => {
 		throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 	}
 
-	return { user: userDto({ masking: true }).parse(user) };
+	return { user: userDto({ masking: false }).parse(user) };
 });
