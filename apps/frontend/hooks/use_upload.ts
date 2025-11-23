@@ -102,7 +102,7 @@ export const createUploadStore = () =>
 
         const resolvedAssets = await Promise.all(assets);
 
-        set({ data: resolvedAssets });
+        set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
         for await (const media of resolvedAssets) {
           const upload = await uploadMutation.mutateAsync({
@@ -156,7 +156,11 @@ export const createUploadStore = () =>
                     },
                     {
                       onSuccess() {
-                        clientUtils.invalidate();
+                        if (albumId) {
+                          clientUtils.gallery.get.refetch({ albumId });
+                        }
+
+                        clientUtils.gallery.get.invalidate();
                       },
                     },
                   );
