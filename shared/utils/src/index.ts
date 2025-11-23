@@ -1,4 +1,5 @@
 // Export all utility functions from this file
 
 export * from './crpyto';
-export * from './string-utils';
+export * from './random-string';
+
