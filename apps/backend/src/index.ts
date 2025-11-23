@@ -19,10 +19,10 @@ const corsHeaders = {
 	"Access-Control-Allow-Credentials": "true", // If you need to send cookies or authentication headers
 };
 
+import { decrypt, encrypt } from "@sayabackup/utils";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { drizzle } from "drizzle-orm/d1";
 import { appRouter } from "./routers/routers";
-import { decrypt, encrypt } from "./utils/crypto";
 
 export default {
 	async fetch(request, env): Promise<Response> {
