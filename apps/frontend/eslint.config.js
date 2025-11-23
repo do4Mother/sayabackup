@@ -12,6 +12,7 @@ module.exports = defineConfig([
   {
     rules: {
       "react-hooks/exhaustive-deps": "off",
+      "import/no-named-as-default": "off",
     },
   },
 ]);
