@@ -1,4 +1,4 @@
-import randomString from "./random_string";
+import { randomString } from "@sayabackup/utils";
 
 /**
  * Sanitizes a file name by replacing spacing and special characters with underscores.
