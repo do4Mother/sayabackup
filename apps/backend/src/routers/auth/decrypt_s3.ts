@@ -1,6 +1,6 @@
+import { decrypt } from "@sayabackup/utils";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
-import { decrypt } from "../../utils/crypto";
 import { s3CredentialsDto } from "./dto/s3credentials.dto";
 
 export function decryptS3Credentials(

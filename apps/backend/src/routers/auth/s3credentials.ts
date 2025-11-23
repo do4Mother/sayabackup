@@ -1,6 +1,6 @@
+import { encrypt } from "@sayabackup/utils";
 import z from "zod";
 import { protectedProcdure } from "../../middlewares/protected";
-import { encrypt } from "../../utils/crypto";
 
 export const s3credentials = protectedProcdure
 	.input(

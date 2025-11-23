@@ -25,7 +25,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "tsup": "^8.0.0",
     "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0"
   }
 }
