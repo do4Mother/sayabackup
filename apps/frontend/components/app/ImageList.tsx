@@ -36,7 +36,7 @@ export default function ImageList(props: ImageListProps) {
     });
 
     if (!result.canceled) {
-      upload(result.assets);
+      upload(result.assets, props.albumId);
       router.replace("/(protected)/home/(tabs)/upload");
     }
   };
