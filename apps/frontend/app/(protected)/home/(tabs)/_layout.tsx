@@ -70,7 +70,7 @@ export default function HomePageLayout() {
           }}
         />
         <Tabs.Screen
-          name="albums"
+          name="albums/index"
           options={{
             title: "Albums",
             tabBarIcon: ({ color }) => (
@@ -94,6 +94,14 @@ export default function HomePageLayout() {
             tabBarIcon: ({ color }) => (
               <Ionicons name="settings-outline" size={20} color={color} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="albums/detail"
+          options={{
+            tabBarButton(props) {
+              return null;
+            },
           }}
         />
       </Tabs>

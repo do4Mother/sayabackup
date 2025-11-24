@@ -66,7 +66,7 @@ export default function AlbumList(props: AlbumListProps) {
                   className={props.itemClassName}
                   onPress={() => {
                     router.push({
-                      pathname: "/albums",
+                      pathname: "/(protected)/home/(tabs)/albums/detail",
                       params: {
                         "#": item.id,
                       },
