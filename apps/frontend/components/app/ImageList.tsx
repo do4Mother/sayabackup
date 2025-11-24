@@ -59,7 +59,7 @@ export default function ImageList(props: ImageListProps) {
         key={responsiveLayout.numOfColumns}
         data={images.data}
         numColumns={responsiveLayout.numOfColumns}
-        className="py-4 px-4 bg-background"
+        className="py-4 px-4 bg-background items-center"
         contentContainerClassName="gap-y-4"
         columnWrapperStyle={{
           gap: responsiveLayout.spacing,
@@ -137,15 +137,6 @@ export default function ImageList(props: ImageListProps) {
 type ResponsiveLayout = ReturnType<typeof createResponsiveLayout>;
 
 function createResponsiveLayout(props: { width: number }) {
-  if (props.width > 1200) {
-    const spacing = (8 * 9) / 10; // 8px gap between 10 columns
-    return {
-      numOfColumns: 10,
-      spacing,
-      imageWidth: props.width / 10 - spacing,
-    };
-  }
-
   if (props.width > 900) {
     const spacing = (8 * 7) / 8; // 8px gap between 8 columns
     return {
