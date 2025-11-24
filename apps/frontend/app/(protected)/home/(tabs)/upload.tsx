@@ -17,7 +17,6 @@ type Media = {
   id: string;
   file: File;
   uri: string;
-  thumbnail: Blob;
   mimeType: string;
   name: string;
   size: number;

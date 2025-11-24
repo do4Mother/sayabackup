@@ -12,7 +12,6 @@ type Item = {
   id: string;
   file: File;
   uri: string;
-  thumbnail: Blob;
   mimeType: string;
   name: string;
   size: number;
@@ -29,9 +28,10 @@ type Action = {
   upload: (data: ImagePickerAsset[], albumId?: string) => Promise<void>;
 };
 
-async function generateThumbnail(
-  asset: ImagePickerAsset,
-): Promise<{ uri: string; thumbnailBlob: Blob }> {
+async function generateThumbnail(asset: {
+  uri: string;
+  mimeType?: string;
+}): Promise<{ uri: string; thumbnailBlob: Blob }> {
   let uri = asset.uri;
   let thumbnailBlob: Blob | null = null;
   if (asset.mimeType?.startsWith("image")) {
@@ -91,12 +91,10 @@ export const createUploadStore = () =>
       setData: (data: Item[]) => set({ data }),
       upload: async (data: ImagePickerAsset[], albumId) => {
         const assets = data.map(async (asset) => {
-          const { uri, thumbnailBlob } = await generateThumbnail(asset);
           return {
             id: randomString(12),
             file: asset.file!,
-            uri: uri,
-            thumbnail: thumbnailBlob,
+            uri: asset.uri,
             mimeType: asset.mimeType || "image/jpeg",
             name: asset.fileName || `media-${Date.now()}`,
             size: asset.fileSize || 0,
@@ -115,9 +113,14 @@ export const createUploadStore = () =>
             type: media.mimeType,
           });
 
+          const { thumbnailBlob } = await generateThumbnail({
+            uri: media.uri,
+            mimeType: media.mimeType,
+          });
+
           // upload thumbnail
           const isSuccess = await axios
-            .put(upload.thumbnail, media.thumbnail, {
+            .put(upload.thumbnail, thumbnailBlob, {
               headers: {
                 "Content-Type": media.mimeType,
               },
