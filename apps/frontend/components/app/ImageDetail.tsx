@@ -2,14 +2,9 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { debounce } from "lodash-es";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Pressable,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
 import {
@@ -49,32 +44,31 @@ export default function ImageDetail(props: ImageDetailProps) {
     width: number;
     height: number;
   }>({
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
+    width: 0,
+    height: 0,
   });
-  const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const images = trpc.gallery.get.useQuery({
     albumId: props.albumId,
   });
-  const image: ImageItem | undefined = images.data?.[activeIndex];
+  const [image, setImage] = useState<ImageItem | undefined>();
   const onMounted = useRef(false);
 
   useEffect(() => {
     if (!images.data || onMounted.current) return;
 
-    const initialIndex = images.data?.findIndex(
-      (item) => item.id === props.imageId,
-    );
-    if (initialIndex && initialIndex > 0 && flatListRef.current) {
-      flatListRef.current.scrollToOffset({
-        offset: initialIndex * dimensions.width,
-        animated: false,
+    const index = images.data.findIndex((img) => img.id === props.imageId);
+    if (index !== -1 && dimensions.width > 0) {
+      new Promise((resolve) => setTimeout(resolve, 100)).then(() => {
+        if (!flatListRef.current) return;
+        flatListRef.current.scrollToOffset({
+          offset: index * (dimensions.width + 16),
+          animated: false,
+        });
+        onMounted.current = true;
       });
     }
-
-    onMounted.current = true;
-  }, [images.data]);
+  }, [images.data, dimensions.width]);
 
   return (
     <>
@@ -88,16 +82,18 @@ export default function ImageDetail(props: ImageDetailProps) {
               className="bg-background"
               contentContainerClassName="gap-4 items-center"
               snapToAlignment="center"
-              onScroll={(event) => {
-                const index = Math.round(
-                  event.nativeEvent.contentOffset.x / dimensions.width,
-                );
-                setActiveIndex(index);
-              }}
               decelerationRate={"fast"}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              initialNumToRender={data?.length}
+              onScroll={debounce((event) => {
+                const index = Math.round(
+                  event.nativeEvent.contentOffset.x / dimensions.width,
+                );
+
+                setImage(data![index]);
+              }, 100)}
               onLayout={(event) => {
                 const { width, height } = event.nativeEvent.layout;
                 setDimensions({
