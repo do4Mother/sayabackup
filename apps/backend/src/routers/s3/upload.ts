@@ -42,7 +42,7 @@ export const upload = protectedWithS3
 			}),
 		);
 
-		const thumbnailPath = `${albumPath}thumbnails/${sanitizedPath}`;
+		const thumbnailPath = `thumbnails/${sanitizedPath}`;
 
 		const thumbnailPreSignedUrl = await getSignedUrl(
 			client,
