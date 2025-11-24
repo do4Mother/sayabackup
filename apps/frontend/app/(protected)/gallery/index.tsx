@@ -1,6 +1,6 @@
 import ImageDetail from "@/components/app/ImageDetail";
 import { Text } from "@/components/ui/text";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 
 export default function GalleryDetailPage() {
@@ -13,23 +13,15 @@ export default function GalleryDetailPage() {
 
   if (!id) {
     return (
-      <>
-        <Stack.Screen options={{ title: "Image Not Found" }} />
-        <View className="bg-background flex-1 items-center justify-center">
-          <Text className=" text-slate-500">Couldn&apos;t find image.</Text>
-        </View>
-      </>
+      <View className="bg-background flex-1 items-center justify-center">
+        <Text className=" text-slate-500">Couldn&apos;t find image.</Text>
+      </View>
     );
   }
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "",
-        }}
-      />
+    <View className="bg-background flex-1">
       <ImageDetail imageId={id} albumId={albumId} />
-    </>
+    </View>
   );
 }
