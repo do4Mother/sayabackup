@@ -36,7 +36,7 @@ async function generateThumbnail(
   let thumbnailBlob: Blob | null = null;
   if (asset.mimeType?.startsWith("image")) {
     const manipulate = ImageManipulator.manipulate(asset.uri);
-    const image = await manipulate.resize({ width: 200 }).renderAsync();
+    const image = await manipulate.resize({ width: 800 }).renderAsync();
     const thumbnail = await image.saveAsync();
     thumbnailBlob = await fetch(thumbnail.uri).then((res) => res.blob());
   }
