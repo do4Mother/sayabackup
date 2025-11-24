@@ -52,7 +52,7 @@ export default function HomePageLayout() {
           header(props) {
             return (
               <Header
-                title={props.route.name}
+                title={props.options.title ?? props.route.name}
                 variant="large"
                 disableBackButton
               />
