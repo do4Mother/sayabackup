@@ -18,7 +18,7 @@ export default function HomePageLayout() {
         tabBarPosition: "left",
         tabBarLabelPosition: "beside-icon",
         tabBarStyle: {
-          minWidth: 200,
+          minWidth: 250,
         },
       }),
     )
