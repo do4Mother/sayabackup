@@ -52,17 +52,22 @@ async function generateThumbnail(
       });
 
       video.muted = true;
-      video.currentTime = 1;
+      video.currentTime = Math.min(1, video.duration / 2); // Seek to 1s or half duration if shorter
       await new Promise((resolve) =>
         video.addEventListener("seeked", () => resolve(true)),
       );
+
+      // Play briefly to ensure frame is available
+      await video.play();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      video.pause();
 
       const canvas = document.createElement("canvas");
       canvas.width = 1024;
       canvas.height = (video.videoHeight / video.videoWidth) * 1024;
       const ctx = canvas.getContext("2d");
       ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const image = canvas.toDataURL("image/jpg");
+      const image = canvas.toDataURL("image/jpeg");
       uri = image;
       thumbnailBlob = await fetch(image).then((res) => res.blob());
     }
