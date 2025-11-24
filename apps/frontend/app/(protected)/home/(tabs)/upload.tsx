@@ -1,3 +1,5 @@
+import ImageType from "@/assets/images/image-asset.png";
+import VideoType from "@/assets/images/video-asset.png";
 import Header from "@/components/app/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +10,8 @@ import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack } from "expo-router";
-import { FlatList, Image, View } from "react-native";
-import { match } from "ts-pattern";
+import { Image, SectionList, View } from "react-native";
+import { match, P } from "ts-pattern";
 
 type Media = {
   id: string;
@@ -85,62 +87,62 @@ export default function UploadTabpage() {
             </View>
           ))
           .otherwise(() => (
-            <>
-              <View className="items-end px-4">
-                <Button
-                  className="gap-x-1"
-                  variant={"ghost"}
-                  onPress={onClearAll}
-                >
-                  <Ionicons name="close" size={22} className="mt-0.5" />
-                  <Text className="leading-none">Clear</Text>
-                </Button>
-              </View>
-
-              <FlatList
-                data={media}
-                contentContainerClassName="gap-4 px-4"
-                renderItem={({ item }) => (
-                  <Card className="gap-4 flex-row px-4">
-                    <Image
-                      source={{
-                        uri: item.uri,
-                      }}
-                      className="size-20 rounded-md"
-                    />
-                    <View className="flex-1">
-                      <CardHeader className="px-0 flex-1 flex-row">
-                        <CardTitle className="leading-5 flex-1 break-all">
-                          {item.name}
-                        </CardTitle>
-                        <Button
-                          size="icon"
-                          variant={"ghost"}
-                          onPress={() => onCancelUpload(item)}
-                        >
-                          <Ionicons
-                            name="trash"
-                            className="text-red-500"
-                            size={18}
-                          />
-                        </Button>
-                      </CardHeader>
-                      <CardContent className="px-0 mt-2">
-                        <Progress
-                          value={(item.processedBytes / item.size) * 100}
-                          className="my-0"
+            <SectionList
+              contentContainerClassName="gap-4 px-4"
+              sections={[{ data: media }]}
+              ListHeaderComponent={() => (
+                <View className="items-end px-4">
+                  <Button
+                    className="gap-x-1"
+                    variant={"ghost"}
+                    onPress={onClearAll}
+                  >
+                    <Ionicons name="close" size={22} className="mt-0.5" />
+                    <Text className="leading-none">Clear</Text>
+                  </Button>
+                </View>
+              )}
+              renderItem={({ item }) => (
+                <Card className="gap-4 flex-row px-4">
+                  <Image
+                    source={match(item.mimeType)
+                      .with(P.string.startsWith("image"), () => ImageType)
+                      .with(P.string.startsWith("video"), () => VideoType)
+                      .otherwise(() => ImageType)}
+                    style={{ width: 70, height: "auto" }}
+                  />
+                  <View className="flex-1">
+                    <CardHeader className="px-0 flex-1 flex-row">
+                      <CardTitle className="leading-5 flex-1 break-all">
+                        {item.name}
+                      </CardTitle>
+                      <Button
+                        size="icon"
+                        variant={"ghost"}
+                        onPress={() => onCancelUpload(item)}
+                      >
+                        <Ionicons
+                          name="trash"
+                          className="text-red-500"
+                          size={18}
                         />
-                        <Text className="mt-1 text-sm">
-                          {((item.processedBytes / item.size) * 100).toFixed(0)}
-                          % ({formatFileSize(item.processedBytes)} of{" "}
-                          {formatFileSize(item.size)})
-                        </Text>
-                      </CardContent>
-                    </View>
-                  </Card>
-                )}
-              />
-            </>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="px-0 mt-2">
+                      <Progress
+                        value={(item.processedBytes / item.size) * 100}
+                        className="my-0"
+                      />
+                      <Text className="mt-1 text-sm">
+                        {((item.processedBytes / item.size) * 100).toFixed(0)}%
+                        ({formatFileSize(item.processedBytes)} of{" "}
+                        {formatFileSize(item.size)})
+                      </Text>
+                    </CardContent>
+                  </View>
+                </Card>
+              )}
+            />
           ))}
       </View>
     </>
