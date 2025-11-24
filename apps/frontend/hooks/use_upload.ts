@@ -5,6 +5,7 @@ import { ImageManipulator } from "expo-image-manipulator";
 import { ImagePickerAsset } from "expo-image-picker";
 import { createContext, useContext } from "react";
 import { Platform } from "react-native";
+import { match, P } from "ts-pattern";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
@@ -108,9 +109,14 @@ export const createUploadStore = () =>
         set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
         for await (const media of resolvedAssets) {
+          const albumPath = match(albumId)
+            .with(P.string, (id) => clientUtils.album.find.getData({ id: id }))
+            .otherwise(() => null);
+
           const upload = await uploadMutation.mutateAsync({
             path: media.name,
             type: media.mimeType,
+            album: albumPath?.name,
           });
 
           const { thumbnailBlob } = await generateThumbnail({

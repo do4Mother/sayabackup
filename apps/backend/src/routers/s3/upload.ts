@@ -11,6 +11,7 @@ export const upload = protectedWithS3
 		z.object({
 			path: z.string(),
 			type: z.string(),
+			album: z.string().nullish(),
 		}),
 	)
 	.mutation(async ({ input, ctx }) => {
@@ -27,9 +28,10 @@ export const upload = protectedWithS3
 			});
 		}
 
+		const albumPath = input.album ? `${input.album.replaceAll(" ", "_")}/` : "";
 		const sanitizedFileName = sanitizeFileName(fileName);
 		const sanitizedPath = [...pathParts, sanitizedFileName].join("/");
-		const originalPath = `originals/${sanitizedPath}`;
+		const originalPath = `${albumPath === "" ? "raw/" : albumPath}${sanitizedPath}`;
 
 		const originalPreSignedUrl = await getSignedUrl(
 			client,
@@ -40,7 +42,7 @@ export const upload = protectedWithS3
 			}),
 		);
 
-		const thumbnailPath = `thumbnails/${sanitizedPath}`;
+		const thumbnailPath = `${albumPath}thumbnails/${sanitizedPath}`;
 
 		const thumbnailPreSignedUrl = await getSignedUrl(
 			client,
