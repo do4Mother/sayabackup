@@ -99,9 +99,7 @@ export default function HomePageLayout() {
         <Tabs.Screen
           name="albums/detail"
           options={{
-            tabBarButton(props) {
-              return null;
-            },
+            href: null,
           }}
         />
       </Tabs>
