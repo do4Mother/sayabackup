@@ -88,7 +88,6 @@ export default function UploadTabpage() {
           ))
           .otherwise(() => (
             <SectionList
-              contentContainerClassName="gap-4 px-4"
               sections={[{ data: media }]}
               ListHeaderComponent={() => (
                 <View className="items-end px-4">
@@ -103,7 +102,7 @@ export default function UploadTabpage() {
                 </View>
               )}
               renderItem={({ item }) => (
-                <Card className="gap-4 flex-row px-4">
+                <Card className="gap-4 flex-row px-4 mx-4 mb-4">
                   <Image
                     source={match(item.mimeType)
                       .with(P.string.startsWith("image"), () => ImageType)
