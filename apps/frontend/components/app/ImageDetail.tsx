@@ -45,7 +45,13 @@ type ImageDetailProps = {
 type ImageItem = AppRouterOutput["gallery"]["get"][number];
 
 export default function ImageDetail(props: ImageDetailProps) {
-  const dimensions = Dimensions.get("window");
+  const [dimensions, setDimensions] = useState<{
+    width: number;
+    height: number;
+  }>({
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  });
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const images = trpc.gallery.get.useQuery({
@@ -92,6 +98,13 @@ export default function ImageDetail(props: ImageDetailProps) {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              onLayout={(event) => {
+                const { width, height } = event.nativeEvent.layout;
+                setDimensions({
+                  width,
+                  height,
+                });
+              }}
               renderItem={({ item }) => (
                 <View
                   key={item.id}
