@@ -40,7 +40,15 @@
           }
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "expo-asset",
+        {
+          "assets": [
+            "assets"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
