@@ -29,7 +29,6 @@ export default function ProtectedLayout() {
         name="gallery/index"
         options={{
           presentation: "modal",
-          sheetAllowedDetents: [0.5, 1],
         }}
       />
     </Stack>
