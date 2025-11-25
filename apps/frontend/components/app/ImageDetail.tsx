@@ -65,6 +65,7 @@ export default function ImageDetail(props: ImageDetailProps) {
           offset: index * (dimensions.width + 16),
           animated: false,
         });
+        setImage(images.data[index]);
         onMounted.current = true;
       });
     }
