@@ -79,10 +79,6 @@ export const update = protectedWithS3
 			)
 			.otherwise(() => photo.file_path);
 
-		console.log("Old file path:", photo.file_path);
-
-		console.log("New file path:", newFilePath);
-
 		/**
 		 * Copy photo to album folder
 		 */
@@ -92,9 +88,7 @@ export const update = protectedWithS3
 			Key: newFilePath,
 		});
 
-		await client.send(copyCommand).catch((error) => {
-			console.log("aws s3 copy error:", error);
-		});
+		await client.send(copyCommand);
 
 		/**
 		 * Delete original files
