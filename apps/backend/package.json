@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"deploy": "cross-env WRANGLER_BUILD_CONDITIONS=workerd,worker npx  wrangler deploy",
+		"deploy": "cross-env WRANGLER_BUILD_CONDITIONS=workerd,worker WRANGLER_BUILD_PLATFORM=node npx  wrangler deploy",
 		"dev": "cross-env WRANGLER_BUILD_CONDITIONS=workerd,worker WRANGLER_BUILD_PLATFORM=node npx wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
