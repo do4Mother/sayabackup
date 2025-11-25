@@ -2,9 +2,10 @@
 	"name": "backend",
 	"version": "0.0.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
+		"deploy": "cross-env WRANGLER_BUILD_CONDITIONS=workerd,worker npx  wrangler deploy",
+		"dev": "cross-env WRANGLER_BUILD_CONDITIONS=workerd,worker WRANGLER_BUILD_PLATFORM=node npx wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
