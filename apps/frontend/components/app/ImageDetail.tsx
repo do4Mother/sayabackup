@@ -69,15 +69,13 @@ export default function ImageDetail(props: ImageDetailProps) {
 
     const index = images.data.findIndex((img) => img.id === props.imageId);
     if (index !== -1 && dimensions.width > 0) {
-      new Promise((resolve) => setTimeout(resolve, 50)).then(() => {
-        if (!flatListRef.current) return;
-        flatListRef.current.scrollToOffset({
-          offset: index * (dimensions.width + 16),
-          animated: false,
-        });
-        setImage(images.data[index]);
-        onMounted.current = true;
+      if (!flatListRef.current) return;
+      flatListRef.current.scrollToOffset({
+        offset: index * (dimensions.width + 16),
+        animated: false,
       });
+      setImage(images.data[index]);
+      onMounted.current = true;
     }
   }, [images.data, dimensions.width]);
 
