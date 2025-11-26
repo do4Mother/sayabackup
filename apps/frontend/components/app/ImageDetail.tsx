@@ -3,7 +3,7 @@ import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { debounce } from "lodash-es";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
@@ -52,6 +52,16 @@ export default function ImageDetail(props: ImageDetailProps) {
     albumId: props.albumId,
   });
   const [image, setImage] = useState<ImageItem | undefined>();
+  const index = useMemo(
+    () =>
+      match(image)
+        .with(
+          P.nonNullable,
+          (img) => images.data?.findIndex((v) => v.id === img.id) ?? 0,
+        )
+        .otherwise(() => 0),
+    [image],
+  );
   const onMounted = useRef(false);
 
   useEffect(() => {
@@ -59,7 +69,7 @@ export default function ImageDetail(props: ImageDetailProps) {
 
     const index = images.data.findIndex((img) => img.id === props.imageId);
     if (index !== -1 && dimensions.width > 0) {
-      new Promise((resolve) => setTimeout(resolve, 100)).then(() => {
+      new Promise((resolve) => setTimeout(resolve, 50)).then(() => {
         if (!flatListRef.current) return;
         flatListRef.current.scrollToOffset({
           offset: index * (dimensions.width + 16),
@@ -71,65 +81,122 @@ export default function ImageDetail(props: ImageDetailProps) {
     }
   }, [images.data, dimensions.width]);
 
+  const onNext = () => {
+    if (!images.data || !image) return;
+
+    if (index !== -1 && index < images.data.length - 1) {
+      flatListRef.current?.scrollToOffset({
+        offset: (index + 1) * (dimensions.width + 16),
+        animated: true,
+      });
+    }
+  };
+
+  const onPrev = () => {
+    if (!images.data || !image) return;
+
+    if (index > 0) {
+      flatListRef.current?.scrollToOffset({
+        offset: (index - 1) * (dimensions.width - 16),
+        animated: true,
+      });
+    }
+  };
+
   return (
     <>
       {match(images)
         .with(
           { isPending: false, data: P.when((v) => v && v.length > 0) },
           ({ data }) => (
-            <FlatList<ImageItem>
-              ref={flatListRef}
-              data={data}
-              className="bg-background"
-              contentContainerClassName="gap-4 items-center"
-              snapToAlignment="center"
-              decelerationRate={"fast"}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              initialNumToRender={data?.length}
-              onScroll={debounce((event) => {
-                const index = Math.round(
-                  event.nativeEvent.contentOffset.x / dimensions.width,
-                );
+            <>
+              <FlatList<ImageItem>
+                ref={flatListRef}
+                data={data}
+                className="bg-background"
+                contentContainerClassName="gap-4 items-center"
+                snapToAlignment="center"
+                decelerationRate={"fast"}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={data?.length}
+                onScroll={debounce((event) => {
+                  const index = Math.round(
+                    (event.nativeEvent.contentOffset.x % dimensions.width) / 16,
+                  );
 
-                setImage(data![index]);
-              }, 100)}
-              onLayout={(event) => {
-                const { width, height } = event.nativeEvent.layout;
-                setDimensions({
-                  width,
-                  height,
-                });
-              }}
-              renderItem={({ item }) => (
-                <View
-                  key={item.id}
-                  style={{
-                    width: dimensions.width,
-                    height: dimensions.height - 110,
-                    flex: 1,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+                  setImage(data![index]);
+                }, 100)}
+                onLayout={(event) => {
+                  const { width, height } = event.nativeEvent.layout;
+                  setDimensions({
+                    width,
+                    height,
+                  });
+                }}
+                renderItem={({ item }) => (
+                  <View
+                    key={item.id}
+                    style={{
+                      width: dimensions.width,
+                      height: dimensions.height - 110,
+                      flex: 1,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {match(item)
+                      .with({ mime_type: P.string.includes("image") }, () => (
+                        <Image
+                          source={{ uri: item.thumbnail_url }}
+                          className="w-full flex-1"
+                          contentFit="contain"
+                        />
+                      ))
+                      .with({ mime_type: P.string.includes("video") }, () => (
+                        <VideoPlayer item={item} />
+                      ))
+                      .otherwise(() => (
+                        <Text>Unsupported media type: {item.mime_type}</Text>
+                      ))}
+                  </View>
+                )}
+              />
+
+              {index > 0 && (
+                <Pressable
+                  className="absolute top-0 bottom-0 left-0 opacity-20 hover:opacity-40 bg-gradient-to-r from-black to-transparent hidden xl:block"
+                  onPress={onPrev}
                 >
-                  {match(item)
-                    .with({ mime_type: P.string.includes("image") }, () => (
-                      <Image
-                        source={{ uri: item.thumbnail_url }}
-                        className="w-full flex-1"
-                        contentFit="contain"
-                      />
-                    ))
-                    .with({ mime_type: P.string.includes("video") }, () => (
-                      <VideoPlayer item={item} />
-                    ))
-                    .otherwise(() => (
-                      <Text>Unsupported media type: {item.mime_type}</Text>
-                    ))}
-                </View>
+                  <View className="w-14 flex items-center justify-center h-full">
+                    <Ionicons
+                      name="chevron-back"
+                      size={24}
+                      className="text-white"
+                    />
+                  </View>
+                </Pressable>
               )}
-            />
+
+              {index < (data?.length ?? 0) - 1 && (
+                <Pressable
+                  className="absolute top-0 bottom-0 right-0 opacity-20 hover:opacity-40 bg-gradient-to-r from-transparent to-black hidden xl:block"
+                  onPress={onNext}
+                >
+                  <View className="w-14 flex items-center justify-center h-full">
+                    <Ionicons
+                      name="chevron-forward"
+                      size={24}
+                      className="text-white"
+                    />
+                    <Text>
+                      {index + 1} / {data?.length}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            </>
           ),
         )
         .with(
