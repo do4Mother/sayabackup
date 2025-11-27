@@ -15,9 +15,8 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { Text } from "../ui/text";
-import Header, { HeaderProps } from "./Header";
 
-export default function HeaderImagePage(props: HeaderProps) {
+const HeaderImagePage = () => {
   const selectedImages = useSelectedImage((state) => state.selectedImages);
   const setSelectedImages = useSelectedImage(
     (state) => state.setSelectedImages,
@@ -40,8 +39,8 @@ export default function HeaderImagePage(props: HeaderProps) {
     );
   }
 
-  return <Header {...props} />;
-}
+  return undefined;
+};
 
 function DeleteButton() {
   const [open, setOpen] = useState(false);
@@ -96,3 +95,7 @@ function DeleteButton() {
     </AlertDialog>
   );
 }
+
+HeaderImagePage.displayName = "Header Image Page";
+
+export default HeaderImagePage;
