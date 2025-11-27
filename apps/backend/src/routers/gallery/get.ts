@@ -1,9 +1,8 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, lte } from "drizzle-orm";
 import { match, P } from "ts-pattern";
 import z from "zod";
-import { withCursorPagination } from "../../db/query.helper";
 import { gallery } from "../../db/schema";
 import { protectedWithS3 } from "../../middlewares/protected-with-s3";
 import { defaultCursorParamsDto } from "../../utils/default_params";
@@ -21,21 +20,22 @@ export const get = protectedWithS3
 
 		const client = createS3Client(s3Credentials);
 
-		const query = ctx.db.select().from(gallery).$dynamic();
-
-		const items = await withCursorPagination({
-			query,
-			column: gallery.created_at,
-			cursor: input.cursor,
-			limit: input.limit + 1,
-			where: and(
-				isNull(gallery.deleted_at),
-				eq(gallery.user_id, ctx.user.id),
-				match(input.albumId)
-					.with(P.string, (v) => eq(gallery.album_id, v))
-					.otherwise(() => undefined),
-			),
-		});
+		const items = await ctx.db
+			.select()
+			.from(gallery)
+			.where(
+				and(
+					isNull(gallery.deleted_at),
+					eq(gallery.user_id, ctx.user.id),
+					match(input.albumId)
+						.with(P.string, (v) => eq(gallery.album_id, v))
+						.otherwise(() => undefined),
+					match(input.cursor)
+						.with(P.number, (v) => lte(gallery.created_at, v))
+						.otherwise(() => undefined),
+				),
+			)
+			.orderBy(desc(gallery.created_at));
 
 		/**
 		 * Create presigned URLs for each gallery item
