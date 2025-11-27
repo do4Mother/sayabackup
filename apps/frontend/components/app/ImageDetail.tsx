@@ -49,13 +49,23 @@ export default function ImageDetail(props: ImageDetailProps) {
   });
   const flatListRef = useRef<FlatList>(null);
   const clientUtils = trpc.useUtils();
-  const images = clientUtils.gallery.get.getInfiniteData({
+  const initialData = clientUtils.gallery.get.getInfiniteData({
     albumId: props.albumId ?? undefined,
     limit: 32,
   });
+  const images = trpc.gallery.get.useInfiniteQuery(
+    {
+      albumId: props.albumId ?? undefined,
+      limit: 32,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      initialData,
+    },
+  );
   const items = useMemo(
-    () => images?.pages.flatMap((page) => page.items),
-    [images?.pages],
+    () => images.data.pages.flatMap((page) => page.items),
+    [images.data.pages],
   );
 
   const [image, setImage] = useState<ImageItem | undefined>();
@@ -111,7 +121,7 @@ export default function ImageDetail(props: ImageDetailProps) {
   return (
     <>
       {match(images)
-        .with({ pages: P.when((v) => (v?.length ?? 0) > 0) }, () => (
+        .with({ data: P.when((v) => (v?.pages.length ?? 0) > 0) }, () => (
           <>
             <FlatList<ImageItem>
               ref={flatListRef}
@@ -135,6 +145,15 @@ export default function ImageDetail(props: ImageDetailProps) {
 
                 if (items[nextIndex] && items[nextIndex]?.id !== image?.id) {
                   setImage(items[nextIndex]);
+                }
+
+                // Load more items if near the end
+                if (
+                  nextIndex >= (items.length ?? 0) - 3 &&
+                  images.hasNextPage &&
+                  !images.isFetchingNextPage
+                ) {
+                  images.fetchNextPage();
                 }
               }, 100)}
               onLayout={(event) => {
@@ -200,15 +219,12 @@ export default function ImageDetail(props: ImageDetailProps) {
                     size={24}
                     className="text-white"
                   />
-                  <Text>
-                    {index + 1} / {items?.length}
-                  </Text>
                 </View>
               </Pressable>
             )}
           </>
         ))
-        .with({ pages: P.when((v) => v?.length === 0) }, () => (
+        .with({ data: P.when((v) => v.pages.length === 0) }, () => (
           <View className="bg-background flex-1 items-center justify-center">
             <Text className=" text-slate-500">No images found.</Text>
           </View>
