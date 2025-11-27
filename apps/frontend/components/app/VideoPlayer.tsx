@@ -68,7 +68,7 @@ export default function VideoPlayer(props: VideoPlayerProps) {
           </View>
         ))
         .otherwise(() => (
-          <View className="h-full">
+          <View className="h-full relative">
             <Pressable onPress={togglePlay} className="h-full">
               <VideoView
                 ref={videoViewRef}
@@ -89,7 +89,7 @@ export default function VideoPlayer(props: VideoPlayerProps) {
                 onPress={() => {
                   videoViewRef.current?.enterFullscreen();
                 }}
-                className="absolute bottom-4 right-4"
+                className="absolute bottom-4 right-16"
               >
                 <AntDesign name="fullscreen" size={28} color="white" />
               </Pressable>
