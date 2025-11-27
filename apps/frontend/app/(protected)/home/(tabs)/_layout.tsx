@@ -1,4 +1,3 @@
-import Header from "@/components/app/Header";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
 import { Stack, Tabs } from "expo-router";
@@ -49,14 +48,10 @@ export default function HomePageLayout() {
       <Tabs
         screenOptions={{
           ...tabbarConfig,
-          header(props) {
-            return (
-              <Header
-                title={props.options.title ?? props.route.name}
-                variant="large"
-                disableBackButton
-              />
-            );
+          headerShadowVisible: false,
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 800,
           },
         }}
       >

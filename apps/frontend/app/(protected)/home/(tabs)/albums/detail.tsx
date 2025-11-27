@@ -1,4 +1,3 @@
-import HeaderImagePage from "@/components/app/HeaderImagePage";
 import ImageList from "@/components/app/ImageList";
 import {
   AlertDialog,
@@ -90,61 +89,55 @@ export default function AlbumDetailPage() {
     <>
       <Stack.Screen
         options={{
-          header: () => {
-            return (
-              <HeaderImagePage
-                title={album.data?.name ?? ""}
-                action={
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <Ionicons name="ellipsis-vertical" size={20} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuLabel>
-                        <Text onPress={onUpload}>Upload</Text>
-                      </DropdownMenuLabel>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuLabel>
-                            <Text className="text-red-500">Delete Album</Text>
-                          </DropdownMenuLabel>
-                        </AlertDialogTrigger>
+          title: album.data?.name ?? "",
+          headerRight: () => (
+            <DropdownMenu className="mr-4">
+              <DropdownMenuTrigger>
+                <Ionicons name="ellipsis-vertical" size={20} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>
+                  <Text onPress={onUpload}>Upload</Text>
+                </DropdownMenuLabel>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuLabel>
+                      <Text className="text-red-500">Delete Album</Text>
+                    </DropdownMenuLabel>
+                  </AlertDialogTrigger>
 
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Are you sure you want to delete this album?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. It will permanently
-                              delete the album.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>
-                              <Text>Cancel</Text>
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onPress={() => onDeleteAlbum(true)}
-                              disabled={removeMutation.isPending}
-                            >
-                              <Text>Delete With Images</Text>
-                            </AlertDialogAction>
-                            <AlertDialogAction
-                              onPress={() => onDeleteAlbum(false)}
-                              disabled={removeMutation.isPending}
-                            >
-                              <Text>Delete Album</Text>
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                }
-              />
-            );
-          },
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you sure you want to delete this album?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. It will permanently delete
+                        the album.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>
+                        <Text>Cancel</Text>
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onPress={() => onDeleteAlbum(true)}
+                        disabled={removeMutation.isPending}
+                      >
+                        <Text>Delete With Images</Text>
+                      </AlertDialogAction>
+                      <AlertDialogAction
+                        onPress={() => onDeleteAlbum(false)}
+                        disabled={removeMutation.isPending}
+                      >
+                        <Text>Delete Album</Text>
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
         }}
       />
       <ImageList albumId={id} />

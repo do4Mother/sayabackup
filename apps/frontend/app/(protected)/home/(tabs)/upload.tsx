@@ -1,6 +1,5 @@
 import ImageType from "@/assets/images/image-asset.png";
 import VideoType from "@/assets/images/video-asset.png";
-import Header from "@/components/app/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -61,20 +60,19 @@ export default function UploadTabpage() {
       <Stack.Screen
         options={{
           title: "Upload",
-          header: (props) => (
-            <Header
-              title={props.options.title ?? ""}
-              disableBackButton
-              variant="large"
-              action={match(media.length === 0)
-                .with(false, () => (
-                  <Button variant="ghost" size={"icon"} onPress={pickMedia}>
-                    <Ionicons name="add" size={22} />
-                  </Button>
-                ))
-                .otherwise(() => null)}
-            />
-          ),
+          headerRight: () =>
+            match(media.length === 0)
+              .with(false, () => (
+                <Button
+                  variant="ghost"
+                  size={"icon"}
+                  onPress={pickMedia}
+                  className="mr-4"
+                >
+                  <Ionicons name="add" size={22} />
+                </Button>
+              ))
+              .otherwise(() => null),
         }}
       />
       <View className="bg-background flex-1">

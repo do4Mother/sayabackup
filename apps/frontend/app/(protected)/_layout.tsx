@@ -1,4 +1,3 @@
-import Header from "@/components/app/Header";
 import { useApp } from "@/hooks/use_app";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
@@ -19,9 +18,6 @@ export default function ProtectedLayout() {
     <Stack
       screenOptions={{
         headerShadowVisible: false,
-        header: (props) => (
-          <Header title={props.options.title ?? props.route.name} />
-        ),
       }}
     >
       {/* Configure modal presentation for gallery route */}
