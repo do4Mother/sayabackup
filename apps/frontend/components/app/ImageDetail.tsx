@@ -4,7 +4,7 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { debounce } from "lodash-es";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
 import {
@@ -37,7 +37,7 @@ type ImageDetailProps = {
   albumId?: string | null;
 };
 
-type ImageItem = AppRouterOutput["gallery"]["get"][number];
+type ImageItem = AppRouterOutput["gallery"]["get"]["items"][number];
 
 export default function ImageDetail(props: ImageDetailProps) {
   const [dimensions, setDimensions] = useState<{
@@ -48,41 +48,48 @@ export default function ImageDetail(props: ImageDetailProps) {
     height: 0,
   });
   const flatListRef = useRef<FlatList>(null);
-  const images = trpc.gallery.get.useQuery({
-    albumId: props.albumId,
+  const clientUtils = trpc.useUtils();
+  const images = clientUtils.gallery.get.getInfiniteData({
+    albumId: props.albumId ?? undefined,
+    limit: 32,
   });
-  const [image, setImage] = useState<ImageItem | undefined>();
-  const index = useMemo(
-    () =>
-      match(image)
-        .with(
-          P.nonNullable,
-          (img) => images.data?.findIndex((v) => v.id === img.id) ?? 0,
-        )
-        .otherwise(() => 0),
-    [image],
+  const items = useMemo(
+    () => images?.pages.flatMap((page) => page.items),
+    [images?.pages],
   );
+
+  const [image, setImage] = useState<ImageItem | undefined>();
+  const index = useMemo(() => {
+    const result = match(image)
+      .with(
+        P.nonNullable,
+        (img) => items?.findIndex((v) => v.id === img.id) ?? 0,
+      )
+      .otherwise(() => 0);
+    return result;
+  }, [image, items]);
   const onMounted = useRef(false);
 
   useEffect(() => {
-    if (!images.data || onMounted.current) return;
+    if (!items || onMounted.current) return;
 
-    const index = images.data.findIndex((img) => img.id === props.imageId);
+    const index = items.findIndex((img) => img.id === props.imageId) ?? -1;
     if (index !== -1 && dimensions.width > 0) {
       if (!flatListRef.current) return;
+
       flatListRef.current.scrollToOffset({
         offset: index * (dimensions.width + 16),
         animated: false,
       });
-      setImage(images.data[index]);
+      setImage(items?.[index]);
       onMounted.current = true;
     }
-  }, [images.data, dimensions.width]);
+  }, [items, dimensions.width]);
 
   const onNext = () => {
-    if (!images.data || !image) return;
+    if (!items || !image) return;
 
-    if (index !== -1 && index < images.data.length - 1) {
+    if (index !== -1 && index < items.length - 1) {
       flatListRef.current?.scrollToOffset({
         offset: (index + 1) * (dimensions.width + 16),
         animated: true,
@@ -91,11 +98,11 @@ export default function ImageDetail(props: ImageDetailProps) {
   };
 
   const onPrev = () => {
-    if (!images.data || !image) return;
+    if (!items || !image) return;
 
     if (index > 0) {
       flatListRef.current?.scrollToOffset({
-        offset: (index - 1) * (dimensions.width - 16),
+        offset: (index - 1) * (dimensions.width + 16),
         animated: true,
       });
     }
@@ -104,107 +111,106 @@ export default function ImageDetail(props: ImageDetailProps) {
   return (
     <>
       {match(images)
-        .with(
-          { isPending: false, data: P.when((v) => v && v.length > 0) },
-          ({ data }) => (
-            <>
-              <FlatList<ImageItem>
-                ref={flatListRef}
-                data={data}
-                className="bg-background"
-                contentContainerClassName="gap-4 items-center"
-                snapToAlignment="center"
-                decelerationRate={"fast"}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                initialNumToRender={data?.length}
-                onScroll={debounce((event) => {
-                  const index = Math.round(
-                    (event.nativeEvent.contentOffset.x % dimensions.width) / 16,
-                  );
+        .with({ pages: P.when((v) => (v?.length ?? 0) > 0) }, () => (
+          <>
+            <FlatList<ImageItem>
+              ref={flatListRef}
+              data={items}
+              className="bg-background"
+              contentContainerClassName="gap-4 items-center"
+              snapToAlignment="center"
+              decelerationRate={"fast"}
+              keyExtractor={(item) => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialNumToRender={items?.length}
+              onScroll={debounce((event) => {
+                if (!dimensions.width || !items?.length) return;
 
-                  setImage(data![index]);
-                }, 100)}
-                onLayout={(event) => {
-                  const { width, height } = event.nativeEvent.layout;
-                  setDimensions({
-                    width,
-                    height,
-                  });
-                }}
-                renderItem={({ item }) => (
-                  <View
-                    key={item.id}
-                    style={{
-                      width: dimensions.width,
-                      height: dimensions.height - 110,
-                      flex: 1,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {match(item)
-                      .with({ mime_type: P.string.includes("image") }, () => (
-                        <Image
-                          source={{ uri: item.thumbnail_url }}
-                          className="w-full flex-1"
-                          contentFit="contain"
-                        />
-                      ))
-                      .with({ mime_type: P.string.includes("video") }, () => (
-                        <VideoPlayer item={item} />
-                      ))
-                      .otherwise(() => (
-                        <Text>Unsupported media type: {item.mime_type}</Text>
-                      ))}
-                  </View>
-                )}
-              />
+                const slideWidth = dimensions.width + 16;
+                const nextIndex = Math.round(
+                  event.nativeEvent.contentOffset.x / slideWidth,
+                );
 
-              {index > 0 && (
-                <Pressable
-                  className="absolute top-0 bottom-0 left-0 opacity-20 hover:opacity-40 bg-gradient-to-r from-black to-transparent hidden xl:block"
-                  onPress={onPrev}
+                if (items[nextIndex] && items[nextIndex]?.id !== image?.id) {
+                  setImage(items[nextIndex]);
+                }
+              }, 100)}
+              onLayout={(event) => {
+                const { width, height } = event.nativeEvent.layout;
+                setDimensions({
+                  width,
+                  height,
+                });
+              }}
+              renderItem={({ item }) => (
+                <View
+                  key={item.id}
+                  style={{
+                    width: dimensions.width,
+                    height: dimensions.height - 110,
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <View className="w-14 flex items-center justify-center h-full">
-                    <Ionicons
-                      name="chevron-back"
-                      size={24}
-                      className="text-white"
-                    />
-                  </View>
-                </Pressable>
+                  {match(item)
+                    .with({ mime_type: P.string.includes("image") }, () => (
+                      <Image
+                        source={{ uri: item.thumbnail_url }}
+                        className="w-full flex-1"
+                        contentFit="contain"
+                        cachePolicy={"memory-disk"}
+                      />
+                    ))
+                    .with({ mime_type: P.string.includes("video") }, () => (
+                      <VideoPlayer item={item} />
+                    ))
+                    .otherwise(() => (
+                      <Text>Unsupported media type: {item.mime_type}</Text>
+                    ))}
+                </View>
               )}
+            />
 
-              {index < (data?.length ?? 0) - 1 && (
-                <Pressable
-                  className="absolute top-0 bottom-0 right-0 opacity-20 hover:opacity-40 bg-gradient-to-r from-transparent to-black hidden xl:block"
-                  onPress={onNext}
-                >
-                  <View className="w-14 flex items-center justify-center h-full">
-                    <Ionicons
-                      name="chevron-forward"
-                      size={24}
-                      className="text-white"
-                    />
-                  </View>
-                </Pressable>
-              )}
-            </>
-          ),
-        )
-        .with(
-          { isPending: false, data: P.when((v) => v?.length === 0) },
-          () => (
-            <View className="bg-background flex-1 items-center justify-center">
-              <Text className=" text-slate-500">No images found.</Text>
-            </View>
-          ),
-        )
-        .with({ isPending: true, isRefetching: false }, () => (
+            {index > 0 && (
+              <Pressable
+                className="absolute top-0 bottom-0 left-0 opacity-20 hover:opacity-40 bg-gradient-to-r from-black to-transparent hidden xl:block"
+                onPress={onPrev}
+              >
+                <View className="w-14 flex items-center justify-center h-full">
+                  <Ionicons
+                    name="chevron-back"
+                    size={24}
+                    className="text-white"
+                  />
+                </View>
+              </Pressable>
+            )}
+
+            {index < (items?.length ?? 0) - 1 && (
+              <Pressable
+                className="absolute top-0 bottom-0 right-0 opacity-20 hover:opacity-40 bg-gradient-to-r from-transparent to-black hidden xl:block"
+                onPress={onNext}
+              >
+                <View className="w-14 flex items-center justify-center h-full">
+                  <Ionicons
+                    name="chevron-forward"
+                    size={24}
+                    className="text-white"
+                  />
+                  <Text>
+                    {index + 1} / {items?.length}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          </>
+        ))
+        .with({ pages: P.when((v) => v?.length === 0) }, () => (
           <View className="bg-background flex-1 items-center justify-center">
-            <ActivityIndicator />
+            <Text className=" text-slate-500">No images found.</Text>
           </View>
         ))
         .otherwise(() => null)}
