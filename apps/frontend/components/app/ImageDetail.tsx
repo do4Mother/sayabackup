@@ -188,9 +188,6 @@ export default function ImageDetail(props: ImageDetailProps) {
                       size={24}
                       className="text-white"
                     />
-                    <Text>
-                      {index + 1} / {data?.length}
-                    </Text>
                   </View>
                 </Pressable>
               )}
