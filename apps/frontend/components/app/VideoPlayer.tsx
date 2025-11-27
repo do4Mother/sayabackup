@@ -75,6 +75,7 @@ export default function VideoPlayer(props: VideoPlayerProps) {
                 player={player}
                 allowsFullscreen
                 nativeControls={false}
+                style={{ maxHeight: "100%", maxWidth: "100%" }}
               />
               {isPlaying ? null : (
                 <Ionicons
@@ -89,7 +90,7 @@ export default function VideoPlayer(props: VideoPlayerProps) {
                 onPress={() => {
                   videoViewRef.current?.enterFullscreen();
                 }}
-                className="absolute bottom-4 right-16"
+                className="absolute bottom-4 right-4"
               >
                 <AntDesign name="fullscreen" size={28} color="white" />
               </Pressable>
