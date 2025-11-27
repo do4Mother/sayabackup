@@ -51,6 +51,7 @@ export const get = protectedWithS3
 							new GetObjectCommand({
 								Bucket: s3Credentials.bucket_name,
 								Key: item.thumbnail_path,
+								ResponseCacheControl: "public, max-age=3600",
 							}),
 							{ expiresIn: 3600 }, // URL valid for 1 hour
 						);
