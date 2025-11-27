@@ -8,7 +8,7 @@ import { ActivityIndicator, Pressable, View } from "react-native";
 import { match } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
-type Gallery = AppRouterOutput["gallery"]["get"][number];
+type Gallery = AppRouterOutput["gallery"]["get"]["items"][number];
 
 type VideoPlayerProps = {
   item: Gallery;
