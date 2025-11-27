@@ -168,7 +168,7 @@ export default function ImageDetail(props: ImageDetailProps) {
                   key={item.id}
                   style={{
                     width: dimensions.width,
-                    height: dimensions.height - 110,
+                    height: dimensions.height,
                     flex: 1,
                     alignItems: "center",
                     justifyContent: "center",
