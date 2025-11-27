@@ -63,10 +63,9 @@ export default function ImageDetail(props: ImageDetailProps) {
       initialData,
     },
   );
-  const items = useMemo(
-    () => images.data.pages.flatMap((page) => page.items),
-    [images.data.pages],
-  );
+  const items = useMemo(() => {
+    return images.data.pages.flatMap((page) => page.items);
+  }, [images.data.pages]);
 
   const [image, setImage] = useState<ImageItem | undefined>();
   const index = useMemo(() => {
@@ -83,6 +82,9 @@ export default function ImageDetail(props: ImageDetailProps) {
   useEffect(() => {
     if (!items || onMounted.current) return;
 
+    /**
+     * Scroll to the selected image
+     */
     const index = items.findIndex((img) => img.id === props.imageId) ?? -1;
     if (index !== -1 && dimensions.width > 0) {
       if (!flatListRef.current) return;
@@ -91,10 +93,22 @@ export default function ImageDetail(props: ImageDetailProps) {
         offset: index * (dimensions.width + 16),
         animated: false,
       });
-      setImage(items?.[index]);
       onMounted.current = true;
     }
   }, [items, dimensions.width]);
+
+  useEffect(() => {
+    if (!items) return;
+
+    /**
+     * Set the current image based on the imageId prop
+     */
+    const foundImage = items.find((img) => img.id === props.imageId);
+    if (foundImage) {
+      console.log("Found image:", foundImage.id);
+      setImage(foundImage);
+    }
+  }, [items]);
 
   const onNext = () => {
     if (!items || !image) return;
@@ -264,13 +278,7 @@ function AddToAlbum(props: AddToAlbumProps) {
         onSuccess() {
           setOpen(false);
           setSelectedAlbumId(null);
-          clientUtils.gallery.get.refetch({});
-          const albumId = props.item?.album_id ?? selectedAlbumId;
-          if (albumId) {
-            clientUtils.gallery.get.refetch({
-              albumId: albumId,
-            });
-          }
+          clientUtils.gallery.get.invalidate({ limit: 32 });
         },
       },
     );
@@ -327,12 +335,32 @@ function DeleteButton(props: { item?: ImageItem }) {
     if (!props.item) return;
 
     await removeMutation.mutateAsync({ ids: [props.item.id] });
-    await clientUtils.gallery.get.invalidate();
-    if (props.item.album_id) {
-      await clientUtils.gallery.get.invalidate({
-        albumId: props.item.album_id,
-      });
-    }
+    clientUtils.gallery.get.setInfiniteData(
+      {
+        limit: 32,
+        albumId: props.item.album_id ?? undefined,
+      },
+      (oldData) => {
+        if (!oldData) {
+          return {
+            pages: [],
+            pageParams: [],
+          };
+        }
+
+        const newPages = oldData.pages.map((page) => {
+          return {
+            ...page,
+            items: page.items.filter((item) => item.id !== props.item!.id),
+          };
+        });
+
+        return {
+          ...oldData,
+          pages: newPages,
+        };
+      },
+    );
     setOpen(false);
   };
 
