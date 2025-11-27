@@ -5,7 +5,7 @@ import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { launchImageLibraryAsync } from "expo-image-picker";
-import { useRouter, Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
@@ -18,7 +18,10 @@ type ImageListProps = {
 };
 
 export default function ImageList(props: ImageListProps) {
-  const images = trpc.gallery.get.useQuery({ albumId: props.albumId });
+  const images = trpc.gallery.get.useInfiniteQuery(
+    { albumId: props.albumId, limit: 7 * 4 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor },
+  );
   const [responsiveLayout, setResponsiveLayout] = useState<ResponsiveLayout>(
     createResponsiveLayout({ width: 0 }),
   );
@@ -60,7 +63,7 @@ export default function ImageList(props: ImageListProps) {
       />
 
       {match(images)
-        .with({ data: P.when((v) => v?.length === 0) }, () => (
+        .with({ data: P.when((v) => v?.pages?.length === 0) }, () => (
           <View className="flex-1 justify-center items-center bg-background p-4">
             <Text className="text-center font-medium text-lg">
               Your gallery is empty.
@@ -72,10 +75,10 @@ export default function ImageList(props: ImageListProps) {
             </Button>
           </View>
         ))
-        .with({ data: P.when((v) => (v?.length ?? 0) > 0) }, () => (
+        .with({ data: P.when((v) => (v?.pages?.length ?? 0) > 0) }, (value) => (
           <FlatList
             key={responsiveLayout.numOfColumns}
-            data={images.data}
+            data={value.data?.pages.flatMap((page) => page.items) ?? []}
             numColumns={responsiveLayout.numOfColumns}
             className="py-4 px-4 bg-background items-center hide-scrollbar"
             contentContainerClassName="gap-y-4"
@@ -90,6 +93,17 @@ export default function ImageList(props: ImageListProps) {
                 }),
               );
             }}
+            onEndReachedThreshold={0.2}
+            onEndReached={() =>
+              images.hasNextPage &&
+              !images.isFetchingNextPage &&
+              images.fetchNextPage()
+            }
+            ListFooterComponent={
+              images.isFetchingNextPage ? (
+                <ActivityIndicator size={"small"} />
+              ) : null
+            }
             renderItem={({ item }) => (
               <Pressable
                 onPress={() => {
