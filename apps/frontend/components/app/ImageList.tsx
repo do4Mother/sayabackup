@@ -19,7 +19,7 @@ type ImageListProps = {
 
 export default function ImageList(props: ImageListProps) {
   const images = trpc.gallery.get.useInfiniteQuery(
-    { albumId: props.albumId, limit: 7 * 4 },
+    { albumId: props.albumId, limit: 8 * 4 },
     { getNextPageParam: (lastPage) => lastPage.nextCursor },
   );
   const [responsiveLayout, setResponsiveLayout] = useState<ResponsiveLayout>(
