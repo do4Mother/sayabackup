@@ -54,6 +54,13 @@ export const remove = protectedWithS3
 					}),
 				);
 
+				await client.send(
+					new DeleteObjectCommand({
+						Bucket: ctx.s3credentials.bucket_name,
+						Key: image.thumbnail_path,
+					}),
+				);
+
 				await ctx.db
 					.update(gallery)
 					.set({
