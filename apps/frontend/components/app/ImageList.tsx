@@ -150,6 +150,7 @@ export default function ImageList(props: ImageListProps) {
                         : "opacity-100",
                     )}
                     style={{ width: responsiveLayout.imageWidth - 8 }}
+                    cachePolicy={"memory-disk"}
                   />
                 </View>
               </Pressable>
