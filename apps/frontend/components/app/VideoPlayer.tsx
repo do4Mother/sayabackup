@@ -50,6 +50,7 @@ export default function VideoPlayer(props: VideoPlayerProps) {
           source={{ uri: props.item.thumbnail_url }}
           className="w-full flex-1"
           contentFit="contain"
+          cachePolicy={"memory-disk"}
         />
         <Pressable
           onPress={onPlayVideo}
