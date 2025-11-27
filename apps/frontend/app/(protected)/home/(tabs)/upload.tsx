@@ -107,7 +107,7 @@ export default function UploadTabpage() {
                       .with(P.string.startsWith("image"), () => ImageType)
                       .with(P.string.startsWith("video"), () => VideoType)
                       .otherwise(() => ImageType)}
-                    style={{ width: 70, height: "auto" }}
+                    style={{ width: 60, height: "auto" }}
                   />
                   <View className="flex-1">
                     <CardHeader className="px-0 flex-1 flex-row">
