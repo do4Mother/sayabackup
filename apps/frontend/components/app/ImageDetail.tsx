@@ -105,7 +105,6 @@ export default function ImageDetail(props: ImageDetailProps) {
      */
     const foundImage = items.find((img) => img.id === props.imageId);
     if (foundImage) {
-      console.log("Found image:", foundImage.id);
       setImage(foundImage);
     }
   }, [items]);
@@ -247,7 +246,12 @@ export default function ImageDetail(props: ImageDetailProps) {
       <View className="h-[55px] bg-background border-t border-slate-200 flex-row px-4 py-2 gap-x-4 justify-around">
         <DownloadButton item={image} />
         <AddToAlbum item={image} />
-        <DeleteButton item={image} />
+        <DeleteButton
+          item={image}
+          onSuccess={() => {
+            setImage(items[index + 1] ?? items[index - 1]);
+          }}
+        />
       </View>
     </>
   );
@@ -326,42 +330,24 @@ function AddToAlbum(props: AddToAlbumProps) {
   );
 }
 
-function DeleteButton(props: { item?: ImageItem }) {
+function DeleteButton(props: { item?: ImageItem; onSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const removeMutation = trpc.gallery.remove.useMutation();
   const clientUtils = trpc.useUtils();
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!props.item) return;
 
-    await removeMutation.mutateAsync({ ids: [props.item.id] });
-    clientUtils.gallery.get.setInfiniteData(
+    removeMutation.mutate(
+      { ids: [props.item.id] },
       {
-        limit: 32,
-        albumId: props.item.album_id ?? undefined,
-      },
-      (oldData) => {
-        if (!oldData) {
-          return {
-            pages: [],
-            pageParams: [],
-          };
-        }
-
-        const newPages = oldData.pages.map((page) => {
-          return {
-            ...page,
-            items: page.items.filter((item) => item.id !== props.item!.id),
-          };
-        });
-
-        return {
-          ...oldData,
-          pages: newPages,
-        };
+        onSuccess() {
+          clientUtils.gallery.get.invalidate();
+          setOpen(false);
+          props.onSuccess?.();
+        },
       },
     );
-    setOpen(false);
   };
 
   return (
