@@ -59,7 +59,7 @@ export default function ImageList(props: ImageListProps) {
         key={responsiveLayout.numOfColumns}
         data={images.data}
         numColumns={responsiveLayout.numOfColumns}
-        className="py-4 px-4 bg-background items-center"
+        className="py-4 px-4 bg-background items-center hide-scrollbar"
         contentContainerClassName="gap-y-4"
         columnWrapperStyle={{
           gap: responsiveLayout.spacing,

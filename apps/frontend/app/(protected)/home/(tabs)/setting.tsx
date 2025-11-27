@@ -138,7 +138,7 @@ export default function SettingTabpage() {
 
   return (
     <View className="bg-background flex-1">
-      <ScrollView>
+      <ScrollView className="xl:max-w-2xl mx-auto w-full hide-scrollbar">
         <Card className="mx-4">
           <CardContent className="gap-y-4">
             <Controller

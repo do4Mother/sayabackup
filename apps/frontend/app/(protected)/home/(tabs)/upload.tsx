@@ -10,6 +10,7 @@ import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack } from "expo-router";
+import { cssInterop } from "nativewind";
 import { Image, SectionList, View } from "react-native";
 import { match, P } from "ts-pattern";
 
@@ -23,6 +24,8 @@ type Media = {
   processedBytes: number;
   abortController?: AbortController;
 };
+
+cssInterop(SectionList, { className: "style" });
 
 export default function UploadTabpage() {
   const { upload, data: media, setData: setMedia } = useUpload();
@@ -88,6 +91,7 @@ export default function UploadTabpage() {
           .otherwise(() => (
             <SectionList
               sections={[{ data: media }]}
+              className="xl:max-w-2xl mx-auto w-full hide-scrollbar"
               ListHeaderComponent={() => (
                 <View className="items-end px-4">
                   <Button
