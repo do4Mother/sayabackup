@@ -19,6 +19,7 @@ import {
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Text } from "../ui/text";
+import CreateAlbumDialog from "./CreateAlbumDialog";
 
 type AlbumListProps = {
   selectMode?: "none" | "single";
@@ -124,22 +125,7 @@ function Item(data: {
 
 function NoData() {
   const [open, setOpen] = useState(false);
-  const createMutation = trpc.album.create.useMutation();
-  const { handleSubmit, control } = useForm<{ name: string }>({
-    defaultValues: {
-      name: "",
-    },
-  });
-  const clientUtils = trpc.useUtils();
 
-  const onCreateAlbum = (data: { name: string }) => {
-    createMutation.mutate(data, {
-      onSuccess(album) {
-        setOpen(false);
-        clientUtils.album.get.invalidate();
-      },
-    });
-  };
   return (
     <View className="flex-1 items-center justify-center px-4 gap-4 bg-background">
       <Text className="text-center font-medium text-lg">
@@ -153,39 +139,7 @@ function NoData() {
           </Button>
         </DialogTrigger>
 
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Album</DialogTitle>
-            <DialogDescription>
-              Give your album a name and start adding your favorite photos
-            </DialogDescription>
-          </DialogHeader>
-          <View>
-            <Controller
-              control={control}
-              rules={{ required: true }}
-              name="name"
-              render={({ field, fieldState }) => (
-                <View className="gap-1">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" {...field} />
-                  {fieldState.invalid && (
-                    <Text className="text-red-500">This field is required</Text>
-                  )}
-                </View>
-              )}
-            />
-          </View>
-          <DialogFooter className="items-end">
-            <Button
-              onPress={handleSubmit(onCreateAlbum)}
-              disabled={createMutation.isPending}
-            >
-              <Ionicons name="save-outline" size={20} color="white" />
-              <Text className="h-[18px]">Create</Text>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        <CreateAlbumDialog onOpenChange={setOpen} />
       </Dialog>
     </View>
   );
