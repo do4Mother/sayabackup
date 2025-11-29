@@ -1,5 +1,5 @@
 import { uploadToS3 } from "@/s3/upload";
-import { trpc } from "@/trpc/trpc";
+import { client, trpc } from "@/trpc/trpc";
 import { randomString, sanitizeFilename } from "@sayabackup/utils";
 import axios, { CanceledError } from "axios";
 import { ImageManipulator } from "expo-image-manipulator";
@@ -28,7 +28,6 @@ type Action = {
   setData: (data: Item[]) => void;
   upload: (data: {
     images: ImagePickerAsset[];
-    key: string;
     albumId?: string;
   }) => Promise<void>;
 };
@@ -109,6 +108,8 @@ export const createUploadStore = () =>
 
         const resolvedAssets = await Promise.all(assets);
 
+        const key = await client.auth.me.query().then((me) => me.user.key);
+
         set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
         for await (const media of resolvedAssets) {
@@ -127,7 +128,7 @@ export const createUploadStore = () =>
           const uploadThumbnail = await uploadToS3({
             path: thumbnailPath,
             type: media.mimeType,
-            key: data.key,
+            key: key,
           });
 
           // upload thumbnail
@@ -153,7 +154,7 @@ export const createUploadStore = () =>
           const uploadFile = await uploadToS3({
             path: filePath,
             type: media.mimeType,
-            key: data.key,
+            key: key,
           });
 
           // upload original file with progress tracking
