@@ -379,17 +379,28 @@ function DeleteButton(props: { item?: ImageItem; onSuccess?: () => void }) {
       return deleteFile({ path: data.path, key: key });
     },
   });
+  const deleteGalleryMutation = trpc.gallery.remove.useMutation();
+  const isPending = removeMutation.isPending || deleteGalleryMutation.isPending;
 
   const handleDelete = () => {
-    if (!props.item) return;
+    if (!props.item?.id) return;
+
+    const id = props.item.id;
 
     removeMutation.mutate(
       { path: props.item.file_path },
       {
         onSuccess() {
-          clientUtils.gallery.get.invalidate();
-          setOpen(false);
-          props.onSuccess?.();
+          deleteGalleryMutation.mutate(
+            { id },
+            {
+              onSuccess() {
+                clientUtils.gallery.get.invalidate();
+                setOpen(false);
+                props.onSuccess?.();
+              },
+            },
+          );
         },
       },
     );
@@ -425,10 +436,7 @@ function DeleteButton(props: { item?: ImageItem; onSuccess?: () => void }) {
           <AlertDialogCancel>
             <Text>Cancel</Text>
           </AlertDialogCancel>
-          <AlertDialogAction
-            onPress={handleDelete}
-            disabled={removeMutation.isPending}
-          >
+          <AlertDialogAction onPress={handleDelete} disabled={isPending}>
             <Text>Delete</Text>
           </AlertDialogAction>
         </AlertDialogFooter>
