@@ -1,5 +1,7 @@
+import { getFile } from "@/s3/get_file";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { useMutation } from "@tanstack/react-query";
 import { useEvent } from "expo";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useRef, useState } from "react";
@@ -21,15 +23,21 @@ export default function VideoPlayer(props: VideoPlayerProps) {
   const { isPlaying } = useEvent(player, "playingChange", {
     isPlaying: player.playing,
   });
-  const videoMutation = trpc.gallery.original.useMutation();
+  const clientUtils = trpc.useUtils();
+  const key = clientUtils.auth.me.getData()?.user.key ?? "";
+  const videoMutation = useMutation({
+    mutationFn: async ({ path }: { path: string }) => {
+      return getFile({ path, key });
+    },
+  });
 
   const onPlayVideo = () => {
     setShowThumbnail(false);
     videoMutation.mutate(
-      { id: props.item.id },
+      { path: props.item.file_path },
       {
         async onSuccess(data) {
-          await player.replaceAsync({ uri: data });
+          await player.replaceAsync({ uri: data.url });
         },
       },
     );
