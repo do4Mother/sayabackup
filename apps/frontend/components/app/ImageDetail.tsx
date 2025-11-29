@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { deleteFile } from "@/s3/delete_file";
 import { getFile } from "@/s3/get_file";
+import { moveFile } from "@/s3/move_file";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
@@ -268,6 +269,21 @@ function AddToAlbum(props: AddToAlbumProps) {
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const updateMutation = trpc.gallery.update.useMutation();
   const clientUtils = trpc.useUtils();
+  const key = trpc.useUtils().auth.me.getData()?.user.key ?? "";
+  const moveMutation = trpc.gallery.move.useMutation();
+  const moveFileMutation = useMutation({
+    mutationFn: async (data: { oldPath: string; newPath: string }) => {
+      return moveFile({
+        oldPath: data.oldPath,
+        newPath: data.newPath,
+        key: key,
+      });
+    },
+  });
+  const isPending =
+    updateMutation.isPending ||
+    moveMutation.isPending ||
+    moveFileMutation.isPending;
 
   useEffect(() => {
     setSelectedAlbumId(props.item?.album_id ?? null);
@@ -276,16 +292,37 @@ function AddToAlbum(props: AddToAlbumProps) {
   const onAddAlbum = (albumId: string | null) => {
     if (!props.item) return;
 
-    updateMutation.mutate(
+    moveMutation.mutate(
       {
         id: props.item.id,
-        albumId: albumId,
+        albumId: selectedAlbumId,
       },
       {
-        onSuccess() {
-          setOpen(false);
-          setSelectedAlbumId(null);
-          clientUtils.gallery.get.invalidate({ limit: 32 });
+        onSuccess(data) {
+          moveFileMutation.mutate(
+            {
+              oldPath: data.oldFilePath,
+              newPath: data.newFilePath,
+            },
+            {
+              onSuccess() {
+                updateMutation.mutate(
+                  {
+                    id: props.item!.id,
+                    albumId: albumId,
+                    filePath: data.newFilePath,
+                  },
+                  {
+                    onSuccess() {
+                      setOpen(false);
+                      setSelectedAlbumId(null);
+                      clientUtils.gallery.get.invalidate({ limit: 32 });
+                    },
+                  },
+                );
+              },
+            },
+          );
         },
       },
     );
@@ -322,7 +359,7 @@ function AddToAlbum(props: AddToAlbumProps) {
         />
         <DialogFooter className="items-end">
           <Button
-            disabled={updateMutation.isPending}
+            disabled={isPending}
             onPress={() => onAddAlbum(selectedAlbumId)}
           >
             <Text>Select</Text>
