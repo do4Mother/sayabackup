@@ -13,6 +13,8 @@
     "deploy": "cross-env EXPO_UNSTABLE_WEB_MODAL=1 expo export -p web --output-dir ../backend/dist"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.937.0",
+    "@aws-sdk/s3-request-presigner": "^3.937.0",
     "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^5.2.2",
     "@react-navigation/bottom-tabs": "^7.4.0",
