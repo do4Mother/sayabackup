@@ -1,4 +1,5 @@
 import { useSelectedImage } from "@/hooks/use_select_image";
+import { deleteFile } from "@/s3/delete_file";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -44,15 +45,20 @@ const HeaderImagePage = () => {
 
 function DeleteButton() {
   const [open, setOpen] = useState(false);
-  const removeMutation = trpc.gallery.remove.useMutation();
+  const clientUtils = trpc.useUtils();
+  const key = clientUtils.auth.me.getData()?.user.key ?? "";
   const setSelectedImages = useSelectedImage(
     (state) => state.setSelectedImages,
   );
-  const clientUtils = trpc.useUtils();
+  const removeMutation = trpc.gallery.remove.useMutation();
 
   const handleDelete = async () => {
     const selectedImages = useSelectedImage.getState().selectedImages;
-    await removeMutation.mutateAsync({ ids: selectedImages });
+    for await (const image of selectedImages) {
+      await deleteFile({ path: image.file_path, key });
+      deleteFile({ path: image.thumbnail_path, key });
+      await removeMutation.mutateAsync({ ids: [image.id] });
+    }
     setSelectedImages([]);
     setOpen(false);
     await clientUtils.gallery.get.invalidate();
