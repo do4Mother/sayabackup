@@ -1,11 +1,11 @@
+import { uploadToS3 } from "@/s3/upload";
 import { trpc } from "@/trpc/trpc";
-import { randomString } from "@sayabackup/utils";
+import { randomString, sanitizeFilename } from "@sayabackup/utils";
 import axios, { CanceledError } from "axios";
 import { ImageManipulator } from "expo-image-manipulator";
 import { ImagePickerAsset } from "expo-image-picker";
 import { createContext, useContext } from "react";
 import { Platform } from "react-native";
-import { match, P } from "ts-pattern";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
@@ -26,7 +26,11 @@ type State = {
 
 type Action = {
   setData: (data: Item[]) => void;
-  upload: (data: ImagePickerAsset[], albumId?: string) => Promise<void>;
+  upload: (data: {
+    images: ImagePickerAsset[];
+    key: string;
+    albumId?: string;
+  }) => Promise<void>;
 };
 
 async function generateThumbnail(asset: {
@@ -83,15 +87,14 @@ async function generateThumbnail(asset: {
 
 export const createUploadStore = () =>
   create<State & Action>((set) => {
-    const uploadMutation = trpc.s3.upload.useMutation();
     const createGalleryMutation = trpc.gallery.create.useMutation();
     const clientUtils = trpc.useUtils();
 
     return {
       data: [],
       setData: (data: Item[]) => set({ data }),
-      upload: async (data: ImagePickerAsset[], albumId) => {
-        const assets = data.map(async (asset) => {
+      upload: async (data) => {
+        const assets = data.images.map(async (asset) => {
           return {
             id: randomString(12),
             file: asset.file!,
@@ -109,24 +112,27 @@ export const createUploadStore = () =>
         set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
         for await (const media of resolvedAssets) {
-          const albumPath = match(albumId)
-            .with(P.string, (id) => clientUtils.album.find.getData({ id: id }))
-            .otherwise(() => null);
-
-          const upload = await uploadMutation.mutateAsync({
-            path: media.name,
-            type: media.mimeType,
-            album: albumPath?.name,
-          });
+          const albumPath = sanitizeFilename(
+            clientUtils.album.find.getData({ id: data.albumId ?? "" })?.name ??
+              "unknown",
+          );
 
           const { thumbnailBlob } = await generateThumbnail({
             uri: media.uri,
             mimeType: media.mimeType,
           });
 
+          const thumbnailPath = `thumbnails/${media.name}`;
+          const filePath = `${albumPath}/${media.name}`;
+          const uploadThumbnail = await uploadToS3({
+            path: thumbnailPath,
+            type: media.mimeType,
+            key: data.key,
+          });
+
           // upload thumbnail
           const isSuccess = await axios
-            .put(upload.thumbnail, thumbnailBlob, {
+            .put(uploadThumbnail, thumbnailBlob, {
               headers: {
                 "Content-Type": media.mimeType,
               },
@@ -144,9 +150,15 @@ export const createUploadStore = () =>
             continue;
           }
 
+          const uploadFile = await uploadToS3({
+            path: filePath,
+            type: media.mimeType,
+            key: data.key,
+          });
+
           // upload original file with progress tracking
           await axios
-            .put(upload.original, media.file, {
+            .put(uploadFile, media.file, {
               headers: {
                 "Content-Type": media.mimeType,
               },
@@ -163,15 +175,17 @@ export const createUploadStore = () =>
                   // create gallery record when upload is complete
                   createGalleryMutation.mutate(
                     {
-                      filePath: upload.original_path,
-                      thumbnailPath: upload.thumbnail_path,
+                      filePath: filePath,
+                      thumbnailPath: thumbnailPath,
                       mimeType: media.mimeType,
-                      albumId: albumId,
+                      albumId: data.albumId,
                     },
                     {
                       onSuccess() {
-                        if (albumId) {
-                          clientUtils.gallery.get.refetch({ albumId });
+                        if (data.albumId) {
+                          clientUtils.gallery.get.refetch({
+                            albumId: data.albumId,
+                          });
                         }
 
                         clientUtils.gallery.get.invalidate();
