@@ -57,7 +57,7 @@ function DeleteButton() {
     for await (const image of selectedImages) {
       await deleteFile({ path: image.file_path, key });
       deleteFile({ path: image.thumbnail_path, key });
-      await removeMutation.mutateAsync({ ids: [image.id] });
+      await removeMutation.mutateAsync({ id: image.id });
     }
     setSelectedImages([]);
     setOpen(false);
