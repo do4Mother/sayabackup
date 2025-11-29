@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { deleteFile } from "@/s3/delete_file";
 import { getFile } from "@/s3/get_file";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -334,14 +335,19 @@ function AddToAlbum(props: AddToAlbumProps) {
 
 function DeleteButton(props: { item?: ImageItem; onSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
-  const removeMutation = trpc.gallery.remove.useMutation();
   const clientUtils = trpc.useUtils();
+  const key = trpc.useUtils().auth.me.getData()?.user.key ?? "";
+  const removeMutation = useMutation({
+    mutationFn: async (data: { path: string }) => {
+      return deleteFile({ path: data.path, key: key });
+    },
+  });
 
   const handleDelete = () => {
     if (!props.item) return;
 
     removeMutation.mutate(
-      { ids: [props.item.id] },
+      { path: props.item.file_path },
       {
         onSuccess() {
           clientUtils.gallery.get.invalidate();
