@@ -40,6 +40,7 @@ export default function AlbumDetailPage() {
   );
   const removeMutation = trpc.album.remove.useMutation();
   const clientUtils = trpc.useUtils();
+  const key = clientUtils.auth.me.getData()?.user.key ?? "";
 
   if (!id) {
     return (
@@ -60,7 +61,7 @@ export default function AlbumDetailPage() {
     });
 
     if (!result.canceled) {
-      upload(result.assets, id);
+      upload({ images: result.assets, key, albumId: id });
       router.replace("/(protected)/home/(tabs)/upload");
     }
   };
