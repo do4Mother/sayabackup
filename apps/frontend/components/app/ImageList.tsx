@@ -108,14 +108,14 @@ export default function ImageList(props: ImageListProps) {
               <Pressable
                 onPress={() => {
                   if (selectedImages.length > 0) {
-                    if (selectedImages.includes(item.id)) {
+                    if (selectedImages.includes(item)) {
                       // Deselect image
                       setSelectedImages(
-                        selectedImages.filter((id) => id !== item.id),
+                        selectedImages.filter((image) => image.id !== item.id),
                       );
                     } else {
                       // Select image
-                      setSelectedImages([...selectedImages, item.id]);
+                      setSelectedImages([...selectedImages, item]);
                     }
                   } else {
                     router.push({
@@ -129,15 +129,15 @@ export default function ImageList(props: ImageListProps) {
                 }}
                 onLongPress={() => {
                   if (selectedImages.length === 0) {
-                    setSelectedImages([item.id]);
+                    setSelectedImages([item]);
                   }
                 }}
               >
                 <View className="relative">
-                  {selectedImages.includes(item.id) && (
+                  {selectedImages.includes(item) && (
                     <View className="absolute top-1 right-1 bg-blue-500 rounded-full w-5 h-5 items-center justify-center z-10">
                       <Text className="text-white font-medium text-xs">
-                        {selectedImages.indexOf(item.id) + 1}
+                        {selectedImages.indexOf(item) + 1}
                       </Text>
                     </View>
                   )}
@@ -145,7 +145,7 @@ export default function ImageList(props: ImageListProps) {
                     source={{ uri: item.thumbnail_path }}
                     className={cn(
                       "aspect-square",
-                      selectedImages.includes(item.id)
+                      selectedImages.includes(item)
                         ? "opacity-50"
                         : "opacity-100",
                     )}
