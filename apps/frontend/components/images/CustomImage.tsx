@@ -1,4 +1,4 @@
-import { getImage } from "@/s3/get_image";
+import { getFile } from "@/s3/get_file";
 import { trpc } from "@/trpc/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -21,7 +21,7 @@ export default function CustomImage(props: ComponentProps<typeof Image>) {
   const image = useQuery({
     queryKey: ["custom-image", props.source],
     queryFn: async () => {
-      const response = await getImage({
+      const response = await getFile({
         path: source.uri ?? "",
         key: key,
       });
