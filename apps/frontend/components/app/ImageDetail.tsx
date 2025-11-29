@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
+import { getFile } from "@/s3/get_file";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { useMutation } from "@tanstack/react-query";
 import { debounce } from "lodash-es";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
@@ -393,15 +395,28 @@ function DeleteButton(props: { item?: ImageItem; onSuccess?: () => void }) {
 }
 
 function DownloadButton(props: { item?: ImageItem }) {
-  const getOriginalMutation = trpc.gallery.original.useMutation();
+  const clientUtils = trpc.useUtils();
+  const key = clientUtils.auth.me.getData()?.user.key ?? "";
+
+  const getOriginalMutation = useMutation({
+    mutationFn: async (data: { path: string }) => {
+      const response = await getFile({
+        path: data.path,
+        key: key,
+        isDownload: true,
+      });
+      return response.url;
+    },
+  });
 
   const handleDownload = () => {
     if (!props.item) return;
 
     getOriginalMutation.mutate(
-      { id: props.item.id, forceDownload: true },
+      { path: props.item.file_path },
       {
         onSuccess(data) {
+          console.log("Downloading from URL:", data);
           window.open(data, "_blank");
         },
       },
