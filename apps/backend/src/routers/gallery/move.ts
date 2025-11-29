@@ -1,3 +1,4 @@
+import { sanitizeFilename } from "@sayabackup/utils";
 import { TRPCError } from "@trpc/server";
 import { and, eq, isNull } from "drizzle-orm";
 import z from "zod";
@@ -49,7 +50,7 @@ export const move = protectedProcdure
 			albumName = album.name;
 		}
 
-		const safeAlbumName = albumName.replace(/[/\\\s]+/g, "_"); // Sanitize album name
+		const safeAlbumName = sanitizeFilename(albumName); // Sanitize album name
 		const filePath = file.file_path.split("/").slice(1); // Remove old album name
 		const newFilePath = [safeAlbumName, ...filePath].join("/");
 
