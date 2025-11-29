@@ -3,12 +3,12 @@ import { useUpload } from "@/hooks/use_upload";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
+import CustomImage from "../images/CustomImage";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
 import HeaderImagePage from "./HeaderImagePage";
@@ -141,8 +141,8 @@ export default function ImageList(props: ImageListProps) {
                       </Text>
                     </View>
                   )}
-                  <Image
-                    source={{ uri: item.thumbnail_url }}
+                  <CustomImage
+                    source={{ uri: item.thumbnail_path }}
                     className={cn(
                       "aspect-square",
                       selectedImages.includes(item.id)

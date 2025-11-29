@@ -1,12 +1,12 @@
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useEvent } from "expo";
-import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { match } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
+import CustomImage from "../images/CustomImage";
 
 type Gallery = AppRouterOutput["gallery"]["get"]["items"][number];
 
@@ -46,8 +46,8 @@ export default function VideoPlayer(props: VideoPlayerProps) {
   return match(showThumbnail)
     .with(true, () => (
       <View className="relative w-full flex-1">
-        <Image
-          source={{ uri: props.item.thumbnail_url }}
+        <CustomImage
+          source={{ uri: props.item.thumbnail_path }}
           className="w-full flex-1"
           contentFit="contain"
           cachePolicy={"memory-disk"}

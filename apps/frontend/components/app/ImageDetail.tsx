@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { debounce } from "lodash-es";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
+import CustomImage from "../images/CustomImage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -189,8 +189,8 @@ export default function ImageDetail(props: ImageDetailProps) {
                 >
                   {match(item)
                     .with({ mime_type: P.string.includes("image") }, () => (
-                      <Image
-                        source={{ uri: item.thumbnail_url }}
+                      <CustomImage
+                        source={{ uri: item.thumbnail_path }}
                         className="w-full flex-1"
                         contentFit="contain"
                         cachePolicy={"memory-disk"}
