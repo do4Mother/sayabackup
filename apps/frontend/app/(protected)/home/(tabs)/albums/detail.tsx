@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Text } from "@/components/ui/text";
 import { useUpload } from "@/hooks/use_upload";
-import { trpc } from "@/trpc/trpc";
+import { deleteFile } from "@/s3/delete_file";
+import { client, trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
+import { useMutation } from "@tanstack/react-query";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
@@ -38,8 +40,23 @@ export default function AlbumDetailPage() {
       enabled: !!id,
     },
   );
-  const removeMutation = trpc.album.remove.useMutation();
   const clientUtils = trpc.useUtils();
+  const key = clientUtils.auth.me.getData()?.user.key ?? "";
+  const deleteMutation = useMutation({
+    mutationFn: async (input: { withImages: boolean }) => {
+      if (input.withImages) {
+        const images = await client.gallery.get.query({ albumId: id! });
+
+        for await (const image of images.items) {
+          await deleteFile({ path: image.file_path, key: key });
+          await client.gallery.remove.mutate({ id: image.id });
+          deleteFile({ path: image.thumbnail_path, key: key });
+        }
+      }
+
+      await client.album.remove.mutate({ id: id! });
+    },
+  });
 
   if (!id) {
     return (
@@ -63,26 +80,6 @@ export default function AlbumDetailPage() {
       upload({ images: result.assets, albumId: id });
       router.replace("/(protected)/home/(tabs)/upload");
     }
-  };
-
-  const onDeleteAlbum = (withImages: boolean) => {
-    removeMutation.mutate(
-      { id, withImages },
-      {
-        onSuccess() {
-          clientUtils.album.get.invalidate();
-          if (withImages) {
-            clientUtils.gallery.get.invalidate();
-          }
-
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.replace("/(protected)/home/(tabs)/gallery");
-          }
-        },
-      },
-    );
   };
 
   return (
@@ -121,14 +118,50 @@ export default function AlbumDetailPage() {
                         <Text>Cancel</Text>
                       </AlertDialogCancel>
                       <AlertDialogAction
-                        onPress={() => onDeleteAlbum(true)}
-                        disabled={removeMutation.isPending}
+                        onPress={() =>
+                          deleteMutation.mutate(
+                            { withImages: true },
+                            {
+                              onSuccess() {
+                                clientUtils.gallery.get.invalidate();
+                                clientUtils.album.get.invalidate();
+
+                                if (router.canGoBack()) {
+                                  router.back();
+                                } else {
+                                  router.replace(
+                                    "/(protected)/home/(tabs)/albums",
+                                  );
+                                }
+                              },
+                            },
+                          )
+                        }
+                        disabled={deleteMutation.isPending}
                       >
                         <Text>Delete With Images</Text>
                       </AlertDialogAction>
                       <AlertDialogAction
-                        onPress={() => onDeleteAlbum(false)}
-                        disabled={removeMutation.isPending}
+                        onPress={() =>
+                          deleteMutation.mutate(
+                            { withImages: false },
+                            {
+                              onSuccess() {
+                                clientUtils.gallery.get.invalidate();
+                                clientUtils.album.get.invalidate();
+
+                                if (router.canGoBack()) {
+                                  router.back();
+                                } else {
+                                  router.replace(
+                                    "/(protected)/home/(tabs)/albums",
+                                  );
+                                }
+                              },
+                            },
+                          )
+                        }
+                        disabled={deleteMutation.isPending}
                       >
                         <Text>Delete Album</Text>
                       </AlertDialogAction>
