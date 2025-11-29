@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Text } from "@/components/ui/text";
 import { useUpload } from "@/hooks/use_upload";
 import { formatFileSize } from "@/lib/file_size";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack } from "expo-router";
@@ -28,6 +29,8 @@ cssInterop(SectionList, { className: "style" });
 
 export default function UploadTabpage() {
   const { upload, data: media, setData: setMedia } = useUpload();
+  const clientUtils = trpc.useUtils();
+  const key = clientUtils.auth.me.getData()?.user.key ?? "";
 
   const pickMedia = async () => {
     const result = await launchImageLibraryAsync({
@@ -37,7 +40,7 @@ export default function UploadTabpage() {
     });
 
     if (!result.canceled) {
-      await upload(result.assets);
+      await upload({ images: result.assets, key });
     }
   };
 
