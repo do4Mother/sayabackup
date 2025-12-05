@@ -1,0 +1,146 @@
+diff --git a/node_modules/expo-image/build/Image.types.d.ts b/node_modules/expo-image/build/Image.types.d.ts
+index 022ae48..56cc582 100644
+--- a/node_modules/expo-image/build/Image.types.d.ts
++++ b/node_modules/expo-image/build/Image.types.d.ts
+@@ -322,6 +322,12 @@ export interface ImageProps extends Omit<ViewProps, 'style' | 'children'> {
+      * @platform ios
+      */
+     enforceEarlyResizing?: boolean;
++    /**
++     * Loading strategy for the image.
++     * @default 'eager'
++     * @platform web
++     */
++    loading?: 'eager' | 'lazy';
+ }
+ /**
+  * It narrows down some props to types expected by the native/web side.
+@@ -513,5 +519,5 @@ export type ImageLoadOptions = {
+      */
+     onError?(error: Error, retry: () => void): void;
+ };
+-export {};
++export { };
+ //# sourceMappingURL=Image.types.d.ts.map
+\ No newline at end of file
+diff --git a/node_modules/expo-image/src/ExpoImage.web.tsx b/node_modules/expo-image/src/ExpoImage.web.tsx
+index 2a49ff0..6dac176 100644
+--- a/node_modules/expo-image/src/ExpoImage.web.tsx
++++ b/node_modules/expo-image/src/ExpoImage.web.tsx
+@@ -2,7 +2,7 @@ import React from 'react';
+ // TODO(@kitten): We shouldn't be importing all of react-native-web or rely on it for a web module in this way optimally
+ import { View } from 'react-native-web';
+ 
+-import type { ImageNativeProps, ImageSource, ImageLoadEventData, ImageRef } from './Image.types';
++import type { ImageLoadEventData, ImageNativeProps, ImageRef, ImageSource } from './Image.types';
+ import AnimationManager, { AnimationManagerNode } from './web/AnimationManager';
+ import ImageWrapper from './web/ImageWrapper';
+ import loadStyle from './web/imageStyles';
+@@ -78,6 +78,7 @@ export default function ExpoImage({
+   alt,
+   tintColor,
+   containerViewRef,
++  loading,
+   ...props
+ }: ImageNativeProps) {
+   const imagePlaceholderContentFit = placeholderContentFit || 'scale-down';
+@@ -119,6 +120,7 @@ export default function ExpoImage({
+               cachePolicy={cachePolicy}
+               priority={priority}
+               tintColor={tintColor}
++              loading={loading}
+             />
+           ),
+       ]
+@@ -154,6 +156,7 @@ export default function ExpoImage({
+           hashPlaceholderStyle={imageHashStyle}
+           accessibilityLabel={accessibilityLabel}
+           tintColor={tintColor}
++          loading={loading}
+         />
+       ),
+   ];
+diff --git a/node_modules/expo-image/src/Image.tsx b/node_modules/expo-image/src/Image.tsx
+index b0489c1..545f485 100644
+--- a/node_modules/expo-image/src/Image.tsx
++++ b/node_modules/expo-image/src/Image.tsx
+@@ -256,6 +256,7 @@ export class Image extends React.PureComponent<ImageProps> {
+         transition={resolveTransition(transition, fadeDuration)}
+         nativeViewRef={this.nativeViewRef}
+         containerViewRef={this.containerViewRef}
++        loading={this.props.loading}
+       />
+     );
+   }
+diff --git a/node_modules/expo-image/src/Image.types.ts b/node_modules/expo-image/src/Image.types.ts
+index 9dec0e7..9e4faf2 100644
+--- a/node_modules/expo-image/src/Image.types.ts
++++ b/node_modules/expo-image/src/Image.types.ts
+@@ -372,6 +372,13 @@ export interface ImageProps extends Omit<ViewProps, 'style' | 'children'> {
+    * @platform ios
+    */
+   enforceEarlyResizing?: boolean;
++
++  /**
++   * Loading strategy for the image.
++   * @default 'eager'
++   * @platform web
++   */
++  loading?: 'eager' | 'lazy';
+ }
+ 
+ /**
+diff --git a/node_modules/expo-image/src/web/ImageWrapper.tsx b/node_modules/expo-image/src/web/ImageWrapper.tsx
+index e8f891d..94ba431 100644
+--- a/node_modules/expo-image/src/web/ImageWrapper.tsx
++++ b/node_modules/expo-image/src/web/ImageWrapper.tsx
+@@ -1,12 +1,12 @@
+-import React, { useEffect, Ref, useId } from 'react';
++import React, { Ref, useEffect, useId } from 'react';
+ 
++import { ImageNativeProps, ImageSource } from '../Image.types';
+ import ColorTintFilter, { getTintColorStyle } from './ColorTintFilter';
+ import { ImageWrapperProps } from './ImageWrapper.types';
+ import { getImageWrapperEventHandler } from './getImageWrapperEventHandler';
+ import { useHeaders, useImageHashes } from './hooks';
+ import { absoluteFilledPosition, getObjectPositionFromContentPositionObject } from './positioning';
+ import { SrcSetSource } from './useSourceSelection';
+-import { ImageNativeProps, ImageSource } from '../Image.types';
+ 
+ function getFetchPriorityFromImagePriority(priority: ImageNativeProps['priority'] = 'normal') {
+   return priority && ['low', 'high'].includes(priority) ? priority : 'auto';
+@@ -36,6 +36,7 @@ const ImageWrapper = React.forwardRef(
+       className,
+       accessibilityLabel,
+       cachePolicy,
++      loading,
+       ...props
+     }: ImageWrapperProps,
+     ref: Ref<HTMLImageElement>
+@@ -82,6 +83,7 @@ const ImageWrapper = React.forwardRef(
+           // @ts-ignore
+           // eslint-disable-next-line react/no-unknown-property
+           fetchPriority={getFetchPriorityFromImagePriority(priority || 'normal')}
++          loading={loading}
+           {...getImageWrapperEventHandler(events, sourceWithHeaders)}
+           {...getImgPropsFromSource(source)}
+           {...props}
+diff --git a/node_modules/expo-image/src/web/ImageWrapper.types.ts b/node_modules/expo-image/src/web/ImageWrapper.types.ts
+index 19bbe2f..6641aa7 100644
+--- a/node_modules/expo-image/src/web/ImageWrapper.types.ts
++++ b/node_modules/expo-image/src/web/ImageWrapper.types.ts
+@@ -1,7 +1,7 @@
+ import { CSSProperties, SyntheticEvent } from 'react';
+ 
+-import { SrcSetSource } from './useSourceSelection';
+ import { ImageContentPositionObject, ImageProps, ImageSource } from '../Image.types';
++import { SrcSetSource } from './useSourceSelection';
+ 
+ export type OnErrorEvent =
+   | (({ source }: { source: ImageSource | null }) => void)
+@@ -35,4 +35,5 @@ export type ImageWrapperProps = {
+   className?: string;
+   accessibilityLabel?: string;
+   cachePolicy?: ImageProps['cachePolicy'];
++  loading?: 'eager' | 'lazy';
+ };
