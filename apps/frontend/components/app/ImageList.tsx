@@ -5,9 +5,9 @@ import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
-import { match, P } from "ts-pattern";
+import { match } from "ts-pattern";
 import CustomImage from "../images/CustomImage";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
@@ -21,6 +21,10 @@ export default function ImageList(props: ImageListProps) {
   const images = trpc.gallery.get.useInfiniteQuery(
     { albumId: props.albumId, limit: 8 * 4 },
     { getNextPageParam: (lastPage) => lastPage.nextCursor },
+  );
+  const data = useMemo(
+    () => images.data?.pages.flatMap((x) => x.items),
+    [images.data],
   );
   const [responsiveLayout, setResponsiveLayout] = useState<ResponsiveLayout>(
     createResponsiveLayout({ width: 0 }),
@@ -65,106 +69,115 @@ export default function ImageList(props: ImageListProps) {
           .otherwise(() => ({ header: undefined }))}
       />
 
-      {match(images)
-        .with({ data: P.when((v) => v?.pages?.length === 0) }, () => (
-          <View className="flex-1 justify-center items-center bg-background p-4">
-            <Text className="text-center font-medium text-lg">
-              Your gallery is empty.
-              <br /> Add some images to get started!
-            </Text>
-            <Button className="mt-4" onPress={onUpload}>
-              <Ionicons name="image" size={20} className="mr-2 text-white" />
-              <Text>Add Images</Text>
-            </Button>
-          </View>
-        ))
-        .with({ data: P.when((v) => (v?.pages?.length ?? 0) > 0) }, (value) => (
-          <FlatList
-            key={responsiveLayout.numOfColumns}
-            data={value.data?.pages.flatMap((page) => page.items) ?? []}
-            numColumns={responsiveLayout.numOfColumns}
-            className="py-4 px-4 bg-background items-center hide-scrollbar"
-            contentContainerClassName="gap-y-4"
-            columnWrapperStyle={{
-              gap: responsiveLayout.spacing,
-              justifyContent: "flex-start",
-            }}
-            onLayout={(event) => {
-              setResponsiveLayout(
-                createResponsiveLayout({
-                  width: event.nativeEvent.layout.width,
-                }),
-              );
-            }}
-            onEndReachedThreshold={0.2}
-            onEndReached={() =>
-              images.hasNextPage &&
-              !images.isFetchingNextPage &&
-              images.fetchNextPage()
-            }
-            ListFooterComponent={
-              images.isFetchingNextPage ? (
-                <ActivityIndicator size={"small"} />
-              ) : null
-            }
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => {
-                  if (selectedImages.length > 0) {
-                    if (selectedImages.includes(item)) {
-                      // Deselect image
-                      setSelectedImages(
-                        selectedImages.filter((image) => image.id !== item.id),
-                      );
+      {images.isError && (
+        <View className="flex-1 items-center justify-center p-4 bg-background">
+          <Text>{images.error?.message}</Text>
+        </View>
+      )}
+
+      {match(data)
+        .when(
+          (v) => v?.length === 0,
+          () => (
+            <View className="flex-1 justify-center items-center bg-background p-4">
+              <Text className="text-center font-medium text-lg">
+                Your gallery is empty.
+                <br /> Add some images to get started!
+              </Text>
+              <Button className="mt-4" onPress={onUpload}>
+                <Ionicons name="image" size={20} className="mr-2 text-white" />
+                <Text>Add Images</Text>
+              </Button>
+            </View>
+          ),
+        )
+        .when(
+          (v) => (v?.length ?? 0) > 0,
+          () => (
+            <FlatList
+              key={responsiveLayout.numOfColumns}
+              data={data}
+              numColumns={responsiveLayout.numOfColumns}
+              className="py-4 px-4 bg-background items-center hide-scrollbar"
+              contentContainerClassName="gap-y-4"
+              columnWrapperStyle={{
+                gap: responsiveLayout.spacing,
+                justifyContent: "flex-start",
+              }}
+              onLayout={(event) => {
+                setResponsiveLayout(
+                  createResponsiveLayout({
+                    width: event.nativeEvent.layout.width,
+                  }),
+                );
+              }}
+              onEndReachedThreshold={0.2}
+              onEndReached={() =>
+                images.hasNextPage &&
+                !images.isFetchingNextPage &&
+                images.fetchNextPage()
+              }
+              ListFooterComponent={
+                images.isFetchingNextPage ? (
+                  <ActivityIndicator size={"small"} />
+                ) : null
+              }
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => {
+                    if (selectedImages.length > 0) {
+                      if (selectedImages.includes(item)) {
+                        // Deselect image
+                        setSelectedImages(
+                          selectedImages.filter(
+                            (image) => image.id !== item.id,
+                          ),
+                        );
+                      } else {
+                        // Select image
+                        setSelectedImages([...selectedImages, item]);
+                      }
                     } else {
-                      // Select image
-                      setSelectedImages([...selectedImages, item]);
+                      router.push({
+                        pathname: "/gallery",
+                        params: {
+                          "#": item.id,
+                          albumId: props.albumId,
+                        },
+                      });
                     }
-                  } else {
-                    router.push({
-                      pathname: "/gallery",
-                      params: {
-                        "#": item.id,
-                        albumId: props.albumId,
-                      },
-                    });
-                  }
-                }}
-                onLongPress={() => {
-                  if (selectedImages.length === 0) {
-                    setSelectedImages([item]);
-                  }
-                }}
-              >
-                <View className="relative">
-                  {selectedImages.includes(item) && (
-                    <View className="absolute top-1 right-1 bg-blue-500 rounded-full w-5 h-5 items-center justify-center z-10">
-                      <Text className="text-white font-medium text-xs">
-                        {selectedImages.indexOf(item) + 1}
-                      </Text>
-                    </View>
-                  )}
-                  <CustomImage
-                    source={{ uri: item.thumbnail_path }}
-                    className={cn(
-                      "aspect-square",
-                      selectedImages.includes(item)
-                        ? "opacity-50"
-                        : "opacity-100",
+                  }}
+                  onLongPress={() => {
+                    if (selectedImages.length === 0) {
+                      setSelectedImages([item]);
+                    }
+                  }}
+                >
+                  <View className="relative">
+                    {selectedImages.includes(item) && (
+                      <View className="absolute top-1 right-1 bg-blue-500 rounded-full w-5 h-5 items-center justify-center z-10">
+                        <Text className="text-white font-medium text-xs">
+                          {selectedImages.indexOf(item) + 1}
+                        </Text>
+                      </View>
                     )}
-                    style={{ width: responsiveLayout.imageWidth - 8 }}
-                    cachePolicy={"memory-disk"}
-                  />
-                </View>
-              </Pressable>
-            )}
-          />
-        ))
-        .with({ isError: true }, () => (
-          <View className="flex-1 items-center justify-center p-4 bg-background">
-            <Text>{images.error?.message}</Text>
-          </View>
-        ))
+                    <CustomImage
+                      source={{ uri: item.thumbnail_path }}
+                      className={cn(
+                        "aspect-square",
+                        selectedImages.includes(item)
+                          ? "opacity-50"
+                          : "opacity-100",
+                      )}
+                      style={{ width: responsiveLayout.imageWidth - 8 }}
+                      cachePolicy={"memory-disk"}
+                    />
+                  </View>
+                </Pressable>
+              )}
+            />
+          ),
+        )
         .otherwise(() => (
           <View className="flex-1 items-center justify-center bg-background">
             <ActivityIndicator />
