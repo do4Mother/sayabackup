@@ -21,12 +21,17 @@ export default function GoogleSignInButton() {
       document.body.appendChild(script);
     }
 
-    setTimeout(() => {
+    const intervalId = window.setInterval(() => {
+      // @ts-ignore
+      if (typeof google === "undefined" || !google?.accounts?.id) return;
+
+      clearInterval(intervalId);
+
       // @ts-ignore
       google.accounts.id.initialize({
         client_id:
           "27302795397-e6cpk83cbb6ig7vik2nkgva1h71ge348.apps.googleusercontent.com",
-        callback: (response: any) => {
+        callback: (response: unknown) => {
           if (isCredentials(response)) {
             signInMutation.mutate(response, {
               onSuccess() {
@@ -38,9 +43,11 @@ export default function GoogleSignInButton() {
       });
 
       const parent = document.getElementById("google-signin-button");
-      // @ts-ignore
-      google.accounts.id.renderButton(parent, { theme: "filled_blue" });
-    }, 500);
+      if (parent) {
+        // @ts-ignore
+        google.accounts.id.renderButton(parent, { theme: "filled_blue" });
+      }
+    }, 200);
   }, []);
 
   return <div id="google-signin-button"></div>;
