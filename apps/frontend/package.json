@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "dev": "cross-env EXPO_UNSTABLE_WEB_MODAL=1 expo start --web --clear",
-    "deploy": "cross-env EXPO_UNSTABLE_WEB_MODAL=1 expo export -p web --output-dir ../backend/dist"
+    "deploy": "cross-env EXPO_UNSTABLE_WEB_MODAL=1 expo export -p web --output-dir ../backend/dist",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.937.0",
@@ -77,6 +78,7 @@
     "cross-env": "^10.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "patch-package": "^8.0.1",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tailwindcss": "^3.4.18",
     "typescript": "~5.9.2"
