@@ -30,5 +30,5 @@ export default function CustomImage(props: ComponentProps<typeof Image>) {
     },
   });
 
-  return <Image {...props} source={{ uri: image.data?.url }} />;
+  return <Image {...props} source={{ uri: image.data?.url }} loading="lazy" />;
 }
