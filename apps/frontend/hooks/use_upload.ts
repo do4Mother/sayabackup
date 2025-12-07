@@ -2,12 +2,17 @@ import { uploadToS3 } from "@/s3/upload";
 import { client, trpc } from "@/trpc/trpc";
 import { randomString, sanitizeFilename } from "@sayabackup/utils";
 import axios, { CanceledError } from "axios";
+import axiosRetry from "axios-retry";
 import { ImageManipulator } from "expo-image-manipulator";
 import { ImagePickerAsset } from "expo-image-picker";
 import { createContext, useContext } from "react";
 import { Platform } from "react-native";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
+
+axiosRetry(axios, {
+  retries: 3,
+});
 
 type Item = {
   id: string;
