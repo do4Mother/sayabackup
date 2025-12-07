@@ -6,7 +6,7 @@ import { Text, View } from "react-native";
 
 export default function Index() {
   return (
-    <View className="from-slate-50 to-gray-300 bg-gradient-to-b flex-1">
+    <View className="from-slate-50 to-gray-300 bg-gradient-to-b flex-1 md:max-w-md md:mx-auto">
       <View className="flex-1 backdrop-blur-3xl bg-white/80 justify-center p-4">
         <Image
           source={Logo}
