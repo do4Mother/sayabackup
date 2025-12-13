@@ -85,6 +85,7 @@ function ListOfAlbums() {
               </Dialog>
             )
           }
+          showBackButton={false}
         />
       </Animated.View>
       <AlbumList className="pt-16" onScroll={onScroll} />
@@ -133,7 +134,7 @@ function AlbumDetailScreen() {
   if (!id) {
     return (
       <>
-        <Header title="Album Not Found" />
+        <Header title="Album Not Found" showBackButton={false} />
         <View className="bg-background flex-1 items-center justify-center">
           <Text className=" text-slate-500">Couldn&apos;t find album.</Text>
         </View>
@@ -251,6 +252,7 @@ function AlbumDetailScreen() {
               </DropdownMenuContent>
             </DropdownMenu>
           }
+          showBackButton={false}
         />
       </Animated.View>
       <ImageList albumId={id} className="pt-16" onScroll={onScroll} />
