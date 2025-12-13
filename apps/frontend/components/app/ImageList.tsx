@@ -6,7 +6,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { Stack, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  View,
+} from "react-native";
 import { match } from "ts-pattern";
 import CustomImage from "../images/CustomImage";
 import { Button } from "../ui/button";
@@ -15,6 +22,8 @@ import HeaderImagePage from "./HeaderImagePage";
 
 type ImageListProps = {
   albumId?: string;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  className?: string;
 };
 
 export default function ImageList(props: ImageListProps) {
@@ -96,9 +105,13 @@ export default function ImageList(props: ImageListProps) {
           () => (
             <FlatList
               key={responsiveLayout.numOfColumns}
+              onScroll={props.onScroll}
               data={data}
               numColumns={responsiveLayout.numOfColumns}
-              className="py-4 px-4 bg-background items-center hide-scrollbar"
+              className={cn(
+                "py-4 px-4 bg-background items-center hide-scrollbar",
+                props.className,
+              )}
               contentContainerClassName="gap-y-4"
               columnWrapperStyle={{
                 gap: responsiveLayout.spacing,
