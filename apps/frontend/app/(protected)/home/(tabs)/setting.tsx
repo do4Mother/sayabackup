@@ -170,6 +170,7 @@ export default function SettingTabpage() {
       </Animated.View>
       <ScrollView
         className="xl:max-w-2xl mx-auto hide-scrollbar pt-16"
+        scrollEventThrottle={100}
         onScroll={onScroll}
       >
         <Card className="mx-4">
