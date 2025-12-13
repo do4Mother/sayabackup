@@ -15,7 +15,7 @@ import React from "react";
 import { Pressable, View } from "react-native";
 
 export default function HomePageLayout() {
-  const tabMenu = tw`flex-col items-center w-fit flex-1 gap-0.5 md:gap-4 p-4 hover:bg-blue-50 opacity-50 lg:flex-row md:flex-none md:w-full md:justify-normal md:rounded-lg`;
+  const tabMenu = tw`flex-col items-center w-fit flex-1 gap-0.5 md:gap-4 p-4 hover:bg-blue-50 opacity-50 md:flex-row md:flex-none md:w-full md:justify-normal md:rounded-lg`;
   const tabText = tw`text-sm hidden md:block`;
 
   return (
@@ -25,10 +25,10 @@ export default function HomePageLayout() {
         <View className="flex-1 md:px-4">
           <TabSlot style={{ flex: 1 }} />
         </View>
-        <TabList className="flex-row md:flex-col p-0 md:p-4 justify-normal shadow bg-background md:h-screen md:shadow-none">
+        <TabList className="flex-row md:flex-col p-0 md:p-4 justify-normal shadow bg-background md:h-screen md:shadow-none md:w-40 lg:w-64">
           <Image
             source={Logo}
-            style={{ width: 160, height: 40 }}
+            style={{ width: 128, height: 32 }}
             className="mb-4 hidden md:block"
           />
           <TabTrigger
