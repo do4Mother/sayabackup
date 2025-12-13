@@ -1,5 +1,6 @@
 import ImageType from "@/assets/images/image-asset.png";
 import VideoType from "@/assets/images/video-asset.png";
+import Header from "@/components/app/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,7 +9,6 @@ import { useUpload } from "@/hooks/use_upload";
 import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
-import { Stack } from "expo-router";
 import { cssInterop } from "nativewind";
 import { Image, SectionList, View } from "react-native";
 import { match, P } from "ts-pattern";
@@ -57,23 +57,21 @@ export default function UploadTabpage() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: "Upload",
-          headerRight: () =>
-            match(media.length === 0)
-              .with(false, () => (
-                <Button
-                  variant="ghost"
-                  size={"icon"}
-                  onPress={pickMedia}
-                  className="mr-4"
-                >
-                  <Ionicons name="add" size={22} />
-                </Button>
-              ))
-              .otherwise(() => null),
-        }}
+      <Header
+        title="Upload"
+        showBackButton={false}
+        action={match(media.length === 0)
+          .with(false, () => (
+            <Button
+              variant="ghost"
+              size={"icon"}
+              onPress={pickMedia}
+              className="mr-4"
+            >
+              <Ionicons name="add" size={22} />
+            </Button>
+          ))
+          .otherwise(() => null)}
       />
       <View className="bg-background flex-1">
         {match(media.length === 0)

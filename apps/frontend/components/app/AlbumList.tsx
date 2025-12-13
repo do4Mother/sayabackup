@@ -3,21 +3,10 @@ import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { match, P } from "ts-pattern";
 import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Dialog, DialogTrigger } from "../ui/dialog";
 import { Text } from "../ui/text";
 import CreateAlbumDialog from "./CreateAlbumDialog";
 
@@ -67,9 +56,9 @@ export default function AlbumList(props: AlbumListProps) {
                   className={props.itemClassName}
                   onPress={() => {
                     router.push({
-                      pathname: "/(protected)/home/(tabs)/albums/detail",
+                      pathname: "/(protected)/home/(tabs)/albums",
                       params: {
-                        "#": item.id,
+                        id: item.id,
                       },
                     });
                   }}

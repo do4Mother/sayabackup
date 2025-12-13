@@ -1,3 +1,4 @@
+import Header from "@/components/app/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { decrypt, encrypt } from "@sayabackup/utils";
 import { useRouter } from "expo-router";
 import { isEmpty, omitBy } from "lodash-es";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { ScrollView, View } from "react-native";
 import z from "zod";
@@ -137,8 +138,9 @@ export default function SettingTabpage() {
   };
 
   return (
-    <View className="bg-background flex-1">
-      <ScrollView className="xl:max-w-2xl mx-auto w-full hide-scrollbar">
+    <Fragment>
+      <Header title="Settings" showBackButton={false} />
+      <ScrollView className="xl:max-w-2xl mx-auto hide-scrollbar">
         <Card className="mx-4">
           <CardContent className="gap-y-4">
             <Controller
@@ -265,6 +267,6 @@ export default function SettingTabpage() {
           </Button>
         </View>
       </ScrollView>
-    </View>
+    </Fragment>
   );
 }

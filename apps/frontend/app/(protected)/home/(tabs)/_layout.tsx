@@ -1,103 +1,103 @@
+import Logo from "@/assets/images/sayabackup.png";
+import { Text } from "@/components/ui/text";
+import { cn, tw } from "@/lib/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
-import { Stack, Tabs } from "expo-router";
+import { Image } from "expo-image";
+import { Stack } from "expo-router";
+import {
+  TabList,
+  Tabs,
+  TabSlot,
+  TabTrigger,
+  TabTriggerSlotProps,
+} from "expo-router/ui";
 import React from "react";
-import { Dimensions } from "react-native";
-import { match } from "ts-pattern";
+import { Dimensions, Pressable, View } from "react-native";
 
 export default function HomePageLayout() {
   const dimensions = Dimensions.get("window");
 
-  const tabbarConfig = match(dimensions.width)
-    .returnType<BottomTabNavigationOptions>()
-    .when(
-      (v) => v > 1000,
-      () => ({
-        tabBarVariant: "material",
-        tabBarPosition: "left",
-        tabBarLabelPosition: "beside-icon",
-        tabBarStyle: {
-          minWidth: 250,
-        },
-      }),
-    )
-    .when(
-      (v) => v > 600,
-      () => ({
-        tabBarVariant: "material",
-        tabBarPosition: "left",
-        tabBarLabelPosition: "below-icon",
-      }),
-    )
-    .otherwise(() => ({
-      tabBarVariant: "uikit",
-      tabBarPosition: "bottom",
-      tabBarStyle: {
-        height: 55,
-      },
-      tabBarItemStyle: {
-        alignItems: "center",
-      },
-      tabBarIconStyle: { width: 20, height: 20, flex: 1 },
-      tabBarLabelStyle: { fontSize: 12, paddingBottom: 4 },
-    }));
+  const tabMenu = tw`flex-col items-center w-fit flex-1 gap-0.5 md:gap-4 p-4 hover:bg-blue-50 opacity-50`;
+  const tabText = tw`text-sm hidden`;
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Tabs
-        screenOptions={{
-          ...tabbarConfig,
-          headerShadowVisible: false,
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 800,
-          },
-        }}
-      >
-        <Tabs.Screen
-          name="gallery"
-          options={{
-            title: "Gallery",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="images-outline" size={20} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="albums/index"
-          options={{
-            title: "Albums",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="albums-outline" size={20} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="upload"
-          options={{
-            title: "Upload",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="cloud-upload-outline" size={20} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="setting"
-          options={{
-            title: "Settings",
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="settings-outline" size={20} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="albums/detail"
-          options={{
-            href: null,
-          }}
-        />
+      <Tabs className="flex-col md:flex-row-reverse bg-background">
+        <View className="flex-1">
+          <TabSlot style={{ flex: 1 }} />
+        </View>
+        <TabList className="flex-row md:flex-col p-0 md:p-4 justify-normal shadow bg-background">
+          <Image
+            source={Logo}
+            style={{ width: 160, height: 40 }}
+            className="mb-4 hidden md:block"
+          />
+          <TabTrigger
+            name="gallery"
+            href="/(protected)/home/(tabs)/gallery"
+            className={tabMenu}
+            asChild
+          >
+            <TabButton>
+              <Ionicons name="images" size={22} />
+              <Text className={tabText}>Gallery</Text>
+            </TabButton>
+          </TabTrigger>
+          <TabTrigger
+            name="albums"
+            href="/(protected)/home/(tabs)/albums"
+            className={tabMenu}
+            asChild
+          >
+            <TabButton>
+              <Ionicons name="albums" size={22} />
+              <Text className={tabText}>Albums</Text>
+            </TabButton>
+          </TabTrigger>
+          <TabTrigger
+            name="upload"
+            href="/(protected)/home/(tabs)/upload"
+            className={tabMenu}
+            asChild
+          >
+            <TabButton>
+              <Ionicons name="cloud-upload" size={22} />
+              <Text className={tabText}>Upload</Text>
+            </TabButton>
+          </TabTrigger>
+          <TabTrigger
+            name="setting"
+            href="/(protected)/home/(tabs)/setting"
+            className={tabMenu}
+            asChild
+          >
+            <TabButton>
+              <Ionicons name="settings" size={22} />
+              <Text className={tabText}>Setting</Text>
+            </TabButton>
+          </TabTrigger>
+        </TabList>
       </Tabs>
     </>
+  );
+}
+
+type TabButtonProps = Omit<TabTriggerSlotProps, "children"> & {
+  children: ((isFocused?: boolean) => React.ReactNode) | React.ReactNode;
+};
+
+function TabButton({ children, ...props }: TabButtonProps) {
+  return (
+    <Pressable
+      {...props}
+      className={cn(
+        props.className,
+        props.isFocused &&
+          "after:content-[''] after:absolute after:bottom-2 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-blue-600 opacity-100",
+      )}
+    >
+      {typeof children === "function" ? children(props.isFocused) : children}
+    </Pressable>
   );
 }
