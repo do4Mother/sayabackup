@@ -20,7 +20,6 @@ export default function ProtectedLayout() {
       screenOptions={{
         headerShadowVisible: false,
         header(props) {
-          console.log("Rendering header with props:", props);
           return <Header />;
         },
       }}
