@@ -3,7 +3,14 @@ import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  View,
+} from "react-native";
 import { match, P } from "ts-pattern";
 import { Button } from "../ui/button";
 import { Dialog, DialogTrigger } from "../ui/dialog";
@@ -16,6 +23,7 @@ type AlbumListProps = {
   onChange?: (albumId: string | null) => void;
   className?: string;
   itemClassName?: string;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 
 export default function AlbumList(props: AlbumListProps) {
@@ -33,6 +41,7 @@ export default function AlbumList(props: AlbumListProps) {
         <FlatList
           data={albums.data}
           className={cn("bg-background", props.className)}
+          onScroll={props.onScroll}
           renderItem={({ item }) =>
             match(selectMode)
               .with("single", () => (

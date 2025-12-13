@@ -14,7 +14,17 @@ import { useRouter } from "expo-router";
 import { isEmpty, omitBy } from "lodash-es";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { ScrollView, View } from "react-native";
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  View,
+} from "react-native";
+import Animated, {
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import z from "zod";
 
 const s3credentialsDto = z.object({
@@ -32,6 +42,7 @@ export default function SettingTabpage() {
   const logout = trpc.auth.logout.useMutation();
   const router = useRouter();
   const clientUtils = trpc.useUtils();
+  const position = useSharedValue(0);
   const alert = useAlert((state) => state.showAlert);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const defaultValues = useRef({
@@ -137,10 +148,30 @@ export default function SettingTabpage() {
     reader.readAsText(file);
   };
 
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    position.value = withDelay(
+      100,
+      withTiming(event.nativeEvent.contentOffset.y > 50 ? -100 : 0),
+    );
+  };
+
   return (
     <Fragment>
-      <Header title="Settings" showBackButton={false} />
-      <ScrollView className="xl:max-w-2xl mx-auto hide-scrollbar">
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: position,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+        }}
+      >
+        <Header title="Settings" showBackButton={false} />
+      </Animated.View>
+      <ScrollView
+        className="xl:max-w-2xl mx-auto hide-scrollbar pt-16"
+        onScroll={onScroll}
+      >
         <Card className="mx-4">
           <CardContent className="gap-y-4">
             <Controller

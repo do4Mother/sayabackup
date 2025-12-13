@@ -12,22 +12,20 @@ import {
   TabTriggerSlotProps,
 } from "expo-router/ui";
 import React from "react";
-import { Dimensions, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 export default function HomePageLayout() {
-  const dimensions = Dimensions.get("window");
-
-  const tabMenu = tw`flex-col items-center w-fit flex-1 gap-0.5 md:gap-4 p-4 hover:bg-blue-50 opacity-50`;
-  const tabText = tw`text-sm hidden`;
+  const tabMenu = tw`flex-col items-center w-fit flex-1 gap-0.5 md:gap-4 p-4 hover:bg-blue-50 opacity-50 lg:flex-row md:flex-none md:w-full md:justify-normal md:rounded-lg`;
+  const tabText = tw`text-sm hidden md:block`;
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <Tabs className="flex-col md:flex-row-reverse bg-background">
-        <View className="flex-1">
+        <View className="flex-1 md:px-4">
           <TabSlot style={{ flex: 1 }} />
         </View>
-        <TabList className="flex-row md:flex-col p-0 md:p-4 justify-normal shadow bg-background">
+        <TabList className="flex-row md:flex-col p-0 md:p-4 justify-normal shadow bg-background md:h-screen md:shadow-none">
           <Image
             source={Logo}
             style={{ width: 160, height: 40 }}
@@ -94,7 +92,7 @@ function TabButton({ children, ...props }: TabButtonProps) {
       className={cn(
         props.className,
         props.isFocused &&
-          "after:content-[''] after:absolute after:bottom-2 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-blue-600 opacity-100",
+          "after:content-[''] after:absolute after:bottom-2 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-blue-600 opacity-100 md:after:hidden md:bg-blue-100",
       )}
     >
       {typeof children === "function" ? children(props.isFocused) : children}

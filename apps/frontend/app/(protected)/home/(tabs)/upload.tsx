@@ -10,7 +10,18 @@ import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { cssInterop } from "nativewind";
-import { Image, SectionList, View } from "react-native";
+import {
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  SectionList,
+  View,
+} from "react-native";
+import Animated, {
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { match, P } from "ts-pattern";
 
 type Media = {
@@ -27,6 +38,7 @@ type Media = {
 cssInterop(SectionList, { className: "style" });
 
 export default function UploadTabpage() {
+  const position = useSharedValue(0);
   const { upload, data: media, setData: setMedia } = useUpload();
 
   const pickMedia = async () => {
@@ -39,6 +51,13 @@ export default function UploadTabpage() {
     if (!result.canceled) {
       await upload({ images: result.assets });
     }
+  };
+
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    position.value = withDelay(
+      100,
+      withTiming(event.nativeEvent.contentOffset.y > 50 ? -100 : 0),
+    );
   };
 
   const onCancelUpload = (mediaItem: Media) => {
@@ -57,22 +76,27 @@ export default function UploadTabpage() {
 
   return (
     <>
-      <Header
-        title="Upload"
-        showBackButton={false}
-        action={match(media.length === 0)
-          .with(false, () => (
-            <Button
-              variant="ghost"
-              size={"icon"}
-              onPress={pickMedia}
-              className="mr-4"
-            >
-              <Ionicons name="add" size={22} />
-            </Button>
-          ))
-          .otherwise(() => null)}
-      />
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: position,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+        }}
+      >
+        <Header
+          title="Upload"
+          showBackButton={false}
+          action={match(media.length === 0)
+            .with(false, () => (
+              <Button variant="ghost" size={"icon"} onPress={pickMedia}>
+                <Ionicons name="add" size={22} />
+              </Button>
+            ))
+            .otherwise(() => null)}
+        />
+      </Animated.View>
       <View className="bg-background flex-1">
         {match(media.length === 0)
           .with(true, () => (
@@ -87,7 +111,8 @@ export default function UploadTabpage() {
           .otherwise(() => (
             <SectionList
               sections={[{ data: media }]}
-              className="xl:max-w-2xl mx-auto w-full hide-scrollbar"
+              className="xl:max-w-2xl mx-auto w-full hide-scrollbar pt-16"
+              onScroll={onScroll}
               ListHeaderComponent={() => (
                 <View className="items-end px-4">
                   <Button

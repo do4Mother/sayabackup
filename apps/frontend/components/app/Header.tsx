@@ -16,9 +16,11 @@ export default function Header(props: HeaderProps) {
   props = { ...defaultProps, ...props };
 
   return (
-    <View className="flex-row gap-4 bg-background px-4 h-14 items-center">
+    <View className="flex-row gap-4 bg-background px-4 h-14 items-center md:h-16">
       {props.showBackButton && <BackButton />}
-      {props.title && <Text className="text-2xl font-bold">{props.title}</Text>}
+      {props.title && (
+        <Text className="text-2xl font-bold md:text-3xl">{props.title}</Text>
+      )}
       <View className="flex-row gap-4 flex-1 justify-end items-center">
         {props.action}
       </View>
