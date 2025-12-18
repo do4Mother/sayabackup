@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { launchImageLibraryAsync } from "expo-image-picker";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,7 +18,6 @@ import { match } from "ts-pattern";
 import CustomImage from "../images/CustomImage";
 import { Button } from "../ui/button";
 import { Text } from "../ui/text";
-import HeaderImagePage from "./HeaderImagePage";
 
 type ImageListProps = {
   albumId?: string;
@@ -63,21 +62,6 @@ export default function ImageList(props: ImageListProps) {
 
   return (
     <>
-      <Stack.Screen
-        options={match(selectedImages.length)
-          .when(
-            (v) => v > 0,
-            () => {
-              const imageComponent = () => <HeaderImagePage />;
-              return {
-                headerShown: true,
-                header: imageComponent,
-              };
-            },
-          )
-          .otherwise(() => ({ header: undefined }))}
-      />
-
       {images.isError && (
         <View className="flex-1 items-center justify-center p-4 bg-background">
           <Text>{images.error?.message}</Text>

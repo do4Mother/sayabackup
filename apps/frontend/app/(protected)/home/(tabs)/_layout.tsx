@@ -22,7 +22,7 @@ export default function HomePageLayout() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <Tabs className="flex-col md:flex-row-reverse bg-background">
-        <View className="flex-1 md:px-4">
+        <View className="flex-1">
           <TabSlot style={{ flex: 1 }} />
         </View>
         <TabList className="flex-row md:flex-col p-0 md:p-4 justify-normal shadow bg-background md:h-screen md:shadow-none md:w-40 lg:w-64">

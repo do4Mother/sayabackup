@@ -24,10 +24,10 @@ const HeaderImagePage = () => {
   );
   if (selectedImages.length > 0) {
     return (
-      <View className="bg-blue-500 flex-row px-4 h-14 items-center justify-between">
+      <View className="bg-blue-500 flex-row px-4 h-14 items-center justify-between absolute top-0 left-0 right-0 z-10">
         <View className="flex-row items-center gap-2">
           <Pressable onPress={() => setSelectedImages([])}>
-            <Ionicons name="close" size={20} color="white" className="mt-0.5" />
+            <Ionicons name="close" size={20} color="white" />
           </Pressable>
           <Text className="text-white font-medium text-lg h-7">
             {selectedImages.length} Selected

@@ -1,6 +1,7 @@
 import AlbumList from "@/components/app/AlbumList";
 import CreateAlbumDialog from "@/components/app/CreateAlbumDialog";
 import Header from "@/components/app/Header";
+import HeaderImagePage from "@/components/app/HeaderImagePage";
 import ImageList from "@/components/app/ImageList";
 import {
   AlertDialog,
@@ -22,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Text } from "@/components/ui/text";
+import { useSelectedImage } from "@/hooks/use_select_image";
 import { useUpload } from "@/hooks/use_upload";
 import { deleteFile } from "@/s3/delete_file";
 import { client, trpc } from "@/trpc/trpc";
@@ -36,6 +38,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from "react-native-reanimated";
+import { match, P } from "ts-pattern";
 
 export default function AlbumTab() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -99,6 +102,7 @@ function AlbumDetailScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { upload } = useUpload();
+  const selectedImages = useSelectedImage((state) => state.selectedImages);
 
   const album = trpc.album.find.useQuery(
     { id: id ?? "" },
@@ -155,106 +159,112 @@ function AlbumDetailScreen() {
     }
   };
 
+  const HeaderPage = (
+    <Animated.View
+      style={{
+        position: "absolute",
+        top: position,
+        left: 0,
+        right: 0,
+        zIndex: 10,
+      }}
+    >
+      <Header
+        title={album.data?.name ?? "Album"}
+        action={
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Ionicons name="ellipsis-vertical" size={20} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>
+                <Text onPress={onUpload}>Upload</Text>
+              </DropdownMenuLabel>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuLabel>
+                    <Text className="text-red-500">Delete Album</Text>
+                  </DropdownMenuLabel>
+                </AlertDialogTrigger>
+
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you sure you want to delete this album?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. It will permanently delete
+                      the album.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>
+                      <Text>Cancel</Text>
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onPress={() =>
+                        deleteMutation.mutate(
+                          { withImages: true },
+                          {
+                            onSuccess() {
+                              clientUtils.gallery.get.invalidate();
+                              clientUtils.album.get.invalidate();
+
+                              if (router.canGoBack()) {
+                                router.back();
+                              } else {
+                                router.replace(
+                                  "/(protected)/home/(tabs)/albums",
+                                );
+                              }
+                            },
+                          },
+                        )
+                      }
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Text>Delete With Images</Text>
+                    </AlertDialogAction>
+                    <AlertDialogAction
+                      onPress={() =>
+                        deleteMutation.mutate(
+                          { withImages: false },
+                          {
+                            onSuccess() {
+                              clientUtils.gallery.get.invalidate();
+                              clientUtils.album.get.invalidate();
+
+                              if (router.canGoBack()) {
+                                router.back();
+                              } else {
+                                router.replace(
+                                  "/(protected)/home/(tabs)/albums",
+                                );
+                              }
+                            },
+                          },
+                        )
+                      }
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Text>Delete Album</Text>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+        showBackButton={false}
+      />
+    </Animated.View>
+  );
+
   return (
     <>
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: position,
-          left: 0,
-          right: 0,
-          zIndex: 10,
-        }}
-      >
-        <Header
-          title={album.data?.name ?? "Album"}
-          action={
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Ionicons name="ellipsis-vertical" size={20} />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>
-                  <Text onPress={onUpload}>Upload</Text>
-                </DropdownMenuLabel>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuLabel>
-                      <Text className="text-red-500">Delete Album</Text>
-                    </DropdownMenuLabel>
-                  </AlertDialogTrigger>
-
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you sure you want to delete this album?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. It will permanently delete
-                        the album.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>
-                        <Text>Cancel</Text>
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onPress={() =>
-                          deleteMutation.mutate(
-                            { withImages: true },
-                            {
-                              onSuccess() {
-                                clientUtils.gallery.get.invalidate();
-                                clientUtils.album.get.invalidate();
-
-                                if (router.canGoBack()) {
-                                  router.back();
-                                } else {
-                                  router.replace(
-                                    "/(protected)/home/(tabs)/albums",
-                                  );
-                                }
-                              },
-                            },
-                          )
-                        }
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Text>Delete With Images</Text>
-                      </AlertDialogAction>
-                      <AlertDialogAction
-                        onPress={() =>
-                          deleteMutation.mutate(
-                            { withImages: false },
-                            {
-                              onSuccess() {
-                                clientUtils.gallery.get.invalidate();
-                                clientUtils.album.get.invalidate();
-
-                                if (router.canGoBack()) {
-                                  router.back();
-                                } else {
-                                  router.replace(
-                                    "/(protected)/home/(tabs)/albums",
-                                  );
-                                }
-                              },
-                            },
-                          )
-                        }
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Text>Delete Album</Text>
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          }
-          showBackButton={false}
-        />
-      </Animated.View>
+      {match(selectedImages.length)
+        .with(P.number.gt(0), () => <HeaderImagePage />)
+        .otherwise(() => HeaderPage)}
       <ImageList albumId={id} className="pt-16" onScroll={onScroll} />
     </>
   );
