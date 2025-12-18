@@ -67,10 +67,12 @@ export default function SettingTabpage() {
     if (user.data && encrypted) {
       const decrypted = decrypt(encrypted, user.data.user.key);
       if (decrypted) {
-        const parsed = s3credentialsDto.safeParse(JSON.parse(decrypted));
-        if (parsed.success) {
-          setCredentials(parsed.data);
-        }
+        try {
+          const parsed = s3credentialsDto.safeParse(JSON.parse(decrypted));
+          if (parsed.success) {
+            setCredentials(parsed.data);
+          }
+        } catch (_) {}
       }
     }
   }, [user.data]);
@@ -129,20 +131,27 @@ export default function SettingTabpage() {
     reader.onload = (e) => {
       const content = e.target?.result;
       if (typeof content === "string") {
-        const decrpyted = decrypt(content, user.data?.user.key ?? "");
-        if (!decrpyted) {
-          alert("Error", "Failed to decrypt the backup file.");
-          return;
+        try {
+          const decrpyted = decrypt(content, user.data?.user.key ?? "");
+          if (!decrpyted) {
+            alert("Error", "Failed to decrypt the backup file.");
+            return;
+          }
+          const parsed = s3credentialsDto.safeParse(JSON.parse(decrpyted));
+          if (!parsed.success) {
+            alert("Error", "Invalid credentials format in backup file.");
+            return;
+          }
+          localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, content);
+          setCredentials(parsed.data);
+          clientUtils.gallery.get.invalidate();
+          alert("Success", "Credentials restored successfully.");
+        } catch (error) {
+          alert(
+            "Error",
+            error instanceof Error ? error.message : String(error),
+          );
         }
-        const parsed = s3credentialsDto.safeParse(JSON.parse(decrpyted));
-        if (!parsed.success) {
-          alert("Error", "Invalid credentials format in backup file.");
-          return;
-        }
-        localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, content);
-        setCredentials(parsed.data);
-        clientUtils.gallery.get.invalidate();
-        alert("Success", "Credentials restored successfully.");
       }
     };
     reader.readAsText(file);
