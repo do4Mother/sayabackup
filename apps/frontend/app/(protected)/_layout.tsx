@@ -5,7 +5,7 @@ import React from "react";
 
 // Configure anchor for modal routes
 export const unstable_settings = {
-  anchor: "home/(tabs)/gallery",
+  anchor: "home/(tabs)",
 };
 
 export default function ProtectedLayout() {
