@@ -6,7 +6,7 @@ import axiosRetry from "axios-retry";
 import { ImageManipulator } from "expo-image-manipulator";
 import { ImagePickerAsset } from "expo-image-picker";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
@@ -218,12 +218,24 @@ export const useUpload = () => {
     throw new Error("useUpload must be used within a UploadProvider");
   }
 
+  const activeWakeLock = useRef(false);
+
   useEffect(() => {
     const unsubscribe = store.subscribe((state) => {
-      if (state.data.some((item) => item.processedBytes < item.size)) {
+      if (
+        state.data.some((item) => item.processedBytes < item.size) &&
+        !activeWakeLock.current
+      ) {
         activateKeepAwakeAsync();
-      } else {
+        activeWakeLock.current = true;
+      }
+
+      if (
+        !state.data.some((item) => item.processedBytes < item.size) &&
+        activeWakeLock.current
+      ) {
         deactivateKeepAwake();
+        activeWakeLock.current = false;
       }
     });
 
