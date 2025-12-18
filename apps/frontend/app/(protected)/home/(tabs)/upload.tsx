@@ -120,7 +120,7 @@ export default function UploadTabpage() {
                     variant={"ghost"}
                     onPress={onClearAll}
                   >
-                    <Ionicons name="close" size={22} className="mt-0.5" />
+                    <Ionicons name="close" size={22} />
                     <Text className="leading-none">Clear</Text>
                   </Button>
                 </View>
