@@ -5,7 +5,8 @@ import axios, { CanceledError } from "axios";
 import axiosRetry from "axios-retry";
 import { ImageManipulator } from "expo-image-manipulator";
 import { ImagePickerAsset } from "expo-image-picker";
-import { createContext, useContext } from "react";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
+import { createContext, useContext, useEffect } from "react";
 import { Platform } from "react-native";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
@@ -216,6 +217,21 @@ export const useUpload = () => {
   if (!store) {
     throw new Error("useUpload must be used within a UploadProvider");
   }
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe((state) => {
+      if (state.data.some((item) => item.processedBytes < item.size)) {
+        activateKeepAwakeAsync();
+      } else {
+        deactivateKeepAwake();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   return useStore(
     store,
     useShallow((state) => state),
