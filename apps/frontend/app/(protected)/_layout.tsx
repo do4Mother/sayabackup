@@ -1,4 +1,4 @@
-import Header from "@/components/app/Header";
+import useHeader from "@/components/app/Header";
 import { useApp } from "@/hooks/use_app";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
@@ -10,6 +10,7 @@ export const unstable_settings = {
 
 export default function ProtectedLayout() {
   const userState = useApp((state) => state.user);
+  const { Header } = useHeader();
 
   if (!userState) {
     return <Redirect href="/" />;
@@ -19,7 +20,7 @@ export default function ProtectedLayout() {
     <Stack
       screenOptions={{
         headerShadowVisible: false,
-        header(props) {
+        header() {
           return <Header />;
         },
       }}

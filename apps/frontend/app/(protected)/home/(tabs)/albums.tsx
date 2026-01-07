@@ -1,6 +1,6 @@
 import AlbumList from "@/components/app/AlbumList";
 import CreateAlbumDialog from "@/components/app/CreateAlbumDialog";
-import Header from "@/components/app/Header";
+import useHeader from "@/components/app/Header";
 import HeaderImagePage from "@/components/app/HeaderImagePage";
 import ImageList from "@/components/app/ImageList";
 import {
@@ -32,12 +32,7 @@ import { useMutation } from "@tanstack/react-query";
 import { launchImageLibraryAsync } from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Fragment, useState } from "react";
-import { NativeScrollEvent, NativeSyntheticEvent, View } from "react-native";
-import Animated, {
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
+import { View } from "react-native";
 import { match, P } from "ts-pattern";
 
 export default function AlbumTab() {
@@ -52,52 +47,36 @@ export default function AlbumTab() {
 
 function ListOfAlbums() {
   const [open, setOpen] = useState(false);
-  const position = useSharedValue(0);
   const albums = trpc.album.get.useQuery(void 0, { enabled: false }); // just for listen data changes
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    position.value = withDelay(
-      100,
-      withTiming(event.nativeEvent.contentOffset.y > 50 ? -100 : 0),
-    );
-  };
+  const { Header, onScroll } = useHeader();
 
   return (
     <Fragment>
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: position,
-          left: 0,
-          right: 0,
-          zIndex: 10,
-        }}
-      >
-        <Header
-          title="Albums"
-          action={
-            albums.data &&
-            albums.data.length > 0 && (
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button variant={"ghost"} size={"icon"}>
-                    <Ionicons name="add" size={22} />
-                  </Button>
-                </DialogTrigger>
+      <Header
+        title="Albums"
+        action={
+          albums.data &&
+          albums.data.length > 0 && (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button variant={"ghost"} size={"icon"}>
+                  <Ionicons name="add" size={22} />
+                </Button>
+              </DialogTrigger>
 
-                <CreateAlbumDialog onOpenChange={setOpen} />
-              </Dialog>
-            )
-          }
-          showBackButton={false}
-        />
-      </Animated.View>
+              <CreateAlbumDialog onOpenChange={setOpen} />
+            </Dialog>
+          )
+        }
+        showBackButton={false}
+      />
       <AlbumList className="pt-16" onScroll={onScroll} />
     </Fragment>
   );
 }
 
 function AlbumDetailScreen() {
-  const position = useSharedValue(0);
+  const { Header, onScroll } = useHeader();
 
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
@@ -128,13 +107,6 @@ function AlbumDetailScreen() {
     },
   });
 
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    position.value = withDelay(
-      100,
-      withTiming(event.nativeEvent.contentOffset.y > 50 ? -100 : 0),
-    );
-  };
-
   if (!id) {
     return (
       <>
@@ -160,104 +132,90 @@ function AlbumDetailScreen() {
   };
 
   const HeaderPage = (
-    <Animated.View
-      style={{
-        position: "absolute",
-        top: position,
-        left: 0,
-        right: 0,
-        zIndex: 10,
-      }}
-    >
-      <Header
-        title={album.data?.name ?? "Album"}
-        action={
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Ionicons name="ellipsis-vertical" size={20} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>
-                <Text onPress={onUpload}>Upload</Text>
-              </DropdownMenuLabel>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuLabel>
-                    <Text className="text-red-500">Delete Album</Text>
-                  </DropdownMenuLabel>
-                </AlertDialogTrigger>
+    <Header
+      title={album.data?.name ?? "Album"}
+      action={
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <Ionicons name="ellipsis-vertical" size={20} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>
+              <Text onPress={onUpload}>Upload</Text>
+            </DropdownMenuLabel>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuLabel>
+                  <Text className="text-red-500">Delete Album</Text>
+                </DropdownMenuLabel>
+              </AlertDialogTrigger>
 
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Are you sure you want to delete this album?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. It will permanently delete
-                      the album.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>
-                      <Text>Cancel</Text>
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onPress={() =>
-                        deleteMutation.mutate(
-                          { withImages: true },
-                          {
-                            onSuccess() {
-                              clientUtils.gallery.get.invalidate();
-                              clientUtils.album.get.invalidate();
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Are you sure you want to delete this album?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. It will permanently delete the
+                    album.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    <Text>Cancel</Text>
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onPress={() =>
+                      deleteMutation.mutate(
+                        { withImages: true },
+                        {
+                          onSuccess() {
+                            clientUtils.gallery.get.invalidate();
+                            clientUtils.album.get.invalidate();
 
-                              if (router.canGoBack()) {
-                                router.back();
-                              } else {
-                                router.replace(
-                                  "/(protected)/home/(tabs)/albums",
-                                );
-                              }
-                            },
+                            if (router.canGoBack()) {
+                              router.back();
+                            } else {
+                              router.replace("/(protected)/home/(tabs)/albums");
+                            }
                           },
-                        )
-                      }
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Text>Delete With Images</Text>
-                    </AlertDialogAction>
-                    <AlertDialogAction
-                      onPress={() =>
-                        deleteMutation.mutate(
-                          { withImages: false },
-                          {
-                            onSuccess() {
-                              clientUtils.gallery.get.invalidate();
-                              clientUtils.album.get.invalidate();
+                        },
+                      )
+                    }
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Text>Delete With Images</Text>
+                  </AlertDialogAction>
+                  <AlertDialogAction
+                    onPress={() =>
+                      deleteMutation.mutate(
+                        { withImages: false },
+                        {
+                          onSuccess() {
+                            clientUtils.gallery.get.invalidate();
+                            clientUtils.album.get.invalidate();
 
-                              if (router.canGoBack()) {
-                                router.back();
-                              } else {
-                                router.replace(
-                                  "/(protected)/home/(tabs)/albums",
-                                );
-                              }
-                            },
+                            if (router.canGoBack()) {
+                              router.back();
+                            } else {
+                              router.replace("/(protected)/home/(tabs)/albums");
+                            }
                           },
-                        )
-                      }
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Text>Delete Album</Text>
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
-        showBackButton={false}
-      />
-    </Animated.View>
+                        },
+                      )
+                    }
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Text>Delete Album</Text>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      }
+      showBackButton={false}
+    />
   );
 
   return (
