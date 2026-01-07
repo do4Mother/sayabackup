@@ -14,7 +14,7 @@ export default function HomeTabPage() {
       {match(selectedImages.length)
         .with(P.number.gt(0), () => <HeaderImagePage />)
         .otherwise(() => (
-          <Header />
+          <Header title="Gallery" showBackButton={false} />
         ))}
 
       <ImageList onScroll={onScroll} className="pt-16" />
