@@ -1,16 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useRef } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
   View,
 } from "react-native";
-import Animated, {
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 import { Text } from "../ui/text";
 
 type HeaderProps = {
@@ -22,11 +19,23 @@ type HeaderProps = {
 export default function useHeader() {
   const position = useSharedValue(0);
 
+  const lastScrollY = useRef(0);
+
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    position.value = withDelay(
-      100,
-      withTiming(event.nativeEvent.contentOffset.y > 50 ? -100 : 0),
-    );
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+
+    if (currentScrollY <= 0) {
+      // At the top, show header
+      position.value = withTiming(0);
+    } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+      // Scrolling down, hide header
+      position.value = withTiming(-100);
+    } else if (currentScrollY < lastScrollY.current) {
+      // Scrolling up, show header
+      position.value = withTiming(0);
+    }
+
+    lastScrollY.current = currentScrollY;
   };
 
   return {
