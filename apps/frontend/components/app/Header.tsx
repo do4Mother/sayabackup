@@ -7,7 +7,11 @@ import {
   Pressable,
   View,
 } from "react-native";
-import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { Text } from "../ui/text";
 
 type HeaderProps = {
@@ -26,13 +30,13 @@ export default function useHeader() {
 
     if (currentScrollY <= 0) {
       // At the top, show header
-      position.value = withTiming(0);
+      position.value = withDelay(100, withTiming(0));
     } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
       // Scrolling down, hide header
-      position.value = withTiming(-100);
+      position.value = withDelay(100, withTiming(-100));
     } else if (currentScrollY < lastScrollY.current) {
       // Scrolling up, show header
-      position.value = withTiming(0);
+      position.value = withDelay(100, withTiming(0));
     }
 
     lastScrollY.current = currentScrollY;
