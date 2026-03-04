@@ -1,4 +1,5 @@
-import useHeader from "@/components/app/Header";
+import { Header } from "@/components/app/Header";
+import { ScrollListener } from "@/components/app/ScrollListener";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,6 @@ export default function SettingTabpage() {
     defaultValues: defaultValues.current,
     values: credentials,
   });
-  const { Header, onScroll } = useHeader();
 
   useEffect(() => {
     const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
@@ -148,139 +148,155 @@ export default function SettingTabpage() {
   };
 
   return (
-    <Fragment>
-      <Header title="Settings" showBackButton={false} />
-      <ScrollView
-        className="xl:max-w-2xl mx-auto hide-scrollbar pt-16"
-        scrollEventThrottle={100}
-        onScroll={onScroll}
-      >
-        <Card className="mx-4">
-          <CardContent className="gap-y-4">
-            <Controller
-              control={control}
-              rules={{ required: true }}
-              name="endpoint"
-              render={({ field, fieldState }) => (
-                <View className="gap-1">
-                  <Label htmlFor="endpoint">Endpoint</Label>
-                  <Input id="endpoint" {...field} />
-                  {fieldState.invalid && (
-                    <Text className="text-red-500">This field is required</Text>
+    <ScrollListener>
+      {(setScrollY) => (
+        <Fragment>
+          <Header title="Settings" showBackButton={false} />
+          <ScrollView
+            className="xl:max-w-2xl mx-auto hide-scrollbar pt-16"
+            scrollEventThrottle={100}
+            onScroll={setScrollY}
+          >
+            <Card className="mx-4">
+              <CardContent className="gap-y-4">
+                <Controller
+                  control={control}
+                  rules={{ required: true }}
+                  name="endpoint"
+                  render={({ field, fieldState }) => (
+                    <View className="gap-1">
+                      <Label htmlFor="endpoint">Endpoint</Label>
+                      <Input id="endpoint" {...field} />
+                      {fieldState.invalid && (
+                        <Text className="text-red-500">
+                          This field is required
+                        </Text>
+                      )}
+                    </View>
                   )}
-                </View>
-              )}
-            />
-            <Controller
-              control={control}
-              rules={{ required: true }}
-              name="access_key_id"
-              render={({ field, fieldState }) => (
-                <View className="gap-1">
-                  <Label htmlFor="access_key_id">Access Key ID</Label>
-                  <Input id="access_key_id" {...field} />
-                  {fieldState.invalid && (
-                    <Text className="text-red-500">This field is required</Text>
+                />
+                <Controller
+                  control={control}
+                  rules={{ required: true }}
+                  name="access_key_id"
+                  render={({ field, fieldState }) => (
+                    <View className="gap-1">
+                      <Label htmlFor="access_key_id">Access Key ID</Label>
+                      <Input id="access_key_id" {...field} />
+                      {fieldState.invalid && (
+                        <Text className="text-red-500">
+                          This field is required
+                        </Text>
+                      )}
+                    </View>
                   )}
-                </View>
-              )}
-            />
-            <Controller
-              control={control}
-              rules={{ required: true }}
-              name="secret_access_key"
-              render={({ field, fieldState }) => (
-                <View className="gap-1">
-                  <Label htmlFor="secret_access_key">Secret Access Key</Label>
-                  <Input id="secret_access_key" {...field} />
-                  {fieldState.invalid && (
-                    <Text className="text-red-500">This field is required</Text>
+                />
+                <Controller
+                  control={control}
+                  rules={{ required: true }}
+                  name="secret_access_key"
+                  render={({ field, fieldState }) => (
+                    <View className="gap-1">
+                      <Label htmlFor="secret_access_key">
+                        Secret Access Key
+                      </Label>
+                      <Input id="secret_access_key" {...field} />
+                      {fieldState.invalid && (
+                        <Text className="text-red-500">
+                          This field is required
+                        </Text>
+                      )}
+                    </View>
                   )}
-                </View>
-              )}
-            />
-            <Controller
-              control={control}
-              rules={{ required: true }}
-              name="bucket_name"
-              render={({ field, fieldState }) => (
-                <View className="gap-1">
-                  <Label htmlFor="bucket_name">Bucket Name</Label>
-                  <Input id="bucket_name" {...field} />
-                  {fieldState.invalid && (
-                    <Text className="text-red-500">This field is required</Text>
+                />
+                <Controller
+                  control={control}
+                  rules={{ required: true }}
+                  name="bucket_name"
+                  render={({ field, fieldState }) => (
+                    <View className="gap-1">
+                      <Label htmlFor="bucket_name">Bucket Name</Label>
+                      <Input id="bucket_name" {...field} />
+                      {fieldState.invalid && (
+                        <Text className="text-red-500">
+                          This field is required
+                        </Text>
+                      )}
+                    </View>
                   )}
-                </View>
-              )}
-            />
-            <Controller
-              control={control}
-              rules={{ required: true }}
-              name="region"
-              render={({ field, fieldState }) => (
-                <View className="gap-1">
-                  <Label htmlFor="region">Region</Label>
-                  <Input id="region" {...field} />
-                  {fieldState.invalid && (
-                    <Text className="text-red-500">This field is required</Text>
+                />
+                <Controller
+                  control={control}
+                  rules={{ required: true }}
+                  name="region"
+                  render={({ field, fieldState }) => (
+                    <View className="gap-1">
+                      <Label htmlFor="region">Region</Label>
+                      <Input id="region" {...field} />
+                      {fieldState.invalid && (
+                        <Text className="text-red-500">
+                          This field is required
+                        </Text>
+                      )}
+                    </View>
                   )}
-                </View>
-              )}
-            />
-          </CardContent>
-          <CardFooter>
-            <Button className="mx-auto" onPress={handleSubmit(onSubmit)}>
-              <Text>Save Settings</Text>
-            </Button>
-          </CardFooter>
-        </Card>
-        <View className="bg-slate-50 rounded-lg p-4 mx-4 mt-4 flex-row gap-2">
-          <View className="w-4">
-            <FontAwesome6 name="info" size={24} color="gray" />
-          </View>
-          <Text className="text-sm text-slate-500">
-            We <b>do not store</b> your S3 credentials on our servers. All
-            settings are stored locally on your device. Make sure to back them
-            up if needed, and be cautious when using public Wi-Fi or shared
-            devices.
-          </Text>
-        </View>
+                />
+              </CardContent>
+              <CardFooter>
+                <Button className="mx-auto" onPress={handleSubmit(onSubmit)}>
+                  <Text>Save Settings</Text>
+                </Button>
+              </CardFooter>
+            </Card>
+            <View className="bg-slate-50 rounded-lg p-4 mx-4 mt-4 flex-row gap-2">
+              <View className="w-4">
+                <FontAwesome6 name="info" size={24} color="gray" />
+              </View>
+              <Text className="text-sm text-slate-500">
+                We <b>do not store</b> your S3 credentials on our servers. All
+                settings are stored locally on your device. Make sure to back
+                them up if needed, and be cautious when using public Wi-Fi or
+                shared devices.
+              </Text>
+            </View>
 
-        <View className="mx-4 gap-y-4 mt-4 pb-8">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept=".backup"
-            onChange={onRestore}
-          />
-          <Button
-            variant={"outline"}
-            className="justify-start"
-            onPress={() => fileInputRef.current?.click()}
-          >
-            <Ionicons name="cloud-download-outline" size={20} />
-            <Text>Restore</Text>
-          </Button>
-          <Button
-            variant={"outline"}
-            className="justify-start"
-            onPress={onBackup}
-            disabled={isEmpty(omitBy(credentials, isEmpty))}
-          >
-            <Ionicons name="cloud-upload-outline" size={20} />
-            <Text>Backup</Text>
-          </Button>
-          <Button
-            variant={"destructive"}
-            className="justify-start"
-            onPress={onLogout}
-          >
-            <Ionicons name="log-out-outline" size={20} color="white" />
-            <Text>Logout</Text>
-          </Button>
-        </View>
-      </ScrollView>
-    </Fragment>
+            <View className="mx-4 gap-y-4 mt-4 pb-8">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".backup"
+                onChange={onRestore}
+              />
+              <Button
+                variant={"outline"}
+                className="justify-start"
+                onPress={() => fileInputRef.current?.click()}
+              >
+                <Ionicons name="cloud-download-outline" size={20} />
+                <Text>Restore</Text>
+              </Button>
+              <Button
+                variant={"outline"}
+                className="justify-start"
+                onPress={onBackup}
+                disabled={isEmpty(omitBy(credentials, isEmpty))}
+              >
+                <Ionicons name="cloud-upload-outline" size={20} />
+                <Text>Backup</Text>
+              </Button>
+              <Button
+                variant={"destructive"}
+                className="justify-start"
+                onPress={onLogout}
+              >
+                <Ionicons name="log-out-outline" size={20} color="white" />
+                <Text>Logout</Text>
+              </Button>
+            </View>
+          </ScrollView>
+        </Fragment>
+      )}
+    </ScrollListener>
   );
 }

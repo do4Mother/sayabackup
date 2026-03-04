@@ -1,8 +1,9 @@
 import AlbumList from "@/components/app/AlbumList";
 import CreateAlbumDialog from "@/components/app/CreateAlbumDialog";
-import useHeader from "@/components/app/Header";
+import { Header } from "@/components/app/Header";
 import HeaderImagePage from "@/components/app/HeaderImagePage";
 import ImageList from "@/components/app/ImageList";
+import { ScrollListener } from "@/components/app/ScrollListener";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,36 +49,37 @@ export default function AlbumTab() {
 function ListOfAlbums() {
   const [open, setOpen] = useState(false);
   const albums = trpc.album.get.useQuery(void 0, { enabled: false }); // just for listen data changes
-  const { Header, onScroll } = useHeader();
 
   return (
-    <Fragment>
-      <Header
-        title="Albums"
-        action={
-          albums.data &&
-          albums.data.length > 0 && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button variant={"ghost"} size={"icon"}>
-                  <Ionicons name="add" size={22} />
-                </Button>
-              </DialogTrigger>
+    <ScrollListener>
+      {(setScrollY) => (
+        <Fragment>
+          <Header
+            title="Albums"
+            action={
+              albums.data &&
+              albums.data.length > 0 && (
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant={"ghost"} size={"icon"}>
+                      <Ionicons name="add" size={22} />
+                    </Button>
+                  </DialogTrigger>
 
-              <CreateAlbumDialog onOpenChange={setOpen} />
-            </Dialog>
-          )
-        }
-        showBackButton={false}
-      />
-      <AlbumList className="pt-16" onScroll={onScroll} />
-    </Fragment>
+                  <CreateAlbumDialog onOpenChange={setOpen} />
+                </Dialog>
+              )
+            }
+            showBackButton={false}
+          />
+          <AlbumList className="pt-16" onScroll={setScrollY} />
+        </Fragment>
+      )}
+    </ScrollListener>
   );
 }
 
 function AlbumDetailScreen() {
-  const { Header, onScroll } = useHeader();
-
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { upload } = useUpload();
@@ -219,11 +221,15 @@ function AlbumDetailScreen() {
   );
 
   return (
-    <>
-      {match(selectedImages.length)
-        .with(P.number.gt(0), () => <HeaderImagePage />)
-        .otherwise(() => HeaderPage)}
-      <ImageList albumId={id} className="pt-16" onScroll={onScroll} />
-    </>
+    <ScrollListener>
+      {(setScrollY) => (
+        <>
+          {match(selectedImages.length)
+            .with(P.number.gt(0), () => <HeaderImagePage />)
+            .otherwise(() => HeaderPage)}
+          <ImageList albumId={id} className="pt-16" onScroll={setScrollY} />
+        </>
+      )}
+    </ScrollListener>
   );
 }

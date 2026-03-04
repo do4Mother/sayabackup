@@ -1,12 +1,8 @@
+import { ScrollListenerContext } from "@/hooks/useScrollListener";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useRef } from "react";
-import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  View,
-} from "react-native";
+import { useContext, useEffect, useRef } from "react";
+import { Pressable, View } from "react-native";
 import Animated, {
   useSharedValue,
   withDelay,
@@ -18,57 +14,54 @@ type HeaderProps = {
   title?: string;
   showBackButton?: boolean;
   action?: React.ReactNode;
+  hideOnScroll?: boolean;
 };
 
-export default function useHeader() {
+export function Header(props: HeaderProps) {
+  const defaultProps = {
+    showBackButton: true,
+  };
+  props = { ...defaultProps, ...props };
   const position = useSharedValue(0);
-
   const lastScrollY = useRef(0);
+  const scrollListenerContext = useContext(ScrollListenerContext);
 
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
+  if (!scrollListenerContext && props.hideOnScroll) {
+    throw new Error("Header must be used within a ScrollListenerProvider");
+  }
 
-    if (currentScrollY <= 0) {
-      // At the top, show header
-      position.value = withDelay(100, withTiming(0));
-    } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-      // Scrolling down, hide header
-      position.value = withDelay(100, withTiming(-100));
-    } else if (currentScrollY < lastScrollY.current) {
-      // Scrolling up, show header
-      position.value = withDelay(100, withTiming(0));
-    }
+  useEffect(() => {
+    if (!props.hideOnScroll) return;
 
-    lastScrollY.current = currentScrollY;
-  };
+    const unsubscribe = scrollListenerContext?.subscribe(
+      (state) => state.scrollY,
+      (scrollY) => {
+        const currentScrollY = scrollY;
 
-  return {
-    onScroll,
-    Header: (props: HeaderProps) => {
-      const defaultProps = {
-        showBackButton: true,
-      };
-      props = { ...defaultProps, ...props };
-      return (
-        <Animated.View
-          style={{
-            position: "absolute",
-            top: position,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-            height: 56,
-          }}
-        >
-          <Header {...props} />
-        </Animated.View>
-      );
-    },
-  };
-}
+        if (currentScrollY <= 0) {
+          // At the top, show header
+          position.value = withDelay(100, withTiming(0));
+        } else if (
+          currentScrollY > lastScrollY.current &&
+          currentScrollY > 50
+        ) {
+          // Scrolling down, hide header
+          position.value = withDelay(100, withTiming(-100));
+        } else if (currentScrollY < lastScrollY.current) {
+          // Scrolling up, show header
+          position.value = withDelay(100, withTiming(0));
+        }
 
-function Header(props: HeaderProps) {
-  return (
+        lastScrollY.current = currentScrollY;
+      },
+    );
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [scrollListenerContext]);
+
+  const HeaderComponent = () => (
     <View className="flex-row gap-4 bg-background px-4 h-14 items-center lg:h-16">
       {props.showBackButton && <BackButton />}
       {props.title && (
@@ -79,6 +72,25 @@ function Header(props: HeaderProps) {
       </View>
     </View>
   );
+
+  if (props.hideOnScroll) {
+    return (
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: position,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          height: 56,
+        }}
+      >
+        <HeaderComponent />
+      </Animated.View>
+    );
+  }
+
+  return <HeaderComponent />;
 }
 
 export function BackButton() {
