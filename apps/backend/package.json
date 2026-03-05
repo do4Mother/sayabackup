@@ -13,7 +13,6 @@
 		"studio": "node -e \"const {execSync}=require('child_process');const {globSync}=require('glob');const p=globSync('.wrangler/state/v3/d1/miniflare-D1DatabaseObject/**/*.sqlite')[0];process.env.LOCAL_DB_PATH=p;execSync('drizzle-kit studio',{stdio:'inherit'})\""
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.5",
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"@types/crypto-js": "^4.2.2",
 		"@types/node": "^24.10.0",
