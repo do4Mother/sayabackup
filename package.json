@@ -1,19 +1,19 @@
 {
-  "name": "sayabackup",
-  "version": "1.0.0",
-  "description": "",
-  "scripts": {
-    "dev:backend": "turbo run dev --filter=backend",
-    "dev": "turbo dev",
-    "deploy": "turbo deploy"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.20.0",
-  "devDependencies": {
-    "@biomejs/biome": "2.4.5",
-    "turbo": "^2.6.0",
-    "typescript": "~5.9.3"
-  }
+	"name": "sayabackup",
+	"version": "1.0.0",
+	"description": "",
+	"scripts": {
+		"dev:backend": "turbo run dev --filter=backend",
+		"dev": "turbo dev",
+		"deploy": "turbo deploy"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.20.0",
+	"devDependencies": {
+		"@biomejs/biome": "2.4.6",
+		"turbo": "^2.6.0",
+		"typescript": "~5.9.3"
+	}
 }

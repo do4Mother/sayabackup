@@ -206,7 +206,7 @@
 		{ "includes": ["*.web.*"] }
 	],
 	"assist": {
-		"enabled": true,
-		"actions": { "source": { "organizeImports": "on" } }
+		"enabled": false,
+		"actions": { "source": { "organizeImports": "off" } }
 	}
 }
