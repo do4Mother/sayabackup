@@ -27,6 +27,10 @@ export default function RootLayout() {
 						options={{ animation: "slide_from_right" }}
 					/>
 					<Stack.Screen name="photo/[id]" options={{ animation: "fade" }} />
+					<Stack.Screen
+						name="settings/s3-credentials"
+						options={{ animation: "slide_from_right" }}
+					/>
 				</Stack>
 			</QueryClientProvider>
 		</TRPCProvider>

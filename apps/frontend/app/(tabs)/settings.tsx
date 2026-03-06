@@ -157,18 +157,12 @@ export default function SettingsScreen() {
 				{/* Storage */}
 				<SectionHeader title="Storage" />
 				<SettingRow
-					icon="server"
-					iconColor="#f97316"
-					iconBg="#431407"
-					title="Storage Provider"
-					subtitle="S3 Compatible"
-				/>
-				<SettingRow
 					icon="key"
 					iconColor="#ec4899"
 					iconBg="#500724"
 					title="S3 Credentials"
 					subtitle="Configured"
+					onPress={() => router.push("/settings/s3-credentials")}
 				/>
 				<SettingRow
 					icon="trash"
