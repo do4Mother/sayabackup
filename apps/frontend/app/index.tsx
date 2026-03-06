@@ -1,10 +1,5 @@
-import { Text, View } from "react-native";
-import "../global.css";
+import { Redirect } from "expo-router";
 
-export default function App() {
-	return (
-		<View className="bg-black flex-1 justify-center items-center">
-			<Text className="text-white">Welcome to the React Native app!</Text>
-		</View>
-	);
+export default function Index() {
+	return <Redirect href="/login" />;
 }
