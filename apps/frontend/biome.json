@@ -1,5 +1,6 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+	"root": false,
+	"extends": "//",
 	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
 	"files": { "ignoreUnknown": false },
 	"formatter": { "enabled": true, "indentStyle": "tab" },
@@ -186,7 +187,8 @@
 					"complexity": { "noUselessConstructor": "warn" },
 					"correctness": {
 						"noUndeclaredVariables": "off",
-						"noUnusedVariables": "warn"
+						"noUnusedVariables": "warn",
+						"useExhaustiveDependencies": "off"
 					},
 					"style": {
 						"noCommonJs": "warn",
