@@ -10,17 +10,53 @@ import { AUTH_COOKIE_NAME, USER_PROVIDERS } from "../../utils/constants";
 export const google = publicProcedure
 	.input(
 		z.object({
-			client_id: z.string(),
-			credential: z.string(),
+			code: z.string(),
+			state: z.string(), // secret value for CSRF protection
 		}),
 	)
 	.mutation(async ({ input, ctx }) => {
+		const secretValue = ctx.getCookie("google_auth_secret");
+
+		if (input.state !== secretValue) {
+			throw new TRPCError({
+				code: "FORBIDDEN",
+				message: "Invalid state value",
+			});
+		}
+
+		/**
+		 * get id_token from google with the authorization code
+		 */
+		const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: new URLSearchParams({
+				code: input.code,
+				client_id: ctx.env.CLIENT_ID,
+				client_secret: ctx.env.CLIENT_SECRET,
+				redirect_uri: "http://localhost:8081/auth/google",
+				grant_type: "authorization_code",
+			}),
+		});
+
+		const tokenData = z
+			.object({
+				id_token: z.string(),
+			})
+			.parse(await tokenResponse.json());
+		const idToken = tokenData.id_token;
+
+		/**
+		 * verify the id_token and get the user info from the token payload
+		 */
 		const jwksURL = "https://www.googleapis.com/oauth2/v3/certs";
 		const issuer = "https://accounts.google.com";
 
 		const JWKS = createRemoteJWKSet(new URL(jwksURL));
 
-		const { payload } = await jwtVerify(input.credential, JWKS, {
+		const { payload } = await jwtVerify(idToken, JWKS, {
 			issuer,
 			audience: ctx.env.CLIENT_ID,
 		});
