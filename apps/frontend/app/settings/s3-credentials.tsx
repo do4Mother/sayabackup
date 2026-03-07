@@ -1,18 +1,26 @@
+import { Button } from "@/components/button/Button";
+import { TextInputField } from "@/components/form/TextInputField";
 import { Ionicons } from "@expo/vector-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-	Alert,
-	Pressable,
-	ScrollView,
-	Text,
-	TextInput,
-	View,
-} from "react-native";
+import { useForm } from "react-hook-form";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import z from "zod";
+
+const S3FormValues = z.object({
+	endpoint: z.url("Please enter a valid URL"),
+	region: z.string().min(1, "Region is required"),
+	bucket_name: z.string().min(1, "Bucket name is required"),
+	access_key_id: z.string().min(1, "Access Key ID is required"),
+	secret_access_key: z.string().min(1, "Secret Access Key is required"),
+});
+
+type S3FormValues = z.infer<typeof S3FormValues>;
 
 type FieldConfig = {
-	key: string;
+	key: keyof S3FormValues;
 	label: string;
 	placeholder: string;
 	icon: keyof typeof Ionicons.glyphMap;
@@ -58,42 +66,32 @@ const FIELDS: FieldConfig[] = [
 export default function S3CredentialsScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const [showSecret, setShowSecret] = useState(false);
-	const [values, setValues] = useState<Record<string, string>>({
-		endpoint: "",
-		region: "",
-		bucket_name: "",
-		access_key_id: "",
-		secret_access_key: "",
+	const [showSecret, _setShowSecret] = useState(false);
+
+	const {
+		control,
+		handleSubmit,
+		formState: { isValid },
+	} = useForm<S3FormValues>({
+		defaultValues: {
+			endpoint: "",
+			region: "",
+			bucket_name: "",
+			access_key_id: "",
+			secret_access_key: "",
+		},
+		resolver: zodResolver(S3FormValues),
+		mode: "onChange",
 	});
 
-	const updateField = (key: string, value: string) => {
-		setValues((prev) => ({ ...prev, [key]: value }));
-	};
-
-	const allFieldsFilled = Object.values(values).every(
-		(v) => v.trim().length > 0,
-	);
-
-	const handleSave = () => {
-		if (!allFieldsFilled) {
-			Alert.alert("Missing Fields", "Please fill in all credential fields.");
-			return;
-		}
+	const handleSave = handleSubmit(() => {
 		// TODO: encrypt and save credentials
 		Alert.alert("Saved", "S3 credentials have been saved successfully.", [
 			{ text: "OK", onPress: () => router.back() },
 		]);
-	};
+	});
 
 	const handleTest = () => {
-		if (!allFieldsFilled) {
-			Alert.alert(
-				"Missing Fields",
-				"Please fill in all fields before testing.",
-			);
-			return;
-		}
 		// TODO: implement actual connectivity test
 		Alert.alert("Connection Test", "Testing connection to your S3 storage...");
 	};
@@ -135,38 +133,19 @@ export default function S3CredentialsScreen() {
 				{/* Credential Fields */}
 				<View className="mx-5">
 					{FIELDS.map((field) => (
-						<View key={field.key} className="mb-4">
-							<Text className="text-neutral-400 text-xs font-semibold tracking-wider uppercase mb-2">
-								{field.label}
-							</Text>
-							<View className="flex-row items-center bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-								<View className="pl-4 pr-2">
-									<Ionicons name={field.icon} size={16} color="#737373" />
-								</View>
-								<TextInput
-									value={values[field.key]}
-									onChangeText={(v) => updateField(field.key, v)}
-									placeholder={field.placeholder}
-									placeholderTextColor="#404040"
-									className="flex-1 text-white text-sm py-3.5 pr-3"
-									autoCapitalize="none"
-									autoCorrect={false}
-									secureTextEntry={field.secure && !showSecret}
-									keyboardType={field.keyboardType ?? "default"}
-								/>
-								{field.secure && (
-									<Pressable
-										onPress={() => setShowSecret(!showSecret)}
-										className="pr-4 pl-2"
-									>
-										<Ionicons
-											name={showSecret ? "eye-off" : "eye"}
-											size={18}
-											color="#737373"
-										/>
-									</Pressable>
-								)}
-							</View>
+						<View key={field.key}>
+							<TextInputField
+								control={control}
+								name={field.key}
+								label={field.label}
+								icon={<Ionicons name={field.icon} size={16} color="#737373" />}
+								placeholder={field.placeholder}
+								placeholderTextColor="#404040"
+								autoCapitalize="none"
+								autoCorrect={false}
+								secureTextEntry={field.secure && !showSecret}
+								keyboardType={field.keyboardType ?? "default"}
+							/>
 						</View>
 					))}
 				</View>
@@ -194,24 +173,12 @@ export default function S3CredentialsScreen() {
 
 				{/* Action Buttons */}
 				<View className="mx-5 mt-8 gap-3">
-					<Pressable
-						onPress={handleSave}
-						className={`rounded-xl py-3.5 items-center ${
-							allFieldsFilled
-								? "bg-pink-500 active:bg-pink-600"
-								: "bg-neutral-800"
-						}`}
-					>
-						<Text
-							className={`font-semibold text-sm ${
-								allFieldsFilled ? "text-white" : "text-neutral-500"
-							}`}
-						>
-							Save Credentials
-						</Text>
-					</Pressable>
+					<Button onPress={handleSave} disabled={!isValid} size="lg">
+						<Text className="font-bold">Save Credentials</Text>
+					</Button>
 
-					<Pressable
+					<Button
+						variant="outline"
 						onPress={() =>
 							Alert.alert(
 								"Clear Credentials",
@@ -221,25 +188,17 @@ export default function S3CredentialsScreen() {
 									{
 										text: "Clear",
 										style: "destructive",
-										onPress: () => {
-											setValues({
-												endpoint: "",
-												region: "",
-												bucket_name: "",
-												access_key_id: "",
-												secret_access_key: "",
-											});
-										},
+										onPress: () => {},
 									},
 								],
 							)
 						}
-						className="border border-red-900/60 rounded-xl py-3.5 items-center active:bg-red-950/40"
+						className="border border-red-900/60 "
 					>
 						<Text className="text-red-400 font-semibold text-sm">
 							Clear Credentials
 						</Text>
-					</Pressable>
+					</Button>
 				</View>
 			</ScrollView>
 		</View>
