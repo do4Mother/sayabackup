@@ -1,12 +1,22 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import { AppButton } from "@/components/button/AppButton";
 import { TextInputField } from "@/components/form/TextInputField";
+import { testS3Connection } from "@/s3/test_connection";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	ScrollView,
+	Text,
+	View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 import z from "zod";
 
 const S3FormValues = z.object({
@@ -67,11 +77,34 @@ export default function S3CredentialsScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { alert } = useAlert();
+	const [isTestingSuccessful, setIsTestingSuccessful] = useState<
+		boolean | null
+	>(null);
+	const testMutation = useMutation({
+		mutationFn: async (values: S3FormValues) => testS3Connection(values),
+		onSuccess: () => {
+			setIsTestingSuccessful(true);
+			alert(
+				"Connection Successful",
+				"Successfully connected to your S3 storage.",
+			);
+		},
+		onError: (error) => {
+			setIsTestingSuccessful(false);
+			alert(
+				"Connection Failed",
+				`Failed to connect to your S3 storage.
+				\nPlease check your credentials and try again.
+			\nError: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		},
+	});
 
 	const {
 		control,
 		handleSubmit,
 		formState: { isValid },
+		getValues,
 		reset,
 	} = useForm<S3FormValues>({
 		defaultValues: {
@@ -93,8 +126,16 @@ export default function S3CredentialsScreen() {
 	});
 
 	const handleTest = () => {
-		// TODO: implement actual connectivity test
-		alert("Connection Test", "Testing connection to your S3 storage...");
+		const values = getValues();
+		const hasEmptyFields = Object.values(values).some(
+			(value) => value.trim() === "",
+		);
+		if (hasEmptyFields) {
+			alert("Validation Error", "Please fill in all fields before testing.");
+			return;
+		}
+
+		testMutation.mutate(getValues());
 	};
 
 	return (
@@ -152,24 +193,49 @@ export default function S3CredentialsScreen() {
 				</View>
 
 				{/* Connection Status */}
-				<View className="mx-5 mt-2 bg-neutral-900/60 border border-neutral-800/60 rounded-2xl p-4 flex-row items-center">
+				<View
+					className={twMerge(
+						"mx-5 mt-2 bg-neutral-900/60 border border-neutral-800/60 rounded-2xl p-4 flex-row items-center",
+						isTestingSuccessful === null
+							? ""
+							: isTestingSuccessful
+								? "border-emerald-500/60"
+								: "border-red-500/60",
+					)}
+				>
 					<View className="w-9 h-9 rounded-xl bg-neutral-800 items-center justify-center mr-3">
-						<Ionicons name="pulse" size={18} color="#737373" />
+						{isTestingSuccessful === null ? (
+							<Ionicons name="ellipse" size={12} color="#737373" />
+						) : isTestingSuccessful ? (
+							<Ionicons name="checkmark" size={16} color="#10b981" />
+						) : (
+							<Ionicons name="close" size={16} color="#ef4444" />
+						)}
 					</View>
 					<View className="flex-1">
 						<Text className="text-neutral-300 text-sm font-medium">
 							Connection Status
 						</Text>
 						<Text className="text-neutral-500 text-xs mt-0.5">
-							Not tested yet
+							{isTestingSuccessful === null
+								? "Not tested yet"
+								: isTestingSuccessful
+									? "Connection successful"
+									: "Connection failed"}
 						</Text>
 					</View>
-					<Pressable
-						onPress={handleTest}
-						className="bg-neutral-800 px-4 py-2 rounded-lg active:bg-neutral-700"
-					>
-						<Text className="text-neutral-300 text-xs font-semibold">Test</Text>
-					</Pressable>
+					{testMutation.isPending ? (
+						<ActivityIndicator color="#737373" />
+					) : (
+						<Pressable
+							onPress={handleTest}
+							className="bg-neutral-800 px-4 py-2 rounded-lg active:bg-neutral-700"
+						>
+							<Text className="text-neutral-300 text-xs font-semibold">
+								Test
+							</Text>
+						</Pressable>
+					)}
 				</View>
 
 				{/* Action Buttons */}
