@@ -1,10 +1,9 @@
 import { useAlert } from "@/components/alert/AlertContext";
-import { Button } from "@/components/button/Button";
+import { AppButton } from "@/components/button/AppButton";
 import { TextInputField } from "@/components/form/TextInputField";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -68,12 +67,12 @@ export default function S3CredentialsScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { alert } = useAlert();
-	const [showSecret, _setShowSecret] = useState(false);
 
 	const {
 		control,
 		handleSubmit,
 		formState: { isValid },
+		reset,
 	} = useForm<S3FormValues>({
 		defaultValues: {
 			endpoint: "",
@@ -145,7 +144,7 @@ export default function S3CredentialsScreen() {
 								placeholderTextColor="#404040"
 								autoCapitalize="none"
 								autoCorrect={false}
-								secureTextEntry={field.secure && !showSecret}
+								secureTextEntry={field.secure}
 								keyboardType={field.keyboardType ?? "default"}
 							/>
 						</View>
@@ -175,11 +174,11 @@ export default function S3CredentialsScreen() {
 
 				{/* Action Buttons */}
 				<View className="mx-5 mt-8 gap-3">
-					<Button onPress={handleSave} disabled={!isValid} size="lg">
+					<AppButton onPress={handleSave} disabled={!isValid} size="lg">
 						<Text className="font-bold">Save Credentials</Text>
-					</Button>
+					</AppButton>
 
-					<Button
+					<AppButton
 						variant="outline"
 						onPress={() =>
 							alert(
@@ -190,7 +189,7 @@ export default function S3CredentialsScreen() {
 									{
 										text: "Clear",
 										style: "destructive",
-										onPress: () => {},
+										onPress: reset,
 									},
 								],
 							)
@@ -200,7 +199,7 @@ export default function S3CredentialsScreen() {
 						<Text className="text-red-400 font-semibold text-sm">
 							Clear Credentials
 						</Text>
-					</Button>
+					</AppButton>
 				</View>
 			</ScrollView>
 		</View>
