@@ -20,7 +20,7 @@ import { twMerge } from "tailwind-merge";
 import z from "zod";
 
 const S3FormValues = z.object({
-	endpoint: z.url("Please enter a valid URL"),
+	endpoint: z.string().min(1, "Endpoint is required"),
 	region: z.string().min(1, "Region is required"),
 	bucket_name: z.string().min(1, "Bucket name is required"),
 	access_key_id: z.string().min(1, "Access Key ID is required"),
@@ -42,7 +42,7 @@ const FIELDS: FieldConfig[] = [
 	{
 		key: "endpoint",
 		label: "Endpoint",
-		placeholder: "https://s3.amazonaws.com",
+		placeholder: "s3.amazonaws.com",
 		icon: "link",
 		keyboardType: "url",
 	},
