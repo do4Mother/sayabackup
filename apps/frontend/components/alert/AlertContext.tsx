@@ -193,11 +193,11 @@ export function AlertProvider({ children }: { children: ReactNode }) {
 						>
 							{/* Content */}
 							<View className="px-6 pt-6 pb-5">
-								<Text className="text-white text-base font-bold text-center">
+								<Text className="text-white text-lg font-bold text-center">
 									{state.title}
 								</Text>
 								{state.message ? (
-									<Text className="text-neutral-400 text-sm text-center mt-2 leading-5">
+									<Text className="text-neutral-400 text-sm text-center mt-4 leading-3">
 										{state.message}
 									</Text>
 								) : null}
