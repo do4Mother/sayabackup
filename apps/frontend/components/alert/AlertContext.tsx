@@ -13,7 +13,7 @@ import Animated, {
 	useSharedValue,
 	withTiming,
 } from "react-native-reanimated";
-import { twMerge } from "tailwind-merge";
+import { AppButton } from "../button/AppButton";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -50,33 +50,15 @@ export function useAlert(): AlertContextValue {
 	return ctx;
 }
 
-// ── Button styles ──────────────────────────────────────────────────────
+// ── Button variant mapping ─────────────────────────────────────────────
 
-const buttonBase =
-	"flex-1 items-center justify-center py-3.5 rounded-xl active:opacity-70";
-
-function getButtonClasses(style?: AlertButtonStyle, isOnly?: boolean): string {
-	if (style === "destructive") {
-		return twMerge(buttonBase, "bg-red-950/50 border border-red-900/50");
-	}
-	if (style === "cancel") {
-		return twMerge(buttonBase, "bg-neutral-800/80");
-	}
-	return twMerge(
-		buttonBase,
-		isOnly ? "bg-amber-400 active:opacity-80" : "bg-neutral-800/80",
-	);
-}
-
-function getButtonTextClasses(
+function getButtonVariant(
 	style?: AlertButtonStyle,
 	isOnly?: boolean,
-): string {
-	if (style === "destructive") return "text-red-400 font-semibold text-sm";
-	if (style === "cancel") return "text-neutral-400 font-medium text-sm";
-	return isOnly
-		? "text-neutral-950 font-bold text-sm"
-		: "text-white font-semibold text-sm";
+): "primary" | "ghost" | "destructive" {
+	if (style === "destructive") return "destructive";
+	if (style === "cancel") return "ghost";
+	return isOnly ? "primary" : "ghost";
 }
 
 // ── Provider ───────────────────────────────────────────────────────────
@@ -227,17 +209,15 @@ export function AlertProvider({ children }: { children: ReactNode }) {
 							{/* Buttons */}
 							<View className="flex-row gap-2.5 px-4 py-3.5">
 								{resolvedButtons.map((btn) => (
-									<Pressable
+									<AppButton
 										key={btn.text}
+										variant={getButtonVariant(btn.style, isOnlyButton)}
+										size="sm"
+										label={btn.text}
 										onPress={() => dismiss(btn.onPress)}
-										className={getButtonClasses(btn.style, isOnlyButton)}
-									>
-										<Text
-											className={getButtonTextClasses(btn.style, isOnlyButton)}
-										>
-											{btn.text}
-										</Text>
-									</Pressable>
+										className="flex-1"
+										fullWidth={false}
+									/>
 								))}
 							</View>
 						</Animated.View>
