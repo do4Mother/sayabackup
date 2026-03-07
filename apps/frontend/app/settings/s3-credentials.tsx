@@ -1,3 +1,4 @@
+import { useAlert } from "@/components/alert/AlertContext";
 import { Button } from "@/components/button/Button";
 import { TextInputField } from "@/components/form/TextInputField";
 import { Ionicons } from "@expo/vector-icons";
@@ -5,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
 
@@ -66,6 +67,7 @@ const FIELDS: FieldConfig[] = [
 export default function S3CredentialsScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
+	const { alert } = useAlert();
 	const [showSecret, _setShowSecret] = useState(false);
 
 	const {
@@ -86,14 +88,14 @@ export default function S3CredentialsScreen() {
 
 	const handleSave = handleSubmit(() => {
 		// TODO: encrypt and save credentials
-		Alert.alert("Saved", "S3 credentials have been saved successfully.", [
+		alert("Saved", "S3 credentials have been saved successfully.", [
 			{ text: "OK", onPress: () => router.back() },
 		]);
 	});
 
 	const handleTest = () => {
 		// TODO: implement actual connectivity test
-		Alert.alert("Connection Test", "Testing connection to your S3 storage...");
+		alert("Connection Test", "Testing connection to your S3 storage...");
 	};
 
 	return (
@@ -180,7 +182,7 @@ export default function S3CredentialsScreen() {
 					<Button
 						variant="outline"
 						onPress={() =>
-							Alert.alert(
+							alert(
 								"Clear Credentials",
 								"Are you sure you want to remove all saved S3 credentials?",
 								[

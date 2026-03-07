@@ -1,8 +1,8 @@
+import { useAlert } from "@/components/alert/AlertContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-	Alert,
 	Dimensions,
 	Modal,
 	Pressable,
@@ -86,6 +86,7 @@ const FILTER_PRESETS = [
 export default function PhotoDetailScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
+	const { alert } = useAlert();
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const [showInfo, setShowInfo] = useState(false);
 	const [isFavorite, setIsFavorite] = useState(false);
@@ -101,7 +102,7 @@ export default function PhotoDetailScreen() {
 	const photoColor = getPhotoColor(id ?? "0");
 
 	const handleDelete = () => {
-		Alert.alert(
+		alert(
 			"Delete Photo",
 			"This photo will be permanently deleted from your backup. This action cannot be undone.",
 			[
@@ -110,7 +111,7 @@ export default function PhotoDetailScreen() {
 					text: "Delete",
 					style: "destructive",
 					onPress: () => {
-						Alert.alert("Deleted", "Photo has been deleted.", [
+						alert("Deleted", "Photo has been deleted.", [
 							{ text: "OK", onPress: () => router.back() },
 						]);
 					},
@@ -133,13 +134,13 @@ export default function PhotoDetailScreen() {
 
 	const handleEditTool = (toolId: string) => {
 		if (toolId === "rotate") {
-			Alert.alert("Rotated", "Photo rotated 90° clockwise.");
+			alert("Rotated", "Photo rotated 90° clockwise.");
 		} else if (toolId === "crop") {
-			Alert.alert("Crop", "Crop tool opened. (Demo)");
+			alert("Crop", "Crop tool opened. (Demo)");
 		} else if (toolId === "text") {
-			Alert.alert("Text", "Text overlay tool opened. (Demo)");
+			alert("Text", "Text overlay tool opened. (Demo)");
 		} else if (toolId === "draw") {
-			Alert.alert("Draw", "Drawing tool opened. (Demo)");
+			alert("Draw", "Drawing tool opened. (Demo)");
 		}
 	};
 
@@ -387,7 +388,7 @@ export default function PhotoDetailScreen() {
 							{/* Save Button */}
 							<Pressable
 								onPress={() => {
-									Alert.alert("Saved", "Your edits have been saved.");
+									alert("Saved", "Your edits have been saved.");
 									setShowEdit(false);
 								}}
 								className="bg-amber-400 rounded-xl py-3 items-center active:opacity-80"
@@ -535,7 +536,7 @@ export default function PhotoDetailScreen() {
 						<Pressable
 							onPress={() => {
 								setShowAlbumPicker(false);
-								Alert.alert("New Album", "Create album feature coming soon.");
+								alert("New Album", "Create album feature coming soon.");
 							}}
 							className="flex-row items-center px-5 py-3.5 active:bg-neutral-900 border-t border-neutral-900"
 						>
@@ -624,10 +625,7 @@ export default function PhotoDetailScreen() {
 								key={opt.label}
 								onPress={() => {
 									setShowShareSheet(false);
-									Alert.alert(
-										opt.label,
-										`${opt.label} action triggered. (Demo)`,
-									);
+									alert(opt.label, `${opt.label} action triggered. (Demo)`);
 								}}
 								className="items-center gap-2"
 							>
@@ -698,10 +696,7 @@ export default function PhotoDetailScreen() {
 							key={opt.label}
 							onPress={() => {
 								setShowMoreMenu(false);
-								Alert.alert(
-									opt.label,
-									`${opt.label} feature coming soon. (Demo)`,
-								);
+								alert(opt.label, `${opt.label} feature coming soon. (Demo)`);
 							}}
 							className="flex-row items-center px-5 py-3.5 active:bg-neutral-900"
 						>
