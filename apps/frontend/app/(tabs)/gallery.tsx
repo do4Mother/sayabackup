@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { Dimensions, FlatList, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DUMMY_PHOTOS = Array.from({ length: 48 }, (_, i) => ({
@@ -52,9 +52,6 @@ export default function GalleryScreen() {
 	const [viewMode, setViewMode] = useState<"grid" | "compact">("grid");
 	const groups = groupByDate(DUMMY_PHOTOS);
 
-	const numColumns = viewMode === "grid" ? 3 : 4;
-	const gap = viewMode === "grid" ? 2 : 1;
-
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
@@ -100,7 +97,10 @@ export default function GalleryScreen() {
 							</Text>
 						</View>
 						{/* Photos Row */}
-						<View className="flex-row flex-wrap" style={{ gap }}>
+						<View
+							className="flex-row flex-wrap justify-center"
+							style={{ gap: 4 }}
+						>
 							{group.photos.map((photo) => (
 								<Pressable
 									key={photo.id}
@@ -111,9 +111,8 @@ export default function GalleryScreen() {
 										})
 									}
 									style={{
-										width: `${100 / numColumns}%`,
+										width: Dimensions.get("screen").width / 3 - 4,
 										aspectRatio: 1,
-										padding: gap / 2,
 									}}
 								>
 									<View
