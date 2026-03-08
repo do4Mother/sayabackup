@@ -7,7 +7,7 @@ import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { decrypt, encrypt } from "@sayabackup/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -87,6 +87,18 @@ export default function S3CredentialsScreen() {
 	const utils = trpc.useUtils();
 	const user = utils.auth.me.getData();
 
+	const data = useQuery({
+		queryKey: ["s3.getCredentials"],
+		queryFn: async () => {
+			const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
+			if (!encrypted) {
+				return null;
+			}
+			const value = decrypt(encrypted, user?.user.key ?? "");
+			return S3FormValues.parse(JSON.parse(value));
+		},
+	});
+
 	const testMutation = useMutation({
 		mutationFn: async (values: S3FormValues) => testS3Connection(values),
 		onSuccess: () => {
@@ -123,20 +135,14 @@ export default function S3CredentialsScreen() {
 		getValues,
 		reset,
 	} = useForm<S3FormValues>({
-		defaultValues: async () => {
-			const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
-			if (!encrypted) {
-				return {
-					endpoint: "",
-					region: "",
-					bucket_name: "",
-					access_key_id: "",
-					secret_access_key: "",
-				};
-			}
-			const value = decrypt(encrypted, user?.user.key ?? "");
-			return S3FormValues.parse(JSON.parse(value));
+		defaultValues: {
+			endpoint: "",
+			region: "",
+			bucket_name: "",
+			access_key_id: "",
+			secret_access_key: "",
 		},
+		values: data.data ?? undefined,
 		resolver: zodResolver(S3FormValues),
 		mode: "onChange",
 	});
@@ -190,7 +196,7 @@ export default function S3CredentialsScreen() {
 										"S3 credentials have been imported successfully.",
 										[{ text: "OK" }],
 									);
-									reset();
+									data.refetch();
 									return;
 								}
 
