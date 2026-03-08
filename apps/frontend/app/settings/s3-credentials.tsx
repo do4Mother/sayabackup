@@ -1,10 +1,14 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import { AppButton } from "@/components/button/AppButton";
 import { TextInputField } from "@/components/form/TextInputField";
+import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
 import { testS3Connection } from "@/s3/test_connection";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { decrypt, encrypt } from "@sayabackup/utils";
 import { useMutation } from "@tanstack/react-query";
+import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -80,6 +84,9 @@ export default function S3CredentialsScreen() {
 	const [isTestingSuccessful, setIsTestingSuccessful] = useState<
 		boolean | null
 	>(null);
+	const utils = trpc.useUtils();
+	const user = utils.auth.me.getData();
+
 	const testMutation = useMutation({
 		mutationFn: async (values: S3FormValues) => testS3Connection(values),
 		onSuccess: () => {
@@ -100,6 +107,15 @@ export default function S3CredentialsScreen() {
 		},
 	});
 
+	const saveMutation = useMutation({
+		mutationFn: async (values: S3FormValues) => {
+			localStorage.setItem(
+				S3_CREDENTIALS_STORAGE_KEY,
+				encrypt(JSON.stringify(values), user?.user.key ?? ""),
+			);
+		},
+	});
+
 	const {
 		control,
 		handleSubmit,
@@ -107,22 +123,40 @@ export default function S3CredentialsScreen() {
 		getValues,
 		reset,
 	} = useForm<S3FormValues>({
-		defaultValues: {
-			endpoint: "",
-			region: "",
-			bucket_name: "",
-			access_key_id: "",
-			secret_access_key: "",
+		defaultValues: async () => {
+			const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
+			if (!encrypted) {
+				return {
+					endpoint: "",
+					region: "",
+					bucket_name: "",
+					access_key_id: "",
+					secret_access_key: "",
+				};
+			}
+			const value = decrypt(encrypted, user?.user.key ?? "");
+			return S3FormValues.parse(JSON.parse(value));
 		},
 		resolver: zodResolver(S3FormValues),
 		mode: "onChange",
 	});
 
 	const handleSave = handleSubmit(() => {
-		// TODO: encrypt and save credentials
-		alert("Saved", "S3 credentials have been saved successfully.", [
-			{ text: "OK", onPress: () => router.back() },
-		]);
+		saveMutation.mutate(getValues(), {
+			onSuccess() {
+				alert("Saved", "S3 credentials have been saved successfully.", [
+					{ text: "OK" },
+				]);
+			},
+			onError(error) {
+				alert(
+					"Save Failed",
+					`An error occurred while saving S3 credentials. Please try again.\nError: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			},
+		});
 	});
 
 	const handleTest = () => {
@@ -138,19 +172,66 @@ export default function S3CredentialsScreen() {
 		testMutation.mutate(getValues());
 	};
 
+	const onImportConfig = () => {
+		DocumentPicker.getDocumentAsync({
+			type: ".backup",
+		}).then((result) => {
+			if (!result.canceled) {
+				for (const file of result.assets) {
+					if (file.file) {
+						const reader = new FileReader();
+						reader.onload = (e) => {
+							try {
+								const text = e.target?.result;
+								if (typeof text === "string") {
+									localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, text);
+									alert(
+										"Import Successful",
+										"S3 credentials have been imported successfully.",
+										[{ text: "OK" }],
+									);
+									reset();
+									return;
+								}
+
+								alert(
+									"Import Failed",
+									"Unable to read the selected file. Please try again.",
+								);
+							} catch (error) {
+								alert(
+									"Import Failed",
+									`An error occurred while importing the file. Please ensure it's a valid JSON file with the correct structure.\nError: ${
+										error instanceof Error ? error.message : String(error)
+									}`,
+								);
+							}
+						};
+					}
+				}
+			}
+		});
+	};
+
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
 			<View className="flex-row items-center px-4 py-3">
-				<Pressable
-					onPress={() => router.back()}
-					className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-800"
-				>
-					<Ionicons name="arrow-back" size={22} color="#fff" />
+				<View className="flex-1 flex-row items-center">
+					<Pressable
+						onPress={() => router.back()}
+						className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-800"
+					>
+						<Ionicons name="arrow-back" size={22} color="#fff" />
+					</Pressable>
+					<Text className="text-white text-lg font-bold ml-2">
+						S3 Credentials
+					</Text>
+				</View>
+
+				<Pressable onPress={onImportConfig}>
+					<Ionicons name="cloud-upload" size={20} color="#fff" />
 				</Pressable>
-				<Text className="text-white text-lg font-bold ml-2">
-					S3 Credentials
-				</Text>
 			</View>
 
 			<ScrollView
