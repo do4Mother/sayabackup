@@ -1,4 +1,9 @@
-import { ListBucketsCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 
 type S3FormValues = {
 	endpoint: string;
@@ -8,7 +13,7 @@ type S3FormValues = {
 	secret_access_key: string;
 };
 
-export function testS3Connection(values: S3FormValues) {
+export async function testS3Connection(values: S3FormValues) {
 	const client = new S3Client({
 		endpoint: values.endpoint.includes("https")
 			? values.endpoint
@@ -20,5 +25,34 @@ export function testS3Connection(values: S3FormValues) {
 		},
 	});
 
-	return client.send(new ListBucketsCommand());
+	/**
+	 * Simulate create file, download, and delete operations to test the connection and permissions.
+	 * We will create a temporary file, upload it, download it, and then delete it.
+	 */
+
+	const testFileName = "s3-connection-test-file.txt";
+	const testFileContent = "This is a test file for S3 connection.";
+	const bucketName = values.bucket_name;
+
+	await client.send(
+		new PutObjectCommand({
+			Bucket: bucketName,
+			Key: testFileName,
+			Body: testFileContent,
+		}),
+	);
+
+	await client.send(
+		new GetObjectCommand({
+			Bucket: bucketName,
+			Key: testFileName,
+		}),
+	);
+
+	await client.send(
+		new DeleteObjectCommand({
+			Bucket: bucketName,
+			Key: testFileName,
+		}),
+	);
 }
