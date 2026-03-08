@@ -84,10 +84,9 @@ export default function S3CredentialsScreen() {
 	const [isTestingSuccessful, setIsTestingSuccessful] = useState<
 		boolean | null
 	>(null);
-	const utils = trpc.useUtils();
-	const user = utils.auth.me.getData();
-
+	const { data: user } = trpc.auth.me.useQuery();
 	const data = useQuery({
+		enabled: !!user,
 		queryKey: ["s3.getCredentials"],
 		queryFn: async () => {
 			const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
