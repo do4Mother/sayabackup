@@ -1,15 +1,9 @@
-import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useResolveClassNames } from "uniwind";
 
 export default function TabsLayout() {
 	const sceneStyle = useResolveClassNames("bg-neutral-950");
-	const user = trpc.auth.me.useQuery();
-
-	if (user.isLoading) {
-		return null;
-	}
 
 	return (
 		<Tabs
