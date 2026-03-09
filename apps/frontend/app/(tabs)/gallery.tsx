@@ -1,47 +1,34 @@
+import { useAlert } from "@/components/alert/AlertContext";
+import CustomImage from "@/components/app/CustomImage";
+import { FloatingActionButton } from "@/components/button/FloatingActionButton";
+import { useUpload } from "@/hooks/use-upload";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
+import dayjs from "dayjs";
+import * as ImagePicker from "expo-image-picker";
+import { launchImageLibraryAsync } from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Dimensions, FlatList, Pressable, Text, View } from "react-native";
+import { useMemo } from "react";
+import {
+	ActivityIndicator,
+	Dimensions,
+	FlatList,
+	Pressable,
+	Text,
+	View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
-const DUMMY_PHOTOS = Array.from({ length: 48 }, (_, i) => ({
-	id: `photo-${i}`,
-	color: [
-		"#7c3aed",
-		"#dc2626",
-		"#059669",
-		"#d97706",
-		"#2563eb",
-		"#db2777",
-		"#0891b2",
-		"#84cc16",
-		"#6366f1",
-		"#f97316",
-		"#14b8a6",
-		"#e11d48",
-		"#8b5cf6",
-		"#ea580c",
-		"#06b6d4",
-		"#22c55e",
-	][i % 16],
-	date: new Date(2026, 2, 6 - Math.floor(i / 6)).toLocaleDateString("en-US", {
-		weekday: "long",
-		month: "short",
-		day: "numeric",
-	}),
-}));
+type Photos = AppRouterOutput["gallery"]["get"]["items"];
 
-type DateGroup = {
-	date: string;
-	photos: typeof DUMMY_PHOTOS;
-};
-
-function groupByDate(photos: typeof DUMMY_PHOTOS): DateGroup[] {
-	const map = new Map<string, typeof DUMMY_PHOTOS>();
+function groupByDate(photos: Photos) {
+	const map = new Map<string, Photos>();
 	for (const photo of photos) {
-		const existing = map.get(photo.date) || [];
+		const existing =
+			map.get(dayjs(photo.created_at).format("ddd, DD MMMM YYYY")) || [];
 		existing.push(photo);
-		map.set(photo.date, existing);
+		map.set(dayjs(photo.created_at).format("ddd, DD MMMM YYYY"), existing);
 	}
 	return Array.from(map.entries()).map(([date, photos]) => ({ date, photos }));
 }
@@ -49,8 +36,43 @@ function groupByDate(photos: typeof DUMMY_PHOTOS): DateGroup[] {
 export default function GalleryScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const [viewMode, setViewMode] = useState<"grid" | "compact">("grid");
-	const groups = groupByDate(DUMMY_PHOTOS);
+	const { upload } = useUpload();
+	const { alert } = useAlert();
+	const photos = trpc.gallery.get.useInfiniteQuery(
+		{ limit: 26 },
+		{
+			getNextPageParam: (lastPage) => lastPage.nextCursor,
+		},
+	);
+	const groups = useMemo(
+		() => groupByDate(photos.data?.pages.flatMap((page) => page.items) || []),
+		[photos.data],
+	);
+
+	const onPickImage = async () => {
+		const permissionResult =
+			await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+		if (!permissionResult.granted) {
+			alert(
+				"Permission required",
+				"Permission to access the media library is required.",
+			);
+			return;
+		}
+
+		const result = await launchImageLibraryAsync({
+			mediaTypes: ["images", "videos"],
+			allowsMultipleSelection: true,
+			quality: 1,
+		});
+
+		if (!result.canceled) {
+			upload({
+				images: result.assets,
+			});
+		}
+	};
 
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
@@ -60,25 +82,6 @@ export default function GalleryScreen() {
 					<Text className="text-white text-2xl font-bold tracking-tight">
 						Gallery
 					</Text>
-					<Text className="text-neutral-500 text-xs mt-1 tracking-wide">
-						48 photos • 2.4 GB
-					</Text>
-				</View>
-				<View className="flex-row items-center gap-4">
-					<Pressable
-						onPress={() =>
-							setViewMode(viewMode === "grid" ? "compact" : "grid")
-						}
-					>
-						<Ionicons
-							name={viewMode === "grid" ? "grid-outline" : "grid"}
-							size={20}
-							color="#a3a3a3"
-						/>
-					</Pressable>
-					<Pressable>
-						<Ionicons name="search-outline" size={20} color="#a3a3a3" />
-					</Pressable>
 				</View>
 			</View>
 
@@ -88,6 +91,17 @@ export default function GalleryScreen() {
 				keyExtractor={(item) => item.date}
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{ paddingBottom: 20 }}
+				onEndReachedThreshold={0.2}
+				onEndReached={() =>
+					photos.hasNextPage &&
+					!photos.isFetchingNextPage &&
+					photos.fetchNextPage()
+				}
+				ListFooterComponent={
+					photos.isFetchingNextPage ? (
+						<ActivityIndicator size={"small"} />
+					) : null
+				}
 				renderItem={({ item: group }) => (
 					<View className="mb-6">
 						{/* Date Header */}
@@ -98,7 +112,7 @@ export default function GalleryScreen() {
 						</View>
 						{/* Photos Row */}
 						<View
-							className="flex-row flex-wrap justify-center"
+							className="flex-row flex-wrap justify-start"
 							style={{ gap: 4 }}
 						>
 							{group.photos.map((photo) => (
@@ -110,21 +124,19 @@ export default function GalleryScreen() {
 											params: { id: photo.id },
 										})
 									}
-									style={{
-										width: Dimensions.get("screen").width / 3 - 4,
-										aspectRatio: 1,
-									}}
 								>
-									<View
-										className="flex-1 rounded-sm items-center justify-center"
-										style={{ backgroundColor: photo.color }}
-									>
-										<Ionicons
-											name="image"
-											size={24}
-											color="rgba(255,255,255,0.3)"
-										/>
-									</View>
+									<CustomImage
+										source={{
+											uri: photo.thumbnail_path,
+										}}
+										alt="image"
+										style={{
+											width: Dimensions.get("screen").width / 3 - 4,
+											aspectRatio: 1,
+										}}
+										loading="lazy"
+										cachePolicy={"memory-disk"}
+									/>
 								</Pressable>
 							))}
 						</View>
@@ -132,24 +144,12 @@ export default function GalleryScreen() {
 				)}
 			/>
 
-			{/* Floating Backup Status */}
-			<View
-				className="absolute bottom-4 left-5 right-5 bg-neutral-900 border border-neutral-800 rounded-2xl px-5 py-3 flex-row items-center"
-				style={{ marginBottom: 4 }}
-			>
-				<View className="w-8 h-8 rounded-full bg-emerald-500/20 items-center justify-center mr-3">
-					<Ionicons name="checkmark-circle" size={18} color="#10b981" />
-				</View>
-				<View className="flex-1">
-					<Text className="text-white text-sm font-medium">
-						Backup complete
-					</Text>
-					<Text className="text-neutral-500 text-xs mt-0.5">
-						All photos synced
-					</Text>
-				</View>
-				<Ionicons name="chevron-forward" size={16} color="#525252" />
-			</View>
+			<FloatingActionButton
+				variant="primary"
+				icon={<Ionicons name="add" size={24} color="#fff" />}
+				position="bottom-right"
+				onPress={onPickImage}
+			/>
 		</View>
 	);
 }
