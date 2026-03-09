@@ -1,9 +1,12 @@
 import { useAlert } from "@/components/alert/AlertContext";
+import CustomImage from "@/components/app/CustomImage";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
 	Dimensions,
+	FlatList,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -12,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const PHOTO_COLORS = [
 	"#7c3aed",
@@ -65,24 +68,6 @@ const DUMMY_ALBUMS_LIST = [
 	{ id: "8", name: "Pets", icon: "paw" as const, color: "#ec4899" },
 ];
 
-const EDIT_TOOLS = [
-	{ id: "crop", icon: "crop" as const, label: "Crop" },
-	{ id: "rotate", icon: "refresh" as const, label: "Rotate" },
-	{ id: "tune", icon: "sunny" as const, label: "Adjust" },
-	{ id: "filter", icon: "color-filter" as const, label: "Filter" },
-	{ id: "text", icon: "text" as const, label: "Text" },
-	{ id: "draw", icon: "brush" as const, label: "Draw" },
-];
-
-const FILTER_PRESETS = [
-	{ id: "original", label: "Original", opacity: 1 },
-	{ id: "vivid", label: "Vivid", opacity: 0.85 },
-	{ id: "warm", label: "Warm", opacity: 0.7 },
-	{ id: "cool", label: "Cool", opacity: 0.75 },
-	{ id: "mono", label: "Mono", opacity: 0.6 },
-	{ id: "fade", label: "Fade", opacity: 0.5 },
-];
-
 export default function PhotoDetailScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
@@ -90,14 +75,23 @@ export default function PhotoDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const [showInfo, setShowInfo] = useState(false);
 	const [isFavorite, setIsFavorite] = useState(false);
-	const [showEdit, setShowEdit] = useState(false);
 	const [showAlbumPicker, setShowAlbumPicker] = useState(false);
 	const [showShareSheet, setShowShareSheet] = useState(false);
 	const [showMoreMenu, setShowMoreMenu] = useState(false);
-	const [selectedFilter, setSelectedFilter] = useState("original");
-	const [brightness, setBrightness] = useState(50);
-	const [contrast, setContrast] = useState(50);
 	const [addedToAlbums, setAddedToAlbums] = useState<string[]>([]);
+	const photos = trpc.gallery.get.useInfiniteQuery(
+		{
+			limit: 26,
+		},
+		{
+			getNextPageParam: (lastPage) => lastPage.nextCursor,
+		},
+	);
+	const items = useMemo(
+		() => photos.data?.pages.flatMap((page) => page.items) || [],
+		[photos.data],
+	);
+	const initialIndex = useRef(items.findIndex((p) => p.id === id)).current;
 
 	const photoColor = getPhotoColor(id ?? "0");
 
@@ -132,25 +126,7 @@ export default function PhotoDetailScreen() {
 		);
 	};
 
-	const handleEditTool = (toolId: string) => {
-		if (toolId === "rotate") {
-			alert("Rotated", "Photo rotated 90° clockwise.");
-		} else if (toolId === "crop") {
-			alert("Crop", "Crop tool opened. (Demo)");
-		} else if (toolId === "text") {
-			alert("Text", "Text overlay tool opened. (Demo)");
-		} else if (toolId === "draw") {
-			alert("Draw", "Drawing tool opened. (Demo)");
-		}
-	};
-
-	const toggleEdit = () => {
-		setShowInfo(false);
-		setShowEdit(!showEdit);
-	};
-
 	const toggleInfo = () => {
-		setShowEdit(false);
 		setShowInfo(!showInfo);
 	};
 
@@ -184,28 +160,52 @@ export default function PhotoDetailScreen() {
 			</View>
 
 			{/* Photo Area */}
-			<View className="flex-1 justify-center items-center">
-				<View
-					className="items-center justify-center rounded-lg"
-					style={{
-						width: SCREEN_WIDTH,
-						height: SCREEN_WIDTH * 0.75,
-						backgroundColor: photoColor,
-						opacity:
-							selectedFilter === "original"
-								? 1
-								: (FILTER_PRESETS.find((f) => f.id === selectedFilter)
-										?.opacity ?? 1),
-					}}
-				>
-					<Ionicons name="image" size={64} color="rgba(255,255,255,0.2)" />
-					<Text className="text-white/30 text-sm mt-2 font-medium">
-						{selectedFilter !== "original"
-							? `Filter: ${selectedFilter}`
-							: "Photo Preview"}
-					</Text>
-				</View>
-			</View>
+			<FlatList
+				data={items}
+				horizontal
+				pagingEnabled
+				showsHorizontalScrollIndicator={false}
+				keyExtractor={(item) => item.id}
+				contentContainerClassName="gap-4"
+				initialScrollIndex={initialIndex}
+				getItemLayout={(_, index) => ({
+					length: SCREEN_WIDTH + 16,
+					offset: (SCREEN_WIDTH + 16) * index,
+					index,
+				})}
+				snapToAlignment="center"
+				onScroll={(e) => {
+					/**
+					 * load pagination when user scrolls near the end of the list.
+					 * We check if the current scroll position + screen width is within SCREEN_WIDTH * 2 of the end of the content,
+					 * and if so, we trigger loading the next page.
+					 */
+					const scrollPosition = e.nativeEvent.contentOffset.x;
+					const contentWidth = e.nativeEvent.contentSize.width;
+					if (
+						scrollPosition + SCREEN_WIDTH >= contentWidth - SCREEN_WIDTH * 2 &&
+						photos.hasNextPage &&
+						!photos.isFetchingNextPage
+					) {
+						photos.fetchNextPage();
+					}
+				}}
+				renderItem={({ item }) => (
+					<View
+						className="flex-1 justify-center items-center"
+						style={{
+							width: SCREEN_WIDTH,
+							height: SCREEN_HEIGHT,
+						}}
+					>
+						<CustomImage
+							source={{ uri: item.thumbnail_path }}
+							className="w-full h-full"
+							contentFit="contain"
+						/>
+					</View>
+				)}
+			/>
 
 			{/* Bottom Bar */}
 			<View
@@ -227,19 +227,6 @@ export default function PhotoDetailScreen() {
 							className={`text-[10px] tracking-wider ${isFavorite ? "text-red-400" : "text-neutral-500"}`}
 						>
 							LIKE
-						</Text>
-					</Pressable>
-
-					<Pressable onPress={toggleEdit} className="items-center gap-1">
-						<Ionicons
-							name={showEdit ? "create" : "create-outline"}
-							size={24}
-							color={showEdit ? "#fbbf24" : "#a3a3a3"}
-						/>
-						<Text
-							className={`text-[10px] tracking-wider ${showEdit ? "text-amber-400" : "text-neutral-500"}`}
-						>
-							EDIT
 						</Text>
 					</Pressable>
 
@@ -281,125 +268,6 @@ export default function PhotoDetailScreen() {
 						</Text>
 					</Pressable>
 				</View>
-
-				{/* Edit Panel */}
-				{showEdit && (
-					<ScrollView className="border-t border-neutral-900 max-h-80">
-						<View className="px-5 py-4 gap-5">
-							{/* Edit Tools */}
-							<View>
-								<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mb-3">
-									Tools
-								</Text>
-								<ScrollView
-									horizontal
-									showsHorizontalScrollIndicator={false}
-									contentContainerStyle={{ gap: 12 }}
-								>
-									{EDIT_TOOLS.map((tool) => (
-										<Pressable
-											key={tool.id}
-											onPress={() => handleEditTool(tool.id)}
-											className="items-center gap-2"
-										>
-											<View className="w-14 h-14 rounded-2xl bg-neutral-900 border border-neutral-800 items-center justify-center">
-												<Ionicons name={tool.icon} size={22} color="#fbbf24" />
-											</View>
-											<Text className="text-neutral-400 text-[10px] tracking-wider">
-												{tool.label}
-											</Text>
-										</Pressable>
-									))}
-								</ScrollView>
-							</View>
-
-							{/* Filters */}
-							<View>
-								<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mb-3">
-									Filters
-								</Text>
-								<ScrollView
-									horizontal
-									showsHorizontalScrollIndicator={false}
-									contentContainerStyle={{ gap: 10 }}
-								>
-									{FILTER_PRESETS.map((filter) => (
-										<Pressable
-											key={filter.id}
-											onPress={() => setSelectedFilter(filter.id)}
-											className="items-center gap-1.5"
-										>
-											<View
-												className={`w-16 h-16 rounded-xl items-center justify-center border ${
-													selectedFilter === filter.id
-														? "border-amber-400"
-														: "border-neutral-800"
-												}`}
-												style={{
-													backgroundColor: photoColor,
-													opacity: filter.opacity,
-												}}
-											>
-												<Ionicons
-													name="image"
-													size={18}
-													color="rgba(255,255,255,0.3)"
-												/>
-											</View>
-											<Text
-												className={`text-[10px] tracking-wider ${
-													selectedFilter === filter.id
-														? "text-amber-400 font-semibold"
-														: "text-neutral-500"
-												}`}
-											>
-												{filter.label}
-											</Text>
-										</Pressable>
-									))}
-								</ScrollView>
-							</View>
-
-							{/* Adjustments */}
-							<View>
-								<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mb-3">
-									Adjustments
-								</Text>
-								<View className="gap-4">
-									<SliderRow
-										label="Brightness"
-										icon="sunny-outline"
-										value={brightness}
-										onDecrease={() => setBrightness((v) => Math.max(0, v - 10))}
-										onIncrease={() =>
-											setBrightness((v) => Math.min(100, v + 10))
-										}
-									/>
-									<SliderRow
-										label="Contrast"
-										icon="contrast-outline"
-										value={contrast}
-										onDecrease={() => setContrast((v) => Math.max(0, v - 10))}
-										onIncrease={() => setContrast((v) => Math.min(100, v + 10))}
-									/>
-								</View>
-							</View>
-
-							{/* Save Button */}
-							<Pressable
-								onPress={() => {
-									alert("Saved", "Your edits have been saved.");
-									setShowEdit(false);
-								}}
-								className="bg-amber-400 rounded-xl py-3 items-center active:opacity-80"
-							>
-								<Text className="text-neutral-950 font-bold text-sm tracking-wide">
-									Save Changes
-								</Text>
-							</Pressable>
-						</View>
-					</ScrollView>
-				)}
 
 				{/* Info Panel */}
 				{showInfo && (
@@ -727,47 +595,6 @@ function MetadataChip({ value }: { value: string }) {
 	return (
 		<View className="bg-neutral-800 rounded-lg px-3 py-1.5">
 			<Text className="text-neutral-300 text-xs font-medium">{value}</Text>
-		</View>
-	);
-}
-
-function SliderRow({
-	label,
-	icon,
-	value,
-	onDecrease,
-	onIncrease,
-}: {
-	label: string;
-	icon: keyof typeof Ionicons.glyphMap;
-	value: number;
-	onDecrease: () => void;
-	onIncrease: () => void;
-}) {
-	return (
-		<View className="flex-row items-center gap-3">
-			<Ionicons name={icon} size={16} color="#fbbf24" />
-			<Text className="text-neutral-400 text-xs w-20">{label}</Text>
-			<Pressable
-				onPress={onDecrease}
-				className="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-800 items-center justify-center"
-			>
-				<Ionicons name="remove" size={16} color="#a3a3a3" />
-			</Pressable>
-			{/* Visual bar */}
-			<View className="flex-1 h-2 bg-neutral-800 rounded-full overflow-hidden">
-				<View
-					className="h-full bg-amber-400 rounded-full"
-					style={{ width: `${value}%` }}
-				/>
-			</View>
-			<Text className="text-neutral-500 text-xs w-8 text-center">{value}</Text>
-			<Pressable
-				onPress={onIncrease}
-				className="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-800 items-center justify-center"
-			>
-				<Ionicons name="add" size={16} color="#a3a3a3" />
-			</Pressable>
 		</View>
 	);
 }
