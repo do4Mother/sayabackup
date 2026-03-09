@@ -27,7 +27,8 @@ export const get = protectedProcdure
 						.otherwise(() => undefined),
 				),
 			)
-			.orderBy(desc(gallery.created_at));
+			.orderBy(desc(gallery.created_at))
+			.limit(input.limit + 1);
 
 		let nextCursor: string | null = null;
 
