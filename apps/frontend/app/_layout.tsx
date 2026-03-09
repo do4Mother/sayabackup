@@ -2,7 +2,7 @@ import { AlertProvider } from "@/components/alert/AlertContext";
 import { ContextUpload, createUploadStore } from "@/hooks/use-upload";
 import { client, queryClient, trpc, TRPCProvider } from "@/trpc/trpc";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack, useRouter } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { useResolveClassNames } from "uniwind";
@@ -61,12 +61,15 @@ function UploadProvider({ children }: { children: React.ReactNode }) {
 function AuthMiddleware({ children }: { children: React.ReactNode }) {
 	const user = trpc.auth.me.useQuery();
 	const router = useRouter();
+	const pathname = usePathname();
 
 	useEffect(() => {
 		if (!user.isLoading && !user.data) {
-			router.replace("/login");
+			if (pathname !== "/login") {
+				router.replace("/login");
+			}
 		}
-	}, [user]);
+	}, [user.data, user.isLoading, pathname, router]);
 
 	if (user.isLoading) {
 		return null; // or a loading spinner
