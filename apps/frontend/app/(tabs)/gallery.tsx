@@ -39,7 +39,7 @@ export default function GalleryScreen() {
 	const { upload } = useUpload();
 	const { alert } = useAlert();
 	const photos = trpc.gallery.get.useInfiniteQuery(
-		{ limit: 26 },
+		{ limit: 27 },
 		{
 			getNextPageParam: (lastPage) => lastPage.nextCursor,
 		},
