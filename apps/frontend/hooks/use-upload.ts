@@ -1,6 +1,7 @@
 import { generateThumbnail } from "@/lib/generate-thumbnail";
 import { uploadToS3 } from "@/s3/upload";
 import { client, trpc } from "@/trpc/trpc";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { randomString, sanitizeFilename } from "@sayabackup/utils";
 import axios, { CanceledError } from "axios";
 import axiosRetry from "axios-retry";
@@ -8,6 +9,7 @@ import { ImagePickerAsset } from "expo-image-picker";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { createContext, useContext, useEffect } from "react";
 import { create, useStore } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 
 axiosRetry(axios, {
@@ -40,152 +42,160 @@ type Action = {
 };
 
 export const createUploadStore = () =>
-	create<State & Action>((set) => {
-		const createGalleryMutation = trpc.gallery.create.useMutation();
-		const clientUtils = trpc.useUtils();
+	create<State & Action>()(
+		persist(
+			(set) => {
+				const createGalleryMutation = trpc.gallery.create.useMutation();
+				const clientUtils = trpc.useUtils();
 
-		return {
-			data: [],
-			setData: (data: UploadItem[]) => set({ data }),
-			upload: async (data) => {
-				const assets = data.images.map(async (asset) => {
-					return {
-						id: randomString(12),
-						file: asset.file!,
-						uri: asset.uri,
-						mimeType: asset.mimeType || "image/jpeg",
-						name: asset.fileName || `media-${Date.now()}`,
-						size: asset.fileSize || 0,
-						processedBytes: 0,
-						abortController: new AbortController(),
-						status: "queued",
-					} as UploadItem;
-				});
-
-				const resolvedAssets = await Promise.all(assets);
-
-				const key = await client.auth.me.query().then((me) => me.user.key);
-
-				set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
-
-				for await (const media of resolvedAssets) {
-					try {
-						/**
-						 * set status to uploading
-						 */
-						set((state) => ({
-							data: state.data.map((m) =>
-								m.id === media.id ? { ...m, status: "uploading" } : m,
-							),
-						}));
-
-						const albumPath = sanitizeFilename(
-							clientUtils.album.find.getData({ id: data.albumId ?? "" })
-								?.name ?? "unknown",
-						);
-
-						const { thumbnailBlob } = await generateThumbnail({
-							uri: media.uri,
-							mimeType: media.mimeType,
+				return {
+					data: [],
+					setData: (data: UploadItem[]) => set({ data }),
+					upload: async (data) => {
+						const assets = data.images.map(async (asset) => {
+							return {
+								id: randomString(12),
+								file: asset.file!,
+								uri: asset.uri,
+								mimeType: asset.mimeType || "image/jpeg",
+								name: asset.fileName || `media-${Date.now()}`,
+								size: asset.fileSize || 0,
+								processedBytes: 0,
+								abortController: new AbortController(),
+								status: "queued",
+							} as UploadItem;
 						});
 
-						const thumbnailPath = `thumbnails/${media.name}`;
-						const filePath = `${albumPath}/${media.name}`;
-						const uploadThumbnail = await uploadToS3({
-							path: thumbnailPath,
-							type: media.mimeType,
-							key: key,
-						});
+						const resolvedAssets = await Promise.all(assets);
 
-						// upload thumbnail
-						const isSuccess = await axios
-							.put(uploadThumbnail, thumbnailBlob, {
-								headers: {
-									"Content-Type": media.mimeType,
-								},
-								signal: media.abortController?.signal,
-							})
-							.then(() => true)
-							.catch((error) => {
-								if (error instanceof CanceledError) {
-									return false;
-								}
-							});
+						const key = await client.auth.me.query().then((me) => me.user.key);
 
-						if (!isSuccess) {
-							// skip uploading original if thumbnail upload is cancelled
-							continue;
-						}
+						set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
-						const uploadFile = await uploadToS3({
-							path: filePath,
-							type: media.mimeType,
-							key: key,
-						});
-
-						// upload original file with progress tracking
-						await axios.put(uploadFile, media.file, {
-							headers: {
-								"Content-Type": media.mimeType,
-							},
-							signal: media.abortController?.signal,
-							onUploadProgress: (progressEvent) => {
-								const processedBytes = progressEvent.loaded;
+						for await (const media of resolvedAssets) {
+							try {
+								/**
+								 * set status to uploading
+								 */
 								set((state) => ({
 									data: state.data.map((m) =>
-										m.id === media.id ? { ...m, processedBytes } : m,
+										m.id === media.id ? { ...m, status: "uploading" } : m,
 									),
 								}));
 
-								if (processedBytes === media.size) {
-									// create gallery record when upload is complete
-									createGalleryMutation.mutate(
-										{
-											filePath: filePath,
-											thumbnailPath: thumbnailPath,
-											mimeType: media.mimeType,
-											albumId: data.albumId,
-										},
-										{
-											onSuccess() {
-												if (data.albumId) {
-													clientUtils.gallery.get.refetch({
-														albumId: data.albumId,
-													});
-												}
+								const albumPath = sanitizeFilename(
+									clientUtils.album.find.getData({ id: data.albumId ?? "" })
+										?.name ?? "unknown",
+								);
 
-												set((state) => ({
-													data: state.data.map((m) =>
-														m.id === media.id
-															? { ...m, status: "completed" }
-															: m,
-													),
-												}));
+								const { thumbnailBlob } = await generateThumbnail({
+									uri: media.uri,
+									mimeType: media.mimeType,
+								});
 
-												clientUtils.gallery.get.invalidate();
-											},
+								const thumbnailPath = `thumbnails/${media.name}`;
+								const filePath = `${albumPath}/${media.name}`;
+								const uploadThumbnail = await uploadToS3({
+									path: thumbnailPath,
+									type: media.mimeType,
+									key: key,
+								});
+
+								// upload thumbnail
+								const isSuccess = await axios
+									.put(uploadThumbnail, thumbnailBlob, {
+										headers: {
+											"Content-Type": media.mimeType,
 										},
-									);
-								}
-							},
-						});
-					} catch (error) {
-						set((state) => ({
-							data: state.data.map((m) =>
-								m.id === media.id
-									? {
-											...m,
-											status: "failed",
-											error: (error as Error).message,
+										signal: media.abortController?.signal,
+									})
+									.then(() => true)
+									.catch((error) => {
+										if (error instanceof CanceledError) {
+											return false;
 										}
-									: m,
-							),
-						}));
-					}
-				}
+									});
+
+								if (!isSuccess) {
+									// skip uploading original if thumbnail upload is cancelled
+									continue;
+								}
+
+								const uploadFile = await uploadToS3({
+									path: filePath,
+									type: media.mimeType,
+									key: key,
+								});
+
+								// upload original file with progress tracking
+								await axios.put(uploadFile, media.file, {
+									headers: {
+										"Content-Type": media.mimeType,
+									},
+									signal: media.abortController?.signal,
+									onUploadProgress: (progressEvent) => {
+										const processedBytes = progressEvent.loaded;
+										set((state) => ({
+											data: state.data.map((m) =>
+												m.id === media.id ? { ...m, processedBytes } : m,
+											),
+										}));
+
+										if (processedBytes === media.size) {
+											// create gallery record when upload is complete
+											createGalleryMutation.mutate(
+												{
+													filePath: filePath,
+													thumbnailPath: thumbnailPath,
+													mimeType: media.mimeType,
+													albumId: data.albumId,
+												},
+												{
+													onSuccess() {
+														if (data.albumId) {
+															clientUtils.gallery.get.refetch({
+																albumId: data.albumId,
+															});
+														}
+
+														set((state) => ({
+															data: state.data.map((m) =>
+																m.id === media.id
+																	? { ...m, status: "completed" }
+																	: m,
+															),
+														}));
+
+														clientUtils.gallery.get.invalidate();
+													},
+												},
+											);
+										}
+									},
+								});
+							} catch (error) {
+								set((state) => ({
+									data: state.data.map((m) =>
+										m.id === media.id
+											? {
+													...m,
+													status: "failed",
+													error: (error as Error).message,
+												}
+											: m,
+									),
+								}));
+							}
+						}
+					},
+				};
 			},
-		};
-	});
+			{
+				name: "upload-store",
+				storage: createJSONStorage(() => AsyncStorage),
+			},
+		),
+	);
 
 export type UploadStore = ReturnType<typeof createUploadStore>;
 export const ContextUpload = createContext<UploadStore | null>(null);
