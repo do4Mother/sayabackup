@@ -1,7 +1,7 @@
 import { UploadItem, useUpload } from "@/hooks/use-upload";
 import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const statusConfig = {
@@ -52,10 +52,17 @@ function ProgressBar({
 	);
 }
 
-function UploadItemRow({ item }: { item: UploadItem }) {
+function UploadItemRow({
+	item,
+	onCancel,
+}: {
+	item: UploadItem;
+	onCancel: (id: string) => void;
+}) {
 	if (!item.status) return null;
 	const config = statusConfig[item.status];
 	const isVideo = item.name.toLowerCase().endsWith(".mp4");
+	const isCancellable = item.status === "uploading" || item.status === "queued";
 
 	return (
 		<View className="flex-row items-center py-3 px-5">
@@ -91,7 +98,7 @@ function UploadItemRow({ item }: { item: UploadItem }) {
 							: ""}
 					</Text>
 				</View>
-				{(item.status === "uploading" || item.status === "queued") && (
+				{isCancellable && (
 					<ProgressBar
 						progress={Math.round((item.processedBytes / item.size) * 100)}
 						status={item.status}
@@ -99,22 +106,34 @@ function UploadItemRow({ item }: { item: UploadItem }) {
 				)}
 			</View>
 
-			{/* Status Icon */}
-			<View className="ml-3">
-				<Ionicons name={config.icon} size={20} color={config.color} />
-			</View>
+			{/* Cancel / Status Icon */}
+			{isCancellable ? (
+				<Pressable
+					onPress={() => onCancel(item.id)}
+					className="ml-3 w-8 h-8 rounded-full bg-red-500/15 items-center justify-center"
+				>
+					<Ionicons name="close" size={18} color="#ef4444" />
+				</Pressable>
+			) : (
+				<View className="ml-3">
+					<Ionicons name={config.icon} size={20} color={config.color} />
+				</View>
+			)}
 		</View>
 	);
 }
 
 export default function UploadsScreen() {
 	const insets = useSafeAreaInsets();
-	const { data: uploads } = useUpload();
+	const { data: uploads, cancelUpload, clearAll } = useUpload();
 
 	const uploading = uploads.filter((u) => u.status === "uploading");
 	const queued = uploads.filter((u) => u.status === "queued");
 	const completed = uploads.filter((u) => u.status === "completed");
 	const failed = uploads.filter((u) => u.status === "failed");
+
+	const hasActive = uploading.length > 0 || queued.length > 0;
+	const hasData = uploads.length > 0;
 
 	const processedBytes = uploads.reduce((acc, u) => acc + u.processedBytes, 0);
 	const totalBytes = uploads.reduce((acc, u) => acc + u.size, 0);
@@ -125,10 +144,34 @@ export default function UploadsScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="px-5 py-4">
+			<View className="px-5 py-4 flex-row items-center justify-between">
 				<Text className="text-white text-2xl font-bold tracking-tight">
 					Uploads
 				</Text>
+				<View className="flex-row gap-2">
+					{hasActive && (
+						<Pressable
+							onPress={() => cancelUpload()}
+							className="flex-row items-center bg-red-500/15 rounded-lg px-3 py-1.5"
+						>
+							<Ionicons name="close-circle" size={16} color="#ef4444" />
+							<Text className="text-red-400 text-xs font-semibold ml-1.5">
+								Cancel All
+							</Text>
+						</Pressable>
+					)}
+					{hasData && (
+						<Pressable
+							onPress={clearAll}
+							className="flex-row items-center bg-neutral-800 rounded-lg px-3 py-1.5"
+						>
+							<Ionicons name="trash" size={16} color="#a3a3a3" />
+							<Text className="text-neutral-400 text-xs font-semibold ml-1.5">
+								Clear
+							</Text>
+						</Pressable>
+					)}
+				</View>
 			</View>
 
 			{/* Summary Card */}
@@ -188,7 +231,11 @@ export default function UploadsScreen() {
 							Uploading
 						</Text>
 						{uploading.map((item) => (
-							<UploadItemRow key={item.id} item={item} />
+							<UploadItemRow
+								key={item.id}
+								item={item}
+								onCancel={cancelUpload}
+							/>
 						))}
 					</View>
 				)}
@@ -199,7 +246,11 @@ export default function UploadsScreen() {
 							Queued
 						</Text>
 						{queued.map((item) => (
-							<UploadItemRow key={item.id} item={item} />
+							<UploadItemRow
+								key={item.id}
+								item={item}
+								onCancel={cancelUpload}
+							/>
 						))}
 					</View>
 				)}
@@ -210,7 +261,11 @@ export default function UploadsScreen() {
 							Failed
 						</Text>
 						{failed.map((item) => (
-							<UploadItemRow key={item.id} item={item} />
+							<UploadItemRow
+								key={item.id}
+								item={item}
+								onCancel={cancelUpload}
+							/>
 						))}
 					</View>
 				)}
@@ -221,7 +276,11 @@ export default function UploadsScreen() {
 							Completed
 						</Text>
 						{completed.map((item) => (
-							<UploadItemRow key={item.id} item={item} />
+							<UploadItemRow
+								key={item.id}
+								item={item}
+								onCancel={cancelUpload}
+							/>
 						))}
 					</View>
 				)}

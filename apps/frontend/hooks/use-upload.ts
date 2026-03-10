@@ -39,6 +39,8 @@ type Action = {
 		images: ImagePickerAsset[];
 		albumId?: string;
 	}) => Promise<void>;
+	cancelUpload: (id?: string) => void;
+	clearAll: () => void;
 };
 
 export const createUploadStore = () =>
@@ -51,6 +53,39 @@ export const createUploadStore = () =>
 				return {
 					data: [],
 					setData: (data: UploadItem[]) => set({ data }),
+					cancelUpload: (id?: string) => {
+						set((state) => {
+							const targets = id
+								? state.data.filter((item) => item.id === id)
+								: state.data.filter(
+										(item) =>
+											item.status === "uploading" || item.status === "queued",
+									);
+
+							for (const item of targets) {
+								item.abortController?.abort();
+							}
+
+							return {
+								data: state.data.map((item) =>
+									targets.some((t) => t.id === item.id)
+										? { ...item, status: "failed" as const, error: "Cancelled" }
+										: item,
+								),
+							};
+						});
+					},
+					clearAll: () => {
+						set((state) => {
+							// Abort any active uploads before clearing
+							for (const item of state.data) {
+								if (item.status === "uploading" || item.status === "queued") {
+									item.abortController?.abort();
+								}
+							}
+							return { data: [] };
+						});
+					},
 					upload: async (data) => {
 						const assets = data.images.map(async (asset) => {
 							return {
