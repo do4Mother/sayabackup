@@ -1,96 +1,29 @@
+import CustomImage from "@/components/app/CustomImage";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
-const DUMMY_ALBUMS = [
-	{
-		id: "1",
-		name: "Favorites",
-		count: 24,
-		icon: "heart" as const,
-		color: "#ef4444",
-		bgColor: "#450a0a",
-	},
-	{
-		id: "2",
-		name: "Screenshots",
-		count: 156,
-		icon: "phone-portrait" as const,
-		color: "#3b82f6",
-		bgColor: "#172554",
-	},
-	{
-		id: "3",
-		name: "Camera",
-		count: 892,
-		icon: "camera" as const,
-		color: "#fbbf24",
-		bgColor: "#451a03",
-	},
-	{
-		id: "4",
-		name: "Downloads",
-		count: 43,
-		icon: "download" as const,
-		color: "#22c55e",
-		bgColor: "#052e16",
-	},
-	{
-		id: "5",
-		name: "Travel 2025",
-		count: 267,
-		icon: "airplane" as const,
-		color: "#a78bfa",
-		bgColor: "#2e1065",
-	},
-	{
-		id: "6",
-		name: "Food & Recipes",
-		count: 89,
-		icon: "restaurant" as const,
-		color: "#f97316",
-		bgColor: "#431407",
-	},
-	{
-		id: "7",
-		name: "Work",
-		count: 34,
-		icon: "briefcase" as const,
-		color: "#6b7280",
-		bgColor: "#1f2937",
-	},
-	{
-		id: "8",
-		name: "Pets",
-		count: 145,
-		icon: "paw" as const,
-		color: "#ec4899",
-		bgColor: "#500724",
-	},
-];
-
-const COVER_COLORS = [
-	["#7c3aed", "#6366f1", "#8b5cf6", "#a78bfa"],
-	["#2563eb", "#0891b2", "#06b6d4", "#3b82f6"],
-	["#d97706", "#f97316", "#fbbf24", "#ea580c"],
-	["#059669", "#22c55e", "#14b8a6", "#84cc16"],
-	["#dc2626", "#e11d48", "#ef4444", "#f43f5e"],
-	["#db2777", "#ec4899", "#f472b6", "#be185d"],
-	["#6b7280", "#9ca3af", "#4b5563", "#71717a"],
-	["#a78bfa", "#c084fc", "#d8b4fe", "#8b5cf6"],
-];
-
-function AlbumCover({ colors }: { colors: string[] }) {
+function AlbumCover({
+	images,
+}: {
+	images: AppRouterOutput["album"]["getWithImage"][number]["images"];
+}) {
 	return (
 		<View className="w-full aspect-square rounded-xl overflow-hidden flex-row flex-wrap">
-			{colors.map((c) => (
+			{images.map((image) => (
 				<View
-					key={c}
+					key={image.id}
 					className="items-center justify-center"
-					style={{ width: "50%", height: "50%", backgroundColor: c }}
+					style={{ width: "50%", height: "50%" }}
 				>
-					<Ionicons name="image" size={16} color="rgba(255,255,255,0.2)" />
+					<CustomImage
+						source={{ uri: image.url }}
+						className="w-full h-full"
+						contentFit="cover"
+					/>
 				</View>
 			))}
 		</View>
@@ -100,6 +33,7 @@ function AlbumCover({ colors }: { colors: string[] }) {
 export default function AlbumsScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
+	const albums = trpc.album.getWithImage.useQuery();
 
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
@@ -123,7 +57,7 @@ export default function AlbumsScreen() {
 				</Text>
 
 				<View className="flex-row flex-wrap" style={{ gap: 16 }}>
-					{DUMMY_ALBUMS.map((album, idx) => (
+					{albums.data?.map((album, idx) => (
 						<Pressable
 							key={album.id}
 							onPress={() =>
@@ -135,7 +69,7 @@ export default function AlbumsScreen() {
 							className="active:opacity-70"
 							style={{ width: "47%" }}
 						>
-							<AlbumCover colors={COVER_COLORS[idx % COVER_COLORS.length]} />
+							<AlbumCover images={album.images} />
 							<View className="mt-2 mb-1">
 								<Text
 									className="text-white text-sm font-semibold"
@@ -144,7 +78,7 @@ export default function AlbumsScreen() {
 									{album.name}
 								</Text>
 								<Text className="text-neutral-500 text-xs mt-0.5">
-									{album.count} items
+									{album.total} items
 								</Text>
 							</View>
 						</Pressable>
