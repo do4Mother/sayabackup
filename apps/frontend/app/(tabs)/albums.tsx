@@ -5,7 +5,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { match } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
+
+const COVER_COLORS = [
+	["#7c3aed", "#6366f1", "#8b5cf6", "#a78bfa"],
+	["#2563eb", "#0891b2", "#06b6d4", "#3b82f6"],
+	["#d97706", "#f97316", "#fbbf24", "#ea580c"],
+	["#059669", "#22c55e", "#14b8a6", "#84cc16"],
+	["#dc2626", "#e11d48", "#ef4444", "#f43f5e"],
+	["#db2777", "#ec4899", "#f472b6", "#be185d"],
+	["#6b7280", "#9ca3af", "#4b5563", "#71717a"],
+	["#a78bfa", "#c084fc", "#d8b4fe", "#8b5cf6"],
+];
 
 function AlbumCover({
 	images,
@@ -14,19 +26,40 @@ function AlbumCover({
 }) {
 	return (
 		<View className="w-full aspect-square rounded-xl overflow-hidden flex-row flex-wrap">
-			{images.map((image) => (
-				<View
-					key={image.id}
-					className="items-center justify-center"
-					style={{ width: "50%", height: "50%" }}
-				>
-					<CustomImage
-						source={{ uri: image.url }}
-						className="w-full h-full"
-						contentFit="cover"
-					/>
-				</View>
-			))}
+			{match(images)
+				.with([], () =>
+					Array.from({ length: 4 }).map((_, idx) => (
+						<View
+							key={idx}
+							className="items-center justify-center"
+							style={{
+								width: "50%",
+								height: "50%",
+								backgroundColor:
+									COVER_COLORS[Math.floor(Math.random() * COVER_COLORS.length)][
+										Math.floor(Math.random() * 4)
+									],
+							}}
+						>
+							<Ionicons name="image" size={24} color="rgba(255,255,255,0.2)" />
+						</View>
+					)),
+				)
+				.otherwise(() =>
+					images.map((image) => (
+						<View
+							key={image.id}
+							className="items-center justify-center"
+							style={{ width: "50%", height: "50%" }}
+						>
+							<CustomImage
+								source={{ uri: image.url }}
+								className="w-full h-full"
+								contentFit="cover"
+							/>
+						</View>
+					)),
+				)}
 		</View>
 	);
 }
