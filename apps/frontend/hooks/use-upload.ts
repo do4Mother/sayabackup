@@ -1,13 +1,12 @@
+import { generateThumbnail } from "@/lib/generate-thumbnail";
 import { uploadToS3 } from "@/s3/upload";
 import { client, trpc } from "@/trpc/trpc";
 import { randomString, sanitizeFilename } from "@sayabackup/utils";
 import axios, { CanceledError } from "axios";
 import axiosRetry from "axios-retry";
-import { ImageManipulator } from "expo-image-manipulator";
 import { ImagePickerAsset } from "expo-image-picker";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
-import { createContext, useContext, useEffect, useRef } from "react";
-import { Platform } from "react-native";
+import { createContext, useContext, useEffect } from "react";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
@@ -15,7 +14,7 @@ axiosRetry(axios, {
 	retries: 3,
 });
 
-type Item = {
+export type UploadItem = {
 	id: string;
 	file: File;
 	uri: string;
@@ -24,85 +23,21 @@ type Item = {
 	size: number;
 	processedBytes: number;
 	abortController?: AbortController;
+	status?: "uploading" | "completed" | "failed" | "queued";
+	error?: string;
 };
 
 type State = {
-	data: Item[];
+	data: UploadItem[];
 };
 
 type Action = {
-	setData: (data: Item[]) => void;
+	setData: (data: UploadItem[]) => void;
 	upload: (data: {
 		images: ImagePickerAsset[];
 		albumId?: string;
 	}) => Promise<void>;
 };
-
-async function generateThumbnail(asset: {
-	uri: string;
-	mimeType?: string;
-}): Promise<{ uri: string; thumbnailBlob: Blob }> {
-	let uri = asset.uri;
-	let thumbnailBlob: Blob | null = null;
-	if (asset.mimeType?.startsWith("image")) {
-		const manipulate = ImageManipulator.manipulate(asset.uri);
-		const image = await manipulate.resize({ width: 800 }).renderAsync();
-		const thumbnail = await image.saveAsync();
-		thumbnailBlob = await fetch(thumbnail.uri).then((res) => res.blob());
-	}
-
-	if (asset.mimeType?.startsWith("video")) {
-		if (Platform.OS === "web") {
-			const video = document.createElement("video");
-			video.preload = "auto";
-			video.muted = true;
-			video.playsInline = true;
-			video.crossOrigin = "anonymous";
-			video.src = asset.uri;
-
-			await new Promise<void>((resolve, reject) => {
-				video.addEventListener("loadedmetadata", () => resolve(), {
-					once: true,
-				});
-				video.addEventListener("error", () => reject(video.error), {
-					once: true,
-				});
-			});
-
-			// Seek to 1s or half duration if shorter
-			video.currentTime = Math.min(1, video.duration / 2);
-
-			await new Promise<void>((resolve, reject) => {
-				video.addEventListener("seeked", () => resolve(), { once: true });
-				video.addEventListener("error", () => reject(video.error), {
-					once: true,
-				});
-			});
-
-			// Wait for the frame to be fully rendered
-			await new Promise((resolve) => setTimeout(resolve, 200));
-
-			const canvas = document.createElement("canvas");
-			canvas.width = 1024;
-			canvas.height = (video.videoHeight / video.videoWidth) * 1024;
-			const ctx = canvas.getContext("2d");
-			ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-			const image = canvas.toDataURL("image/jpeg");
-			uri = image;
-			thumbnailBlob = await fetch(image).then((res) => res.blob());
-
-			// Clean up
-			video.removeAttribute("src");
-			video.load();
-		}
-	}
-
-	if (!thumbnailBlob) {
-		throw new Error("fail generate thumbnail");
-	}
-
-	return { uri, thumbnailBlob };
-}
 
 export const createUploadStore = () =>
 	create<State & Action>((set) => {
@@ -111,7 +46,7 @@ export const createUploadStore = () =>
 
 		return {
 			data: [],
-			setData: (data: Item[]) => set({ data }),
+			setData: (data: UploadItem[]) => set({ data }),
 			upload: async (data) => {
 				const assets = data.images.map(async (asset) => {
 					return {
@@ -123,7 +58,8 @@ export const createUploadStore = () =>
 						size: asset.fileSize || 0,
 						processedBytes: 0,
 						abortController: new AbortController(),
-					};
+						status: "queued",
+					} as UploadItem;
 				});
 
 				const resolvedAssets = await Promise.all(assets);
@@ -133,53 +69,62 @@ export const createUploadStore = () =>
 				set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
 				for await (const media of resolvedAssets) {
-					const albumPath = sanitizeFilename(
-						clientUtils.album.find.getData({ id: data.albumId ?? "" })?.name ??
-							"unknown",
-					);
+					try {
+						/**
+						 * set status to uploading
+						 */
+						set((state) => ({
+							data: state.data.map((m) =>
+								m.id === media.id ? { ...m, status: "uploading" } : m,
+							),
+						}));
 
-					const { thumbnailBlob } = await generateThumbnail({
-						uri: media.uri,
-						mimeType: media.mimeType,
-					});
+						const albumPath = sanitizeFilename(
+							clientUtils.album.find.getData({ id: data.albumId ?? "" })
+								?.name ?? "unknown",
+						);
 
-					const thumbnailPath = `thumbnails/${media.name}`;
-					const filePath = `${albumPath}/${media.name}`;
-					const uploadThumbnail = await uploadToS3({
-						path: thumbnailPath,
-						type: media.mimeType,
-						key: key,
-					});
-
-					// upload thumbnail
-					const isSuccess = await axios
-						.put(uploadThumbnail, thumbnailBlob, {
-							headers: {
-								"Content-Type": media.mimeType,
-							},
-							signal: media.abortController?.signal,
-						})
-						.then(() => true)
-						.catch((error) => {
-							if (error instanceof CanceledError) {
-								return false;
-							}
+						const { thumbnailBlob } = await generateThumbnail({
+							uri: media.uri,
+							mimeType: media.mimeType,
 						});
 
-					if (!isSuccess) {
-						// skip uploading original if thumbnail upload is cancelled
-						continue;
-					}
+						const thumbnailPath = `thumbnails/${media.name}`;
+						const filePath = `${albumPath}/${media.name}`;
+						const uploadThumbnail = await uploadToS3({
+							path: thumbnailPath,
+							type: media.mimeType,
+							key: key,
+						});
 
-					const uploadFile = await uploadToS3({
-						path: filePath,
-						type: media.mimeType,
-						key: key,
-					});
+						// upload thumbnail
+						const isSuccess = await axios
+							.put(uploadThumbnail, thumbnailBlob, {
+								headers: {
+									"Content-Type": media.mimeType,
+								},
+								signal: media.abortController?.signal,
+							})
+							.then(() => true)
+							.catch((error) => {
+								if (error instanceof CanceledError) {
+									return false;
+								}
+							});
 
-					// upload original file with progress tracking
-					await axios
-						.put(uploadFile, media.file, {
+						if (!isSuccess) {
+							// skip uploading original if thumbnail upload is cancelled
+							continue;
+						}
+
+						const uploadFile = await uploadToS3({
+							path: filePath,
+							type: media.mimeType,
+							key: key,
+						});
+
+						// upload original file with progress tracking
+						await axios.put(uploadFile, media.file, {
 							headers: {
 								"Content-Type": media.mimeType,
 							},
@@ -209,14 +154,34 @@ export const createUploadStore = () =>
 													});
 												}
 
+												set((state) => ({
+													data: state.data.map((m) =>
+														m.id === media.id
+															? { ...m, status: "completed" }
+															: m,
+													),
+												}));
+
 												clientUtils.gallery.get.invalidate();
 											},
 										},
 									);
 								}
 							},
-						})
-						.catch(() => {});
+						});
+					} catch (error) {
+						set((state) => ({
+							data: state.data.map((m) =>
+								m.id === media.id
+									? {
+											...m,
+											status: "failed",
+											error: (error as Error).message,
+										}
+									: m,
+							),
+						}));
+					}
 				}
 			},
 		};
@@ -225,37 +190,44 @@ export const createUploadStore = () =>
 export type UploadStore = ReturnType<typeof createUploadStore>;
 export const ContextUpload = createContext<UploadStore | null>(null);
 
+// Module-level wake lock state shared across all useUpload instances
+let wakeLockActive = false;
+let wakeLockPromise: Promise<void> | null = null;
+
 export const useUpload = () => {
 	const store = useContext(ContextUpload);
 	if (!store) {
 		throw new Error("useUpload must be used within a UploadProvider");
 	}
 
-	const activeWakeLock = useRef(false);
-
 	useEffect(() => {
 		const unsubscribe = store.subscribe((state) => {
-			if (
-				state.data.some((item) => item.processedBytes < item.size) &&
-				!activeWakeLock.current
-			) {
-				activateKeepAwakeAsync();
-				activeWakeLock.current = true;
+			const isUploading = state.data.some(
+				(item) => item.status === "uploading",
+			);
+
+			if (isUploading && !wakeLockActive) {
+				wakeLockActive = true;
+				wakeLockPromise = activateKeepAwakeAsync();
 			}
 
-			if (
-				!state.data.some((item) => item.processedBytes < item.size) &&
-				activeWakeLock.current
-			) {
-				deactivateKeepAwake();
-				activeWakeLock.current = false;
+			if (!isUploading && wakeLockActive) {
+				wakeLockActive = false;
+				const pending = wakeLockPromise;
+				wakeLockPromise = null;
+				// Wait for activation to complete before deactivating
+				if (pending) {
+					pending.then(() => deactivateKeepAwake());
+				} else {
+					deactivateKeepAwake();
+				}
 			}
 		});
 
 		return () => {
 			unsubscribe();
 		};
-	}, []);
+	}, [store]);
 
 	return useStore(
 		store,
