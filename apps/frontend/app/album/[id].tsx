@@ -18,7 +18,7 @@ export default function AlbumDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const album = trpc.album.find.useQuery({ id });
 	const photos = trpc.gallery.get.useInfiniteQuery(
-		{ albumId: id, limit: 26 },
+		{ albumId: id, limit: 27 },
 		{ getNextPageParam: (lastPage) => lastPage.nextCursor },
 	);
 	const items = useMemo(
