@@ -1,80 +1,8 @@
+import { UploadItem, useUpload } from "@/hooks/use-upload";
+import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-type UploadItem = {
-	id: string;
-	name: string;
-	size: string;
-	progress: number;
-	status: "uploading" | "completed" | "failed" | "queued";
-};
-
-const DUMMY_UPLOADS: UploadItem[] = [
-	{
-		id: "1",
-		name: "IMG_20260305_142356.jpg",
-		size: "4.2 MB",
-		progress: 100,
-		status: "completed",
-	},
-	{
-		id: "2",
-		name: "IMG_20260305_142401.jpg",
-		size: "3.8 MB",
-		progress: 100,
-		status: "completed",
-	},
-	{
-		id: "3",
-		name: "IMG_20260305_143012.jpg",
-		size: "5.1 MB",
-		progress: 72,
-		status: "uploading",
-	},
-	{
-		id: "4",
-		name: "VID_20260304_190023.mp4",
-		size: "48.6 MB",
-		progress: 34,
-		status: "uploading",
-	},
-	{
-		id: "5",
-		name: "IMG_20260304_185512.jpg",
-		size: "3.4 MB",
-		progress: 0,
-		status: "queued",
-	},
-	{
-		id: "6",
-		name: "IMG_20260304_185530.jpg",
-		size: "4.0 MB",
-		progress: 0,
-		status: "queued",
-	},
-	{
-		id: "7",
-		name: "IMG_20260303_120045.jpg",
-		size: "2.9 MB",
-		progress: 0,
-		status: "failed",
-	},
-	{
-		id: "8",
-		name: "IMG_20260305_140000.jpg",
-		size: "3.5 MB",
-		progress: 100,
-		status: "completed",
-	},
-	{
-		id: "9",
-		name: "IMG_20260305_135812.jpg",
-		size: "4.7 MB",
-		progress: 100,
-		status: "completed",
-	},
-];
 
 const statusConfig = {
 	uploading: {
@@ -108,7 +36,7 @@ function ProgressBar({
 	status,
 }: {
 	progress: number;
-	status: UploadItem["status"];
+	status: NonNullable<UploadItem["status"]>;
 }) {
 	const color = statusConfig[status].color;
 	return (
@@ -125,6 +53,7 @@ function ProgressBar({
 }
 
 function UploadItemRow({ item }: { item: UploadItem }) {
+	if (!item.status) return null;
 	const config = statusConfig[item.status];
 	const isVideo = item.name.toLowerCase().endsWith(".mp4");
 
@@ -151,15 +80,22 @@ function UploadItemRow({ item }: { item: UploadItem }) {
 					{item.name}
 				</Text>
 				<View className="flex-row items-center mt-0.5">
-					<Text className="text-neutral-600 text-xs">{item.size}</Text>
+					<Text className="text-neutral-600 text-xs">
+						{formatFileSize(item.size)}
+					</Text>
 					<View className="w-1 h-1 rounded-full bg-neutral-700 mx-2" />
 					<Text className="text-xs" style={{ color: config.color }}>
 						{config.label}
-						{item.status === "uploading" ? ` ${item.progress}%` : ""}
+						{item.status === "uploading"
+							? ` ${Math.round((item.processedBytes / item.size) * 100)}%`
+							: ""}
 					</Text>
 				</View>
 				{(item.status === "uploading" || item.status === "queued") && (
-					<ProgressBar progress={item.progress} status={item.status} />
+					<ProgressBar
+						progress={Math.round((item.processedBytes / item.size) * 100)}
+						status={item.status}
+					/>
 				)}
 			</View>
 
@@ -173,16 +109,18 @@ function UploadItemRow({ item }: { item: UploadItem }) {
 
 export default function UploadsScreen() {
 	const insets = useSafeAreaInsets();
+	const { data: uploads } = useUpload();
 
-	const uploading = DUMMY_UPLOADS.filter((u) => u.status === "uploading");
-	const queued = DUMMY_UPLOADS.filter((u) => u.status === "queued");
-	const completed = DUMMY_UPLOADS.filter((u) => u.status === "completed");
-	const failed = DUMMY_UPLOADS.filter((u) => u.status === "failed");
+	const uploading = uploads.filter((u) => u.status === "uploading");
+	const queued = uploads.filter((u) => u.status === "queued");
+	const completed = uploads.filter((u) => u.status === "completed");
+	const failed = uploads.filter((u) => u.status === "failed");
 
-	const totalProgress = Math.round(
-		DUMMY_UPLOADS.reduce((acc, u) => acc + u.progress, 0) /
-			DUMMY_UPLOADS.length,
-	);
+	const processedBytes = uploads.reduce((acc, u) => acc + u.processedBytes, 0);
+	const totalBytes = uploads.reduce((acc, u) => acc + u.size, 0);
+	const totalProgress = totalBytes
+		? Math.round((processedBytes / totalBytes) * 100)
+		: 0;
 
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
