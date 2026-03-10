@@ -7,9 +7,12 @@ import {
 	trpc,
 	TRPCProvider,
 } from "@/trpc/trpc";
+import { Toasts } from "@backpackapp-io/react-native-toast";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Redirect, Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useResolveClassNames } from "uniwind";
 import "../global.css";
 
@@ -17,43 +20,55 @@ export default function RootLayout() {
 	const contentStyle = useResolveClassNames("bg-neutral-950");
 
 	return (
-		<TRPCProvider client={client} queryClient={queryClient}>
-			<PersistQueryClientProvider
-				client={queryClient}
-				persistOptions={{ persister: asyncStoragePersister }}
-			>
-				<UploadProvider>
-					<AlertProvider>
-						<AuthMiddleware>
-							<StatusBar style="light" />
-							<Stack
-								screenOptions={{
-									headerShown: false,
-									contentStyle: contentStyle,
-									animation: "fade",
-								}}
-							>
-								<Stack.Screen name="index" />
-								<Stack.Screen name="login" />
-								<Stack.Screen name="(tabs)" />
-								<Stack.Screen
-									name="album/[id]"
-									options={{ animation: "slide_from_right" }}
-								/>
-								<Stack.Screen
-									name="photo/[id]"
-									options={{ animation: "fade" }}
-								/>
-								<Stack.Screen
-									name="settings/s3-credentials"
-									options={{ animation: "slide_from_right" }}
-								/>
-							</Stack>
-						</AuthMiddleware>
-					</AlertProvider>
-				</UploadProvider>
-			</PersistQueryClientProvider>
-		</TRPCProvider>
+		<SafeAreaProvider>
+			<GestureHandlerRootView style={{ flex: 1 }}>
+				<TRPCProvider client={client} queryClient={queryClient}>
+					<PersistQueryClientProvider
+						client={queryClient}
+						persistOptions={{ persister: asyncStoragePersister }}
+					>
+						<UploadProvider>
+							<AlertProvider>
+								<AuthMiddleware>
+									<StatusBar style="light" />
+									<Stack
+										screenOptions={{
+											headerShown: false,
+											contentStyle: contentStyle,
+											animation: "fade",
+										}}
+									>
+										<Stack.Screen name="index" />
+										<Stack.Screen name="login" />
+										<Stack.Screen name="(tabs)" />
+										<Stack.Screen
+											name="album/[id]"
+											options={{ animation: "slide_from_right" }}
+										/>
+										<Stack.Screen
+											name="album/create"
+											options={{
+												presentation: "modal",
+												sheetAllowedDetents: [0.75, 1],
+											}}
+										/>
+										<Stack.Screen
+											name="photo/[id]"
+											options={{ animation: "fade" }}
+										/>
+										<Stack.Screen
+											name="settings/s3-credentials"
+											options={{ animation: "slide_from_right" }}
+										/>
+									</Stack>
+									<Toasts />
+								</AuthMiddleware>
+							</AlertProvider>
+						</UploadProvider>
+					</PersistQueryClientProvider>
+				</TRPCProvider>
+			</GestureHandlerRootView>
+		</SafeAreaProvider>
 	);
 }
 
