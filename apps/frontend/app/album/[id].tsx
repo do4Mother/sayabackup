@@ -3,7 +3,13 @@ import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import {
+	ActivityIndicator,
+	FlatList,
+	Pressable,
+	Text,
+	View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AlbumDetailScreen() {
@@ -55,6 +61,17 @@ export default function AlbumDetailScreen() {
 				numColumns={3}
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{ paddingHorizontal: 1, paddingBottom: 40 }}
+				onEndReachedThreshold={0.2}
+				onEndReached={() =>
+					photos.hasNextPage &&
+					!photos.isFetchingNextPage &&
+					photos.fetchNextPage()
+				}
+				ListFooterComponent={
+					photos.isFetchingNextPage ? (
+						<ActivityIndicator size={"small"} />
+					) : null
+				}
 				renderItem={({ item: photo }) => (
 					<Pressable
 						onPress={() =>
