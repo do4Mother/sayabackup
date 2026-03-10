@@ -1,5 +1,6 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import CustomImage from "@/components/app/CustomImage";
+import { Header } from "@/components/app/Header";
 import { FloatingActionButton } from "@/components/button/FloatingActionButton";
 import { useUpload } from "@/hooks/use-upload";
 import { trpc } from "@/trpc/trpc";
@@ -77,13 +78,7 @@ export default function GalleryScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="flex-row items-center justify-between px-5 py-4">
-				<View>
-					<Text className="text-white text-2xl font-bold tracking-tight">
-						Gallery
-					</Text>
-				</View>
-			</View>
+			<Header title="Gallery" />
 
 			{/* Photo Grid */}
 			<FlatList

@@ -1,4 +1,5 @@
 import CustomImage from "@/components/app/CustomImage";
+import { Header } from "@/components/app/Header";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -29,30 +30,26 @@ export default function AlbumDetailScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="flex-row items-center px-4 py-3 gap-3">
-				<Pressable
-					onPress={() => router.back()}
-					className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-800"
-				>
-					<Ionicons name="arrow-back" size={20} color="#fff" />
-				</Pressable>
-				<View className="flex-1">
-					<View className="flex-row items-center gap-2">
+			<Header
+				leading={
+					<View className="flex-1">
 						<Text
 							className="text-white text-lg font-bold leading-4"
 							numberOfLines={1}
 						>
 							{album.data?.name}
 						</Text>
+						<Text className="text-neutral-500 text-xs mt-0.5">
+							{album.data?.total} photos
+						</Text>
 					</View>
-					<Text className="text-neutral-500 text-xs mt-0.5">
-						{album.data?.total} photos
-					</Text>
-				</View>
-				<Pressable className="w-10 h-10 rounded-full items-center justify-center ">
-					<Ionicons name="ellipsis-vertical" size={18} color="#a3a3a3" />
-				</Pressable>
-			</View>
+				}
+				trailing={
+					<Pressable className="w-10 h-10 rounded-full items-center justify-center">
+						<Ionicons name="ellipsis-vertical" size={18} color="#a3a3a3" />
+					</Pressable>
+				}
+			/>
 
 			{/* Photo Grid */}
 			<FlatList

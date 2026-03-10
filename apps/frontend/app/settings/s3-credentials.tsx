@@ -1,4 +1,5 @@
 import { useAlert } from "@/components/alert/AlertContext";
+import { Header } from "@/components/app/Header";
 import { AppButton } from "@/components/button/AppButton";
 import { TextInputField } from "@/components/form/TextInputField";
 import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
@@ -9,7 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { decrypt, encrypt } from "@sayabackup/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -78,7 +78,6 @@ const FIELDS: FieldConfig[] = [
 ];
 
 export default function S3CredentialsScreen() {
-	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { alert } = useAlert();
 	const [isTestingSuccessful, setIsTestingSuccessful] = useState<
@@ -221,23 +220,14 @@ export default function S3CredentialsScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="flex-row items-center px-4 py-3">
-				<View className="flex-1 flex-row items-center">
-					<Pressable
-						onPress={() => router.back()}
-						className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-800"
-					>
-						<Ionicons name="arrow-back" size={22} color="#fff" />
+			<Header
+				title="S3 Credentials"
+				trailing={
+					<Pressable onPress={onImportConfig}>
+						<Ionicons name="cloud-upload" size={20} color="#fff" />
 					</Pressable>
-					<Text className="text-white text-lg font-bold ml-2">
-						S3 Credentials
-					</Text>
-				</View>
-
-				<Pressable onPress={onImportConfig}>
-					<Ionicons name="cloud-upload" size={20} color="#fff" />
-				</Pressable>
-			</View>
+				}
+			/>
 
 			<ScrollView
 				showsVerticalScrollIndicator={false}

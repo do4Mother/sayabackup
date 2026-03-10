@@ -1,4 +1,5 @@
 import CustomImage from "@/components/app/CustomImage";
+import { Header } from "@/components/app/Header";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -38,14 +39,17 @@ export default function AlbumsScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="flex-row items-center justify-between px-5 py-4">
-				<Text className="text-white text-2xl font-bold tracking-tight">
-					Albums
-				</Text>
-				<Pressable className="w-9 h-9 rounded-full bg-neutral-900 items-center justify-center border border-neutral-800">
-					<Ionicons name="add" size={20} color="#fbbf24" />
-				</Pressable>
-			</View>
+			<Header
+				title="Albums"
+				trailing={
+					<Pressable
+						className="w-9 h-9 rounded-full bg-neutral-900 items-center justify-center border border-neutral-800"
+						onPress={() => router.push("/album/create")}
+					>
+						<Ionicons name="add" size={20} color="#fbbf24" />
+					</Pressable>
+				}
+			/>
 
 			{/* Albums Grid */}
 			<ScrollView

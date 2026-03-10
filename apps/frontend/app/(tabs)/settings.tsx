@@ -1,3 +1,4 @@
+import { Header } from "@/components/app/Header";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -65,11 +66,7 @@ export default function SettingsScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="px-5 py-4">
-				<Text className="text-white text-2xl font-bold tracking-tight">
-					Settings
-				</Text>
-			</View>
+			<Header title="Settings" />
 
 			<ScrollView
 				showsVerticalScrollIndicator={false}

@@ -1,3 +1,4 @@
+import { Header } from "@/components/app/Header";
 import { UploadItem, useUpload } from "@/hooks/use-upload";
 import { formatFileSize } from "@/lib/file_size";
 import { Ionicons } from "@expo/vector-icons";
@@ -144,35 +145,35 @@ export default function UploadsScreen() {
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
 			{/* Header */}
-			<View className="px-5 py-4 flex-row items-center justify-between">
-				<Text className="text-white text-2xl font-bold tracking-tight">
-					Uploads
-				</Text>
-				<View className="flex-row gap-2">
-					{hasActive && (
-						<Pressable
-							onPress={() => cancelUpload()}
-							className="flex-row items-center bg-red-500/15 rounded-lg px-3 py-1.5"
-						>
-							<Ionicons name="close-circle" size={16} color="#ef4444" />
-							<Text className="text-red-400 text-xs font-semibold ml-1.5">
-								Cancel All
-							</Text>
-						</Pressable>
-					)}
-					{hasData && (
-						<Pressable
-							onPress={clearAll}
-							className="flex-row items-center bg-neutral-800 rounded-lg px-3 py-1.5"
-						>
-							<Ionicons name="trash" size={16} color="#a3a3a3" />
-							<Text className="text-neutral-400 text-xs font-semibold ml-1.5">
-								Clear
-							</Text>
-						</Pressable>
-					)}
-				</View>
-			</View>
+			<Header
+				title="Uploads"
+				trailing={
+					<View className="flex-row gap-2">
+						{hasActive && (
+							<Pressable
+								onPress={() => cancelUpload()}
+								className="flex-row items-center bg-red-500/15 rounded-lg px-3 py-1.5"
+							>
+								<Ionicons name="close-circle" size={16} color="#ef4444" />
+								<Text className="text-red-400 text-xs font-semibold ml-1.5">
+									Cancel All
+								</Text>
+							</Pressable>
+						)}
+						{hasData && (
+							<Pressable
+								onPress={clearAll}
+								className="flex-row items-center bg-neutral-800 rounded-lg px-3 py-1.5"
+							>
+								<Ionicons name="trash" size={16} color="#a3a3a3" />
+								<Text className="text-neutral-400 text-xs font-semibold ml-1.5">
+									Clear
+								</Text>
+							</Pressable>
+						)}
+					</View>
+				}
+			/>
 
 			{/* Summary Card */}
 			<View className="mx-5 mb-6 bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
