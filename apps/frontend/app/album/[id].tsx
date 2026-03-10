@@ -1,6 +1,12 @@
+import { useAlert } from "@/components/alert/AlertContext";
 import CustomImage from "@/components/app/CustomImage";
 import { Header } from "@/components/app/Header";
+import {
+	DropdownButton,
+	DropdownButtonItem,
+} from "@/components/button/DropdownButton";
 import { trpc } from "@/trpc/trpc";
+import { toast } from "@backpackapp-io/react-native-toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
@@ -17,6 +23,9 @@ export default function AlbumDetailScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { id } = useLocalSearchParams<{ id: string }>();
+	const { alert } = useAlert();
+	const trpcUtils = trpc.useUtils();
+	const removeMutation = trpc.album.remove.useMutation();
 	const album = trpc.album.find.useQuery({ id });
 	const photos = trpc.gallery.get.useInfiniteQuery(
 		{ albumId: id, limit: 27 },
@@ -45,9 +54,49 @@ export default function AlbumDetailScreen() {
 					</View>
 				}
 				trailing={
-					<Pressable className="w-10 h-10 rounded-full items-center justify-center">
-						<Ionicons name="ellipsis-vertical" size={18} color="#a3a3a3" />
-					</Pressable>
+					<DropdownButton
+						align="right"
+						variant="ghost"
+						size="sm"
+						icon={
+							<Ionicons name="ellipsis-vertical" size={18} color="#a3a3a3" />
+						}
+					>
+						<DropdownButtonItem
+							destructive
+							label="Delete Album"
+							onPress={() => {
+								alert(
+									"Are you sure you want to delete this album?",
+									"The album and all its photos will be permanently deleted.",
+									[
+										{
+											text: "Cancel",
+											style: "cancel",
+										},
+										{
+											text: "Delete",
+											style: "destructive",
+											onPress: () => {
+												removeMutation.mutate(
+													{ id },
+													{
+														onSuccess: () => {
+															toast.success("Album deleted");
+															trpcUtils.gallery.get.invalidate();
+															trpcUtils.album.getWithImage.invalidate();
+															router.back();
+														},
+													},
+												);
+											},
+										},
+									],
+								);
+							}}
+						/>
+						<DropdownButtonItem label="Option 2" onPress={() => {}} />
+					</DropdownButton>
 				}
 			/>
 
