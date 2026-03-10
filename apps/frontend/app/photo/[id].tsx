@@ -3,8 +3,9 @@ import CustomImage from "@/components/app/CustomImage";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
+	ActivityIndicator,
 	Dimensions,
 	FlatList,
 	Modal,
@@ -14,6 +15,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { match } from "ts-pattern";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -72,7 +74,10 @@ export default function PhotoDetailScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { alert } = useAlert();
-	const { id } = useLocalSearchParams<{ id: string }>();
+	const { id, albumId } = useLocalSearchParams<{
+		id: string;
+		albumId?: string;
+	}>();
 	const [showInfo, setShowInfo] = useState(false);
 	const [isFavorite, setIsFavorite] = useState(false);
 	const [showAlbumPicker, setShowAlbumPicker] = useState(false);
@@ -81,7 +86,8 @@ export default function PhotoDetailScreen() {
 	const [addedToAlbums, setAddedToAlbums] = useState<string[]>([]);
 	const photos = trpc.gallery.get.useInfiniteQuery(
 		{
-			limit: 26,
+			albumId: albumId,
+			limit: 27,
 		},
 		{
 			getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -91,8 +97,6 @@ export default function PhotoDetailScreen() {
 		() => photos.data?.pages.flatMap((page) => page.items) || [],
 		[photos.data],
 	);
-	const initialIndex = useRef(items.findIndex((p) => p.id === id)).current;
-
 	const photoColor = getPhotoColor(id ?? "0");
 
 	const handleDelete = () => {
@@ -160,52 +164,61 @@ export default function PhotoDetailScreen() {
 			</View>
 
 			{/* Photo Area */}
-			<FlatList
-				data={items}
-				horizontal
-				pagingEnabled
-				showsHorizontalScrollIndicator={false}
-				keyExtractor={(item) => item.id}
-				contentContainerClassName="gap-4"
-				initialScrollIndex={initialIndex}
-				getItemLayout={(_, index) => ({
-					length: SCREEN_WIDTH + 16,
-					offset: (SCREEN_WIDTH + 16) * index,
-					index,
-				})}
-				snapToAlignment="center"
-				onScroll={(e) => {
-					/**
-					 * load pagination when user scrolls near the end of the list.
-					 * We check if the current scroll position + screen width is within SCREEN_WIDTH * 2 of the end of the content,
-					 * and if so, we trigger loading the next page.
-					 */
-					const scrollPosition = e.nativeEvent.contentOffset.x;
-					const contentWidth = e.nativeEvent.contentSize.width;
-					if (
-						scrollPosition + SCREEN_WIDTH >= contentWidth - SCREEN_WIDTH * 2 &&
-						photos.hasNextPage &&
-						!photos.isFetchingNextPage
-					) {
-						photos.fetchNextPage();
-					}
-				}}
-				renderItem={({ item }) => (
-					<View
-						className="flex-1 justify-center items-center"
-						style={{
-							width: SCREEN_WIDTH,
-							height: SCREEN_HEIGHT,
+			{match(photos.isLoading)
+				.with(false, () => (
+					<FlatList
+						data={items}
+						horizontal
+						pagingEnabled
+						showsHorizontalScrollIndicator={false}
+						keyExtractor={(item) => item.id}
+						contentContainerClassName="gap-4"
+						initialScrollIndex={items.findIndex((p) => p.id === id)}
+						getItemLayout={(_, index) => ({
+							length: SCREEN_WIDTH + 16,
+							offset: (SCREEN_WIDTH + 16) * index,
+							index,
+						})}
+						snapToAlignment="center"
+						onScroll={(e) => {
+							/**
+							 * load pagination when user scrolls near the end of the list.
+							 * We check if the current scroll position + screen width is within SCREEN_WIDTH * 2 of the end of the content,
+							 * and if so, we trigger loading the next page.
+							 */
+							const scrollPosition = e.nativeEvent.contentOffset.x;
+							const contentWidth = e.nativeEvent.contentSize.width;
+							if (
+								scrollPosition + SCREEN_WIDTH >=
+									contentWidth - SCREEN_WIDTH * 2 &&
+								photos.hasNextPage &&
+								!photos.isFetchingNextPage
+							) {
+								photos.fetchNextPage();
+							}
 						}}
-					>
-						<CustomImage
-							source={{ uri: item.thumbnail_path }}
-							className="w-full h-full"
-							contentFit="contain"
-						/>
+						renderItem={({ item }) => (
+							<View
+								className="flex-1 justify-center items-center"
+								style={{
+									width: SCREEN_WIDTH,
+									height: SCREEN_HEIGHT,
+								}}
+							>
+								<CustomImage
+									source={{ uri: item.thumbnail_path }}
+									className="w-full h-full"
+									contentFit="contain"
+								/>
+							</View>
+						)}
+					/>
+				))
+				.otherwise(() => (
+					<View className="flex-1 justify-center items-center">
+						<ActivityIndicator size="large" />
 					</View>
-				)}
-			/>
+				))}
 
 			{/* Bottom Bar */}
 			<View
