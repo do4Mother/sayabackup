@@ -7,7 +7,7 @@
 		"reset-project": "node ./scripts/reset-project.js",
 		"android": "expo start --android",
 		"ios": "expo start --ios",
-		"dev": "expo start --web",
+		"dev": "EXPO_UNSTABLE_WEB_MODAL=1 expo start --web",
 		"lint": "expo lint"
 	},
 	"dependencies": {
