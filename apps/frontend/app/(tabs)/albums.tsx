@@ -49,6 +49,7 @@ export default function AlbumsScreen() {
 						<Ionicons name="add" size={20} color="#fbbf24" />
 					</Pressable>
 				}
+				showBackButton={false}
 			/>
 
 			{/* Albums Grid */}
