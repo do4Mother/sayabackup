@@ -2,6 +2,7 @@ import { router } from "../../trpc";
 import { create } from "./create";
 import { find } from "./find";
 import { get } from "./get";
+import { getWithImage } from "./get-with-image";
 import { remove } from "./remove";
 import { update } from "./update";
 
@@ -11,4 +12,5 @@ export const albumRouter = router({
 	get,
 	update,
 	remove,
+	getWithImage,
 });
