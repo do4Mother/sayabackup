@@ -1,10 +1,15 @@
 import { AlertProvider } from "@/components/alert/AlertContext";
 import { ContextUpload, createUploadStore } from "@/hooks/use-upload";
-import { client, queryClient, trpc, TRPCProvider } from "@/trpc/trpc";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack, usePathname, useRouter } from "expo-router";
+import {
+	asyncStoragePersister,
+	client,
+	queryClient,
+	trpc,
+	TRPCProvider,
+} from "@/trpc/trpc";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { Redirect, Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
 import { useResolveClassNames } from "uniwind";
 import "../global.css";
 
@@ -13,7 +18,10 @@ export default function RootLayout() {
 
 	return (
 		<TRPCProvider client={client} queryClient={queryClient}>
-			<QueryClientProvider client={queryClient}>
+			<PersistQueryClientProvider
+				client={queryClient}
+				persistOptions={{ persister: asyncStoragePersister }}
+			>
 				<UploadProvider>
 					<AlertProvider>
 						<AuthMiddleware>
@@ -44,7 +52,7 @@ export default function RootLayout() {
 						</AuthMiddleware>
 					</AlertProvider>
 				</UploadProvider>
-			</QueryClientProvider>
+			</PersistQueryClientProvider>
 		</TRPCProvider>
 	);
 }
@@ -60,19 +68,14 @@ function UploadProvider({ children }: { children: React.ReactNode }) {
 
 function AuthMiddleware({ children }: { children: React.ReactNode }) {
 	const user = trpc.auth.me.useQuery();
-	const router = useRouter();
 	const pathname = usePathname();
-
-	useEffect(() => {
-		if (!user.isLoading && !user.data) {
-			if (pathname !== "/login") {
-				router.replace("/login");
-			}
-		}
-	}, [user.data, user.isLoading, pathname, router]);
 
 	if (user.isLoading) {
 		return null; // or a loading spinner
+	}
+
+	if (!user.data && pathname !== "/login") {
+		return <Redirect href="/login" />;
 	}
 
 	return <>{children}</>;
