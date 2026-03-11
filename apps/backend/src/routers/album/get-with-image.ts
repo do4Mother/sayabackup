@@ -9,7 +9,10 @@ export const getWithImage = protectedProcdure.query(async ({ ctx }) => {
 			total: sql<number>`COUNT(${gallery.id})`,
 		})
 		.from(albums)
-		.leftJoin(gallery, eq(gallery.album_id, albums.id))
+		.leftJoin(
+			gallery,
+			and(eq(gallery.album_id, albums.id), isNull(gallery.deleted_at)),
+		)
 		.where(and(eq(albums.user_id, ctx.user.id), isNull(albums.deleted_at)))
 		.groupBy(albums.id)
 		.orderBy(desc(albums.created_at));
