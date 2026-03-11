@@ -1,11 +1,9 @@
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
-	const _router = useRouter();
 	const insets = useSafeAreaInsets();
 
 	const secret = trpc.auth.secret.useQuery(void 0);
@@ -13,7 +11,8 @@ export default function LoginScreen() {
 	const handleLogin = () => {
 		const googleClientId =
 			"27302795397-e6cpk83cbb6ig7vik2nkgva1h71ge348.apps.googleusercontent.com";
-		const redirectURI = "http://localhost:8081/auth/google";
+		const origin = window.location.origin;
+		const redirectURI = `${origin}/auth/google`;
 		// generate nonce and store in localStorage for later verification
 		const nonce = Math.random().toString(36).substring(2);
 		localStorage.setItem("oauth_nonce", nonce);

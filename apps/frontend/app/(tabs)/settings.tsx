@@ -1,4 +1,6 @@
 import { Header } from "@/components/app/Header";
+import { useSessions } from "@/hooks/use-sessions";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -62,6 +64,17 @@ export default function SettingsScreen() {
 	const [autoBackup, setAutoBackup] = useState(true);
 	const [wifiOnly, setWifiOnly] = useState(true);
 	const [notifications, setNotifications] = useState(false);
+	const logoutMutation = trpc.auth.logout.useMutation();
+	const setSessionState = useSessions((state) => state.setState);
+
+	const onLogout = () => {
+		logoutMutation.mutate(void 0, {
+			onSuccess() {
+				setSessionState("unauthenticated");
+				router.replace("/login");
+			},
+		});
+	};
 
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
@@ -203,7 +216,7 @@ export default function SettingsScreen() {
 				{/* Sign Out */}
 				<View className="mt-8 mx-5">
 					<Pressable
-						onPress={() => router.replace("/login")}
+						onPress={onLogout}
 						className="border border-red-900 rounded-xl py-3.5 items-center active:bg-red-950"
 					>
 						<Text className="text-red-400 font-semibold text-sm">Sign Out</Text>

@@ -1,24 +1,23 @@
 import { AlertProvider } from "@/components/alert/AlertContext";
+import { useSessions } from "@/hooks/use-sessions";
 import { ContextUpload, createUploadStore } from "@/hooks/use-upload";
 import {
 	asyncStoragePersister,
 	client,
 	queryClient,
-	trpc,
 	TRPCProvider,
 } from "@/trpc/trpc";
 import { Toasts } from "@backpackapp-io/react-native-toast";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { Redirect, Stack, usePathname } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useResolveClassNames } from "uniwind";
 import "../global.css";
 
 export default function RootLayout() {
-	const contentStyle = useResolveClassNames("bg-neutral-950");
-
 	return (
 		<SafeAreaProvider>
 			<GestureHandlerRootView style={{ flex: 1 }}>
@@ -29,54 +28,9 @@ export default function RootLayout() {
 					>
 						<UploadProvider>
 							<AlertProvider>
-								<AuthMiddleware>
-									<StatusBar style="light" />
-									<Stack
-										screenOptions={{
-											headerShown: false,
-											contentStyle: contentStyle,
-											animation: "fade",
-										}}
-									>
-										<Stack.Screen name="index" />
-										<Stack.Screen name="login" />
-										<Stack.Screen name="(tabs)" />
-										<Stack.Screen
-											name="album/[id]"
-											options={{ animation: "slide_from_right" }}
-										/>
-										<Stack.Screen
-											name="album/create"
-											options={{
-												presentation: "modal",
-												sheetAllowedDetents: [0.75, 1],
-											}}
-										/>
-										<Stack.Screen
-											name="album/[id]/rename"
-											options={{
-												presentation: "modal",
-												sheetAllowedDetents: [0.75, 1],
-											}}
-										/>
-										<Stack.Screen
-											name="photo/[id]"
-											options={{ animation: "fade" }}
-										/>
-										<Stack.Screen
-											name="photo/[id]/add-to-album"
-											options={{
-												presentation: "modal",
-												sheetAllowedDetents: [0.75, 1],
-											}}
-										/>
-										<Stack.Screen
-											name="settings/s3-credentials"
-											options={{ animation: "slide_from_right" }}
-										/>
-									</Stack>
-									<Toasts />
-								</AuthMiddleware>
+								<StatusBar style="light" />
+								<Routers />
+								<Toasts />
 							</AlertProvider>
 						</UploadProvider>
 					</PersistQueryClientProvider>
@@ -95,17 +49,75 @@ function UploadProvider({ children }: { children: React.ReactNode }) {
 	);
 }
 
-function AuthMiddleware({ children }: { children: React.ReactNode }) {
-	const user = trpc.auth.me.useQuery();
+function Routers() {
+	const contentStyle = useResolveClassNames("bg-neutral-950");
+
+	const router = useRouter();
 	const pathname = usePathname();
+	const state = useSessions((state) => state.status);
+	const setState = useSessions((state) => state.setState);
 
-	if (user.isLoading) {
-		return null; // or a loading spinner
+	useEffect(() => {
+		client.auth.me
+			.query()
+			.then(() => {
+				setState("authenticated");
+				if (pathname === "/login") {
+					router.replace("/(tabs)/gallery");
+				}
+			})
+			.catch(() => {
+				setState("unauthenticated");
+			});
+	}, []);
+
+	if (state === "loading") {
+		return null;
 	}
 
-	if (!user.data && pathname !== "/login") {
-		return <Redirect href="/login" />;
-	}
-
-	return <>{children}</>;
+	return (
+		<Stack
+			screenOptions={{
+				headerShown: false,
+				contentStyle: contentStyle,
+				animation: "fade",
+			}}
+		>
+			<Stack.Screen name="index" />
+			<Stack.Screen name="login" />
+			<Stack.Protected guard={state === "authenticated"}>
+				<Stack.Screen name="(tabs)" />
+				<Stack.Screen
+					name="album/[id]"
+					options={{ animation: "slide_from_right" }}
+				/>
+				<Stack.Screen
+					name="album/create"
+					options={{
+						presentation: "modal",
+						sheetAllowedDetents: [0.75, 1],
+					}}
+				/>
+				<Stack.Screen
+					name="album/[id]/rename"
+					options={{
+						presentation: "modal",
+						sheetAllowedDetents: [0.75, 1],
+					}}
+				/>
+				<Stack.Screen name="photo/[id]" options={{ animation: "fade" }} />
+				<Stack.Screen
+					name="photo/[id]/add-to-album"
+					options={{
+						presentation: "modal",
+						sheetAllowedDetents: [0.75, 1],
+					}}
+				/>
+				<Stack.Screen
+					name="settings/s3-credentials"
+					options={{ animation: "slide_from_right" }}
+				/>
+			</Stack.Protected>
+		</Stack>
+	);
 }
