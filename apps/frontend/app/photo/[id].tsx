@@ -133,7 +133,10 @@ export default function PhotoDetailScreen() {
 				contentContainerClassName="gap-4"
 				initialScrollIndex={items.findIndex((p) => p.id === id)}
 				ListEmptyComponent={() => (
-					<View className="flex-1 justify-center items-center">
+					<View
+						className="flex-1 justify-center items-center"
+						style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
+					>
 						<ActivityIndicator size="large" />
 					</View>
 				)}
