@@ -1,3 +1,4 @@
+import { useSessions } from "@/hooks/use-sessions";
 import { trpc } from "@/trpc/trpc";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ export default function GoogleAuthScreen() {
 	const router = useRouter();
 	const glob = useGlobalSearchParams();
 	const mutation = trpc.auth.google.useMutation();
+	const setSessionState = useSessions((state) => state.setState);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -27,6 +29,7 @@ export default function GoogleAuthScreen() {
 			{ code, state },
 			{
 				onSuccess() {
+					setSessionState("authenticated");
 					router.replace("/(tabs)/gallery");
 				},
 			},
