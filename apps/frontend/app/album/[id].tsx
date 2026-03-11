@@ -172,12 +172,22 @@ export default function AlbumDetailScreen() {
 							width: "33.333%",
 							aspectRatio: 1,
 							padding: 1,
+							position: "relative",
 						}}
 					>
 						<CustomImage
 							source={{ uri: photo.thumbnail_path }}
 							className="w-full h-full"
 						/>
+
+						{photo.mime_type?.startsWith("video") && (
+							<Ionicons
+								name="videocam"
+								size={24}
+								color="#fff"
+								className="absolute top-2 right-2"
+							/>
+						)}
 					</Pressable>
 				)}
 			/>
