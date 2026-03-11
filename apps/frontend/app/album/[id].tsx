@@ -18,6 +18,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { match } from "ts-pattern";
 
 export default function AlbumDetailScreen() {
 	const router = useRouter();
@@ -111,7 +112,43 @@ export default function AlbumDetailScreen() {
 				keyExtractor={(item) => item.id}
 				numColumns={3}
 				showsVerticalScrollIndicator={false}
-				contentContainerStyle={{ paddingHorizontal: 1, paddingBottom: 40 }}
+				contentContainerStyle={{
+					paddingHorizontal: 1,
+					paddingBottom: 40,
+					flexGrow: 1,
+				}}
+				ListEmptyComponent={() =>
+					match(photos.isLoading)
+						.with(true, () => (
+							<View className="flex-1 items-center justify-center">
+								<ActivityIndicator size={"small"} />
+							</View>
+						))
+						.otherwise(() => (
+							<View className="items-center justify-center flex-1">
+								<Ionicons name="images-outline" size={64} color="#6b7280" />
+								<Text className="text-neutral-400 mt-4 text-lg">
+									No photos yet
+								</Text>
+								<Text className="text-neutral-500 text-sm mt-1 text-center">
+									This album doesn't contain any photos.
+								</Text>
+								<Pressable
+									onPress={() =>
+										router.push({
+											pathname: "/uploads",
+											params: { albumId: id },
+										})
+									}
+									className="mt-4 bg-blue-600 px-4 py-2 rounded"
+								>
+									<Text className="text-white font-semibold">
+										Upload Photos
+									</Text>
+								</Pressable>
+							</View>
+						))
+				}
 				onEndReachedThreshold={0.2}
 				onEndReached={() =>
 					photos.hasNextPage &&

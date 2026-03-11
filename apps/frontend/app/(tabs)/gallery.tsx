@@ -19,6 +19,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { match } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
 type Photos = AppRouterOutput["gallery"]["get"]["items"];
@@ -91,6 +92,37 @@ export default function GalleryScreen() {
 					photos.hasNextPage &&
 					!photos.isFetchingNextPage &&
 					photos.fetchNextPage()
+				}
+				ListEmptyComponent={() =>
+					match(photos.isLoading)
+						.with(true, () => (
+							<View className="flex-1 items-center justify-center">
+								<ActivityIndicator size={"small"} />
+							</View>
+						))
+						.otherwise(() => (
+							<View className="items-center justify-center flex-1">
+								<Ionicons name="images-outline" size={64} color="#6b7280" />
+								<Text className="text-neutral-400 mt-4 text-lg">
+									No photos yet
+								</Text>
+								<Text className="text-neutral-500 text-sm mt-1 text-center">
+									This album doesn't contain any photos.
+								</Text>
+								<Pressable
+									onPress={() =>
+										router.push({
+											pathname: "/uploads",
+										})
+									}
+									className="mt-4 bg-blue-600 px-4 py-2 rounded"
+								>
+									<Text className="text-white font-semibold">
+										Upload Photos
+									</Text>
+								</Pressable>
+							</View>
+						))
 				}
 				ListFooterComponent={
 					photos.isFetchingNextPage ? (
