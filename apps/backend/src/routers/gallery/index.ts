@@ -1,5 +1,6 @@
 import { router } from "../../trpc";
 import { create } from "./create";
+import { find } from "./find";
 import { get } from "./get";
 import { move } from "./move";
 import { remove } from "./remove";
@@ -11,4 +12,5 @@ export const galleryRouter = router({
 	update,
 	remove,
 	move,
+	find,
 });
