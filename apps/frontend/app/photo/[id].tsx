@@ -3,7 +3,7 @@ import CustomImage from "@/components/app/CustomImage";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Dimensions,
@@ -15,7 +15,6 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { match } from "ts-pattern";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -84,6 +83,9 @@ export default function PhotoDetailScreen() {
 	const [showShareSheet, setShowShareSheet] = useState(false);
 	const [showMoreMenu, setShowMoreMenu] = useState(false);
 	const [addedToAlbums, setAddedToAlbums] = useState<string[]>([]);
+	const flatListRef = useRef<FlatList>(null);
+	const trpcUtils = trpc.useUtils();
+	const removeMutation = trpc.gallery.remove.useMutation();
 	const photos = trpc.gallery.get.useInfiniteQuery(
 		{
 			albumId: albumId,
@@ -109,9 +111,29 @@ export default function PhotoDetailScreen() {
 					text: "Delete",
 					style: "destructive",
 					onPress: () => {
-						alert("Deleted", "Photo has been deleted.", [
-							{ text: "OK", onPress: () => router.back() },
-						]);
+						removeMutation.mutate(
+							{ id: id as string },
+							{
+								onSuccess: () => {
+									trpcUtils.gallery.get.invalidate({ albumId });
+
+									/**
+									 * After deletion, we want to navigate to the next photo in the list. We find the index of the deleted photo, and if there's a next photo, we navigate to it. Otherwise, we go back to the album or gallery view.
+									 */
+									const deletedIndex = items.findIndex((p) => p.id === id);
+									if (deletedIndex !== -1) {
+										const nextPhoto =
+											items[deletedIndex + 1] || items[deletedIndex - 1];
+										if (nextPhoto) {
+											flatListRef.current?.scrollToIndex({
+												index: deletedIndex + 1,
+												animated: true,
+											});
+										}
+									}
+								},
+							},
+						);
 					},
 				},
 			],
@@ -164,61 +186,58 @@ export default function PhotoDetailScreen() {
 			</View>
 
 			{/* Photo Area */}
-			{match(photos.isLoading)
-				.with(false, () => (
-					<FlatList
-						data={items}
-						horizontal
-						pagingEnabled
-						showsHorizontalScrollIndicator={false}
-						keyExtractor={(item) => item.id}
-						contentContainerClassName="gap-4"
-						initialScrollIndex={items.findIndex((p) => p.id === id)}
-						getItemLayout={(_, index) => ({
-							length: SCREEN_WIDTH + 16,
-							offset: (SCREEN_WIDTH + 16) * index,
-							index,
-						})}
-						snapToAlignment="center"
-						onScroll={(e) => {
-							/**
-							 * load pagination when user scrolls near the end of the list.
-							 * We check if the current scroll position + screen width is within SCREEN_WIDTH * 2 of the end of the content,
-							 * and if so, we trigger loading the next page.
-							 */
-							const scrollPosition = e.nativeEvent.contentOffset.x;
-							const contentWidth = e.nativeEvent.contentSize.width;
-							if (
-								scrollPosition + SCREEN_WIDTH >=
-									contentWidth - SCREEN_WIDTH * 2 &&
-								photos.hasNextPage &&
-								!photos.isFetchingNextPage
-							) {
-								photos.fetchNextPage();
-							}
-						}}
-						renderItem={({ item }) => (
-							<View
-								className="flex-1 justify-center items-center"
-								style={{
-									width: SCREEN_WIDTH,
-									height: SCREEN_HEIGHT,
-								}}
-							>
-								<CustomImage
-									source={{ uri: item.thumbnail_path }}
-									className="w-full h-full"
-									contentFit="contain"
-								/>
-							</View>
-						)}
-					/>
-				))
-				.otherwise(() => (
+			<FlatList
+				ref={flatListRef}
+				data={items}
+				horizontal
+				pagingEnabled
+				showsHorizontalScrollIndicator={false}
+				keyExtractor={(item) => item.id}
+				contentContainerClassName="gap-4"
+				initialScrollIndex={items.findIndex((p) => p.id === id)}
+				ListEmptyComponent={() => (
 					<View className="flex-1 justify-center items-center">
 						<ActivityIndicator size="large" />
 					</View>
-				))}
+				)}
+				getItemLayout={(_, index) => ({
+					length: SCREEN_WIDTH + 16,
+					offset: (SCREEN_WIDTH + 16) * index,
+					index,
+				})}
+				snapToAlignment="center"
+				onScroll={(e) => {
+					/**
+					 * load pagination when user scrolls near the end of the list.
+					 * We check if the current scroll position + screen width is within SCREEN_WIDTH * 2 of the end of the content,
+					 * and if so, we trigger loading the next page.
+					 */
+					const scrollPosition = e.nativeEvent.contentOffset.x;
+					const contentWidth = e.nativeEvent.contentSize.width;
+					if (
+						scrollPosition + SCREEN_WIDTH >= contentWidth - SCREEN_WIDTH * 2 &&
+						photos.hasNextPage &&
+						!photos.isFetchingNextPage
+					) {
+						photos.fetchNextPage();
+					}
+				}}
+				renderItem={({ item }) => (
+					<View
+						className="flex-1 justify-center items-center"
+						style={{
+							width: SCREEN_WIDTH,
+							height: SCREEN_HEIGHT,
+						}}
+					>
+						<CustomImage
+							source={{ uri: item.thumbnail_path }}
+							className="w-full h-full"
+							contentFit="contain"
+						/>
+					</View>
+				)}
+			/>
 
 			{/* Bottom Bar */}
 			<View
