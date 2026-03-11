@@ -19,7 +19,7 @@ export default function AddToAlbumScreen() {
 			{
 				onSuccess: () => {
 					trpcUtils.gallery.find.invalidate({ id });
-					trpcUtils.album.find.invalidate({ id: albumId });
+					trpcUtils.gallery.get.invalidate({ albumId: albumId });
 					trpcUtils.album.getWithImage.invalidate();
 					trpcUtils.album.get.invalidate();
 				},
