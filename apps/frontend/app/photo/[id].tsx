@@ -1,6 +1,7 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import CustomImage from "@/components/app/CustomImage";
 import { VideoPlayer } from "@/components/app/VideoPlayer";
+import { deleteFile } from "@/s3/delete_file";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -49,6 +50,7 @@ export default function PhotoDetailScreen() {
 	const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 	const flatListRef = useRef<FlatList>(null);
 	const trpcUtils = trpc.useUtils();
+	const secretKey = trpcUtils.auth.me.getData()?.user.key ?? "";
 	const removeMutation = trpc.gallery.remove.useMutation();
 	const photos = trpc.gallery.get.useInfiniteQuery(
 		{
@@ -88,6 +90,14 @@ export default function PhotoDetailScreen() {
 							{
 								onSuccess: () => {
 									trpcUtils.gallery.get.invalidate({ albumId });
+									deleteFile({
+										path: selectedPhoto?.file_path ?? "",
+										key: secretKey,
+									}).catch(() => {
+										/**
+										 * ignore error
+										 */
+									});
 								},
 							},
 						);
