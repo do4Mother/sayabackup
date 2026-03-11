@@ -6,7 +6,7 @@ import { twMerge } from "tailwind-merge";
 
 export default function AddToAlbumScreen() {
 	const router = useRouter();
-	const { id } = useLocalSearchParams<{ id: string }>();
+	const { photoId: id } = useLocalSearchParams<{ photoId: string }>();
 	const albums = trpc.album.get.useQuery();
 	const photo = trpc.gallery.find.useQuery({ id });
 	const updateMutation = trpc.gallery.update.useMutation();
@@ -19,7 +19,8 @@ export default function AddToAlbumScreen() {
 			{
 				onSuccess: () => {
 					trpcUtils.gallery.find.invalidate({ id });
-					trpcUtils.gallery.get.invalidate({ albumId: albumId });
+					trpcUtils.gallery.get.invalidate({ albumId: albumId, limit: 27 });
+					trpcUtils.gallery.get.invalidate({ limit: 27 });
 					trpcUtils.album.getWithImage.invalidate();
 					trpcUtils.album.get.invalidate();
 				},
