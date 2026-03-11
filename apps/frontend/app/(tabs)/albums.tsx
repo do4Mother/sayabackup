@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import {
 	ActivityIndicator,
 	Pressable,
+	RefreshControl,
 	ScrollView,
 	Text,
 	View,
@@ -95,6 +96,13 @@ export default function AlbumsScreen() {
 			<ScrollView
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+				refreshControl={
+					<RefreshControl
+						refreshing={albums.isLoading}
+						onRefresh={() => albums.refetch()}
+						colors={["#fbbf24"]}
+					/>
+				}
 			>
 				<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mb-4">
 					My Albums

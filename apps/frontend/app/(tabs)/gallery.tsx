@@ -86,6 +86,8 @@ export default function GalleryScreen() {
 				data={groups}
 				keyExtractor={(item) => item.date}
 				showsVerticalScrollIndicator={false}
+				refreshing={photos.isLoading}
+				onRefresh={() => photos.refetch()}
 				contentContainerStyle={{ paddingBottom: 20 }}
 				onEndReachedThreshold={0.2}
 				onEndReached={() =>
