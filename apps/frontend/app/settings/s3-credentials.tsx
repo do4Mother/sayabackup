@@ -1,6 +1,10 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import { Header } from "@/components/app/Header";
 import { AppButton } from "@/components/button/AppButton";
+import {
+	DropdownButton,
+	DropdownButtonItem,
+} from "@/components/button/DropdownButton";
 import { TextInputField } from "@/components/form/TextInputField";
 import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
 import { testS3Connection } from "@/s3/test_connection";
@@ -176,45 +180,65 @@ export default function S3CredentialsScreen() {
 		testMutation.mutate(getValues());
 	};
 
-	const onImportConfig = () => {
-		DocumentPicker.getDocumentAsync({
+	const onImportConfig = async () => {
+		const result = await DocumentPicker.getDocumentAsync({
 			type: ".backup",
-		}).then((result) => {
-			if (!result.canceled) {
-				for (const file of result.assets) {
-					if (file.file) {
-						const reader = new FileReader();
-						reader.onload = (e) => {
-							try {
-								const text = e.target?.result;
-								if (typeof text === "string") {
-									localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, text);
-									alert(
-										"Import Successful",
-										"S3 credentials have been imported successfully.",
-										[{ text: "OK" }],
-									);
-									data.refetch();
-									return;
-								}
-
-								alert(
-									"Import Failed",
-									"Unable to read the selected file. Please try again.",
-								);
-							} catch (error) {
-								alert(
-									"Import Failed",
-									`An error occurred while importing the file. Please ensure it's a valid JSON file with the correct structure.\nError: ${
-										error instanceof Error ? error.message : String(error)
-									}`,
-								);
-							}
-						};
-					}
-				}
-			}
 		});
+
+		if (result.canceled) return;
+
+		for (const file of result.assets) {
+			if (file.file) {
+				const reader = new FileReader();
+				reader.readAsText(file.file);
+				reader.onload = (e) => {
+					try {
+						const text = e.target?.result;
+						console.log("File content:", text);
+						if (typeof text === "string") {
+							localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, text);
+							alert(
+								"Import Successful",
+								"S3 credentials have been imported successfully.",
+								[{ text: "OK" }],
+							);
+							data.refetch();
+							return;
+						}
+
+						alert(
+							"Import Failed",
+							"Unable to read the selected file. Please try again.",
+						);
+					} catch (error) {
+						alert(
+							"Import Failed",
+							`An error occurred while importing the file. Please ensure it's a valid JSON file with the correct structure.\nError: ${
+								error instanceof Error ? error.message : String(error)
+							}`,
+						);
+					}
+				};
+			}
+		}
+	};
+
+	const onExportConfig = () => {
+		const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
+		if (!encrypted) {
+			alert("Export Failed", "No S3 credentials found to export.");
+			return;
+		}
+
+		const blob = new Blob([encrypted], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = "s3_credentials.backup";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
 	};
 
 	return (
@@ -223,9 +247,21 @@ export default function S3CredentialsScreen() {
 			<Header
 				title="S3 Credentials"
 				trailing={
-					<Pressable onPress={onImportConfig}>
-						<Ionicons name="cloud-upload" size={20} color="#fff" />
-					</Pressable>
+					<DropdownButton
+						variant="ghost"
+						size="sm"
+						icon={<Ionicons name="ellipsis-vertical" size={20} color="#fff" />}
+						align="right"
+					>
+						<DropdownButtonItem
+							label="Import Config"
+							onPress={onImportConfig}
+						/>
+						<DropdownButtonItem
+							label="Export Config"
+							onPress={onExportConfig}
+						/>
+					</DropdownButton>
 				}
 			/>
 
