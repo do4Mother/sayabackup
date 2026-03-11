@@ -1,5 +1,6 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import CustomImage from "@/components/app/CustomImage";
+import { VideoPlayer } from "@/components/app/VideoPlayer";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -15,6 +16,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { match, P } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -123,7 +125,7 @@ export default function PhotoDetailScreen() {
 			</View>
 
 			{/* Photo Area */}
-			<FlatList
+			<FlatList<Photo>
 				ref={flatListRef}
 				data={items}
 				horizontal
@@ -179,11 +181,20 @@ export default function PhotoDetailScreen() {
 							height: SCREEN_HEIGHT,
 						}}
 					>
-						<CustomImage
-							source={{ uri: item.thumbnail_path }}
-							className="w-full h-full"
-							contentFit="contain"
-						/>
+						{match(item)
+							.with({ mime_type: P.string.includes("video") }, (video) => (
+								<VideoPlayer
+									src={video.file_path}
+									thumnbnailPath={video.thumbnail_path}
+								/>
+							))
+							.otherwise(() => (
+								<CustomImage
+									source={{ uri: item.thumbnail_path }}
+									className="w-full h-full"
+									contentFit="contain"
+								/>
+							))}
 					</View>
 				)}
 			/>
