@@ -53,6 +53,13 @@ export default function RootLayout() {
 											}}
 										/>
 										<Stack.Screen
+											name="album/[id]/rename"
+											options={{
+												presentation: "modal",
+												sheetAllowedDetents: [0.75, 1],
+											}}
+										/>
+										<Stack.Screen
 											name="photo/[id]"
 											options={{ animation: "fade" }}
 										/>

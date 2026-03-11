@@ -63,6 +63,12 @@ export default function AlbumDetailScreen() {
 						}
 					>
 						<DropdownButtonItem
+							label="Rename Album"
+							onPress={() =>
+								router.push({ pathname: "/album/[id]/rename", params: { id } })
+							}
+						/>
+						<DropdownButtonItem
 							destructive
 							label="Delete Album"
 							onPress={() => {
@@ -95,7 +101,6 @@ export default function AlbumDetailScreen() {
 								);
 							}}
 						/>
-						<DropdownButtonItem label="Option 2" onPress={() => {}} />
 					</DropdownButton>
 				}
 			/>
