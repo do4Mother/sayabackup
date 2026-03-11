@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 type State = {
 	status: "loading" | "authenticated" | "unauthenticated";
@@ -17,6 +18,7 @@ export const useSessions = create<State & Actions>()(
 		}),
 		{
 			name: "session-storage",
+			storage: createJSONStorage(() => AsyncStorage),
 		},
 	),
 );
