@@ -64,6 +64,13 @@ export default function RootLayout() {
 											options={{ animation: "fade" }}
 										/>
 										<Stack.Screen
+											name="photo/[id]/add-to-album"
+											options={{
+												presentation: "modal",
+												sheetAllowedDetents: [0.75, 1],
+											}}
+										/>
+										<Stack.Screen
 											name="settings/s3-credentials"
 											options={{ animation: "slide_from_right" }}
 										/>
