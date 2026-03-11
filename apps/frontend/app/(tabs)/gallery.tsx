@@ -88,7 +88,7 @@ export default function GalleryScreen() {
 				showsVerticalScrollIndicator={false}
 				refreshing={photos.isLoading}
 				onRefresh={() => photos.refetch()}
-				contentContainerStyle={{ paddingBottom: 20 }}
+				contentContainerStyle={{ paddingBottom: 20, flex: 1 }}
 				onEndReachedThreshold={0.2}
 				onEndReached={() =>
 					photos.hasNextPage &&
@@ -147,6 +147,7 @@ export default function GalleryScreen() {
 							{group.photos.map((photo) => (
 								<Pressable
 									key={photo.id}
+									className="relative"
 									onPress={() =>
 										router.push({
 											pathname: "/photo/[id]",
@@ -164,8 +165,16 @@ export default function GalleryScreen() {
 											aspectRatio: 1,
 										}}
 										loading="lazy"
-										cachePolicy={"memory-disk"}
 									/>
+
+									{photo.mime_type?.startsWith("video") && (
+										<Ionicons
+											name="videocam"
+											size={24}
+											color="#fff"
+											className="absolute top-2 right-2"
+										/>
+									)}
 								</Pressable>
 							))}
 						</View>
