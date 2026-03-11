@@ -19,31 +19,6 @@ import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const PHOTO_COLORS = [
-	"#7c3aed",
-	"#dc2626",
-	"#059669",
-	"#d97706",
-	"#2563eb",
-	"#db2777",
-	"#0891b2",
-	"#84cc16",
-	"#6366f1",
-	"#f97316",
-	"#14b8a6",
-	"#e11d48",
-	"#8b5cf6",
-	"#ea580c",
-	"#06b6d4",
-	"#22c55e",
-];
-
-function getPhotoColor(id: string): string {
-	const match = id.match(/(\d+)$/);
-	const num = match ? Number.parseInt(match[1], 10) : 0;
-	return PHOTO_COLORS[num % PHOTO_COLORS.length];
-}
-
 const DUMMY_METADATA = {
 	fileName: "IMG_20260305_142356.jpg",
 	fileSize: "4.2 MB",
@@ -57,19 +32,6 @@ const DUMMY_METADATA = {
 	location: "Bandung, Indonesia",
 };
 
-const _DUMMY_ALBUMS_LIST = [
-	{ id: "1", name: "Favorites", icon: "heart" as const, color: "#ef4444" },
-	{ id: "3", name: "Camera", icon: "camera" as const, color: "#fbbf24" },
-	{ id: "5", name: "Travel 2025", icon: "airplane" as const, color: "#a78bfa" },
-	{
-		id: "6",
-		name: "Food & Recipes",
-		icon: "restaurant" as const,
-		color: "#f97316",
-	},
-	{ id: "8", name: "Pets", icon: "paw" as const, color: "#ec4899" },
-];
-
 type Photo = AppRouterOutput["gallery"]["get"]["items"][number];
 
 export default function PhotoDetailScreen() {
@@ -81,8 +43,6 @@ export default function PhotoDetailScreen() {
 		albumId?: string;
 	}>();
 	const [showInfo, setShowInfo] = useState(false);
-	const [isFavorite, setIsFavorite] = useState(false);
-	const [showShareSheet, setShowShareSheet] = useState(false);
 	const [showMoreMenu, setShowMoreMenu] = useState(false);
 	const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 	const flatListRef = useRef<FlatList>(null);
@@ -101,7 +61,6 @@ export default function PhotoDetailScreen() {
 		() => photos.data?.pages.flatMap((page) => page.items) || [],
 		[photos.data],
 	);
-	const photoColor = getPhotoColor(id ?? "0");
 
 	useEffect(() => {
 		if (id && items.length > 0) {
@@ -136,10 +95,6 @@ export default function PhotoDetailScreen() {
 		);
 	};
 
-	const handleShare = () => {
-		setShowShareSheet(true);
-	};
-
 	const toggleInfo = () => {
 		setShowInfo(!showInfo);
 	};
@@ -158,12 +113,6 @@ export default function PhotoDetailScreen() {
 					<Ionicons name="arrow-back" size={22} color="#fff" />
 				</Pressable>
 				<View className="flex-row items-center gap-2">
-					<Pressable
-						onPress={handleShare}
-						className="w-10 h-10 rounded-full bg-black/50 items-center justify-center"
-					>
-						<Ionicons name="share-outline" size={20} color="#fff" />
-					</Pressable>
 					<Pressable
 						onPress={() => setShowMoreMenu(true)}
 						className="w-10 h-10 rounded-full bg-black/50 items-center justify-center"
@@ -243,22 +192,6 @@ export default function PhotoDetailScreen() {
 			>
 				{/* Action Buttons */}
 				<View className="flex-row items-center justify-around py-3 px-6">
-					<Pressable
-						onPress={() => setIsFavorite(!isFavorite)}
-						className="items-center gap-1"
-					>
-						<Ionicons
-							name={isFavorite ? "heart" : "heart-outline"}
-							size={24}
-							color={isFavorite ? "#ef4444" : "#a3a3a3"}
-						/>
-						<Text
-							className={`text-[10px] tracking-wider ${isFavorite ? "text-red-400" : "text-neutral-500"}`}
-						>
-							LIKE
-						</Text>
-					</Pressable>
-
 					<Pressable
 						onPress={() => router.push(`/photo/${id}/add-to-album`)}
 						className="items-center gap-1"
@@ -370,96 +303,6 @@ export default function PhotoDetailScreen() {
 					</ScrollView>
 				)}
 			</View>
-
-			{/* Share Sheet Modal */}
-			<Modal
-				visible={showShareSheet}
-				transparent
-				animationType="slide"
-				onRequestClose={() => setShowShareSheet(false)}
-			>
-				<Pressable
-					className="flex-1 bg-black/60"
-					onPress={() => setShowShareSheet(false)}
-				/>
-				<View
-					className="bg-neutral-950 rounded-t-3xl border-t border-neutral-800"
-					style={{ paddingBottom: insets.bottom + 16 }}
-				>
-					<View className="items-center pt-3 pb-1">
-						<View className="w-10 h-1 rounded-full bg-neutral-700" />
-					</View>
-					<View className="flex-row items-center justify-between px-5 py-3">
-						<Text className="text-white text-lg font-bold">Share</Text>
-						<Pressable onPress={() => setShowShareSheet(false)}>
-							<Ionicons name="close" size={24} color="#737373" />
-						</Pressable>
-					</View>
-
-					{/* Share preview */}
-					<View className="flex-row items-center mx-5 mb-4 bg-neutral-900 rounded-xl p-3 gap-3">
-						<View
-							className="w-12 h-12 rounded-lg items-center justify-center"
-							style={{ backgroundColor: photoColor }}
-						>
-							<Ionicons name="image" size={18} color="rgba(255,255,255,0.3)" />
-						</View>
-						<View className="flex-1">
-							<Text
-								className="text-white text-sm font-medium"
-								numberOfLines={1}
-							>
-								{DUMMY_METADATA.fileName}
-							</Text>
-							<Text className="text-neutral-500 text-xs mt-0.5">
-								{DUMMY_METADATA.fileSize} • {DUMMY_METADATA.dimensions}
-							</Text>
-						</View>
-					</View>
-
-					{/* Share options */}
-					<View className="flex-row justify-around px-5 py-2">
-						{[
-							{
-								icon: "link-outline" as const,
-								label: "Copy Link",
-								color: "#3b82f6",
-							},
-							{
-								icon: "copy-outline" as const,
-								label: "Copy",
-								color: "#a78bfa",
-							},
-							{
-								icon: "download-outline" as const,
-								label: "Save",
-								color: "#22c55e",
-							},
-							{
-								icon: "mail-outline" as const,
-								label: "Email",
-								color: "#f97316",
-							},
-						].map((opt) => (
-							<Pressable
-								key={opt.label}
-								onPress={() => {
-									setShowShareSheet(false);
-									alert(opt.label, `${opt.label} action triggered. (Demo)`);
-								}}
-								className="items-center gap-2"
-							>
-								<View className="w-14 h-14 rounded-2xl bg-neutral-900 border border-neutral-800 items-center justify-center">
-									<Ionicons name={opt.icon} size={24} color={opt.color} />
-								</View>
-								<Text className="text-neutral-400 text-[10px] tracking-wider">
-									{opt.label}
-								</Text>
-							</Pressable>
-						))}
-					</View>
-				</View>
-			</Modal>
 
 			{/* More Menu Modal */}
 			<Modal
