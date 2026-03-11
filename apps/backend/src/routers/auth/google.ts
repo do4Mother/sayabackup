@@ -27,6 +27,7 @@ export const google = publicProcedure
 		/**
 		 * get id_token from google with the authorization code
 		 */
+		const origin = ctx.request.headers.get("origin") || "http://localhost:8081";
 		const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
 			method: "POST",
 			headers: {
@@ -36,7 +37,7 @@ export const google = publicProcedure
 				code: input.code,
 				client_id: ctx.env.CLIENT_ID,
 				client_secret: ctx.env.CLIENT_SECRET,
-				redirect_uri: "http://localhost:8081/auth/google",
+				redirect_uri: `${origin}/auth/google`,
 				grant_type: "authorization_code",
 			}),
 		});
