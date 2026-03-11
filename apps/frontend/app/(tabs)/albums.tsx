@@ -3,7 +3,13 @@ import { Header } from "@/components/app/Header";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	ScrollView,
+	Text,
+	View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { match } from "ts-pattern";
 import { AppRouterOutput } from "../../../backend/src/routers/routers";
@@ -94,34 +100,59 @@ export default function AlbumsScreen() {
 					My Albums
 				</Text>
 
-				<View className="flex-row flex-wrap" style={{ gap: 16 }}>
-					{albums.data?.map((album, idx) => (
-						<Pressable
-							key={album.id}
-							onPress={() =>
-								router.push({
-									pathname: "/album/[id]",
-									params: { id: album.id },
-								})
-							}
-							className="active:opacity-70"
-							style={{ width: "47%" }}
-						>
-							<AlbumCover images={album.images} />
-							<View className="mt-2 mb-1">
-								<Text
-									className="text-white text-sm font-semibold"
-									numberOfLines={1}
+				{match(albums.data)
+					.with(undefined, () => (
+						<View className="items-center justify-center flex-1">
+							<ActivityIndicator size="small" />
+						</View>
+					))
+					.with([], () => (
+						<View className="items-center justify-center flex-1">
+							<Ionicons name="albums-outline" size={64} color="#6b7280" />
+							<Text className="text-neutral-400 mt-4 text-lg">
+								No albums yet
+							</Text>
+							<Text className="text-neutral-500 text-sm mt-1 text-center">
+								Create your first album to start saving photos.
+							</Text>
+							<Pressable
+								onPress={() => router.push("/album/create")}
+								className="mt-4 bg-blue-600 px-4 py-2 rounded"
+							>
+								<Text className="text-white font-semibold">Create Album</Text>
+							</Pressable>
+						</View>
+					))
+					.otherwise((data) => (
+						<View className="flex-row flex-wrap" style={{ gap: 16 }}>
+							{data.map((album, idx) => (
+								<Pressable
+									key={album.id}
+									onPress={() =>
+										router.push({
+											pathname: "/album/[id]",
+											params: { id: album.id },
+										})
+									}
+									className="active:opacity-70"
+									style={{ width: "47%" }}
 								>
-									{album.name}
-								</Text>
-								<Text className="text-neutral-500 text-xs mt-0.5">
-									{album.total} items
-								</Text>
-							</View>
-						</Pressable>
+									<AlbumCover images={album.images} />
+									<View className="mt-2 mb-1">
+										<Text
+											className="text-white text-sm font-semibold"
+											numberOfLines={1}
+										>
+											{album.name}
+										</Text>
+										<Text className="text-neutral-500 text-xs mt-0.5">
+											{album.total} items
+										</Text>
+									</View>
+								</Pressable>
+							))}
+						</View>
 					))}
-				</View>
 			</ScrollView>
 		</View>
 	);
