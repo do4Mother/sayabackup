@@ -13,7 +13,10 @@ export const find = protectedProcdure
 				total: sql<number>`COUNT(${gallery.id})`,
 			})
 			.from(albums)
-			.leftJoin(gallery, eq(gallery.album_id, albums.id))
+			.leftJoin(
+				gallery,
+				and(eq(gallery.album_id, albums.id), isNull(gallery.deleted_at)),
+			)
 			.where(
 				and(
 					eq(albums.id, input.id),
