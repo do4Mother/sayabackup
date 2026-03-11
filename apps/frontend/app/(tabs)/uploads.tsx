@@ -1,9 +1,15 @@
+import { useAlert } from "@/components/alert/AlertContext";
 import { Header } from "@/components/app/Header";
 import { UploadItem, useUpload } from "@/hooks/use-upload";
 import { formatFileSize } from "@/lib/file_size";
+import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
+import {
+	launchImageLibraryAsync,
+	requestMediaLibraryPermissionsAsync,
+} from "expo-image-picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const statusConfig = {
 	uploading: {
@@ -125,8 +131,15 @@ function UploadItemRow({
 }
 
 export default function UploadsScreen() {
-	const insets = useSafeAreaInsets();
-	const { data: uploads, cancelUpload, clearAll } = useUpload();
+	const { alert } = useAlert();
+	const { albumId } = useLocalSearchParams<{ albumId?: string }>();
+	const router = useRouter();
+
+	const albumQuery = trpc.album.find.useQuery(
+		{ id: (albumId as string) ?? "" },
+		{ enabled: !!albumId },
+	);
+	const { data: uploads, cancelUpload, clearAll, upload } = useUpload();
 
 	const uploading = uploads.filter((u) => u.status === "uploading");
 	const queued = uploads.filter((u) => u.status === "queued");
@@ -142,35 +155,76 @@ export default function UploadsScreen() {
 		? Math.round((processedBytes / totalBytes) * 100)
 		: 0;
 
+	const onPickImage = async () => {
+		const permissionResult = await requestMediaLibraryPermissionsAsync();
+
+		if (!permissionResult.granted) {
+			alert(
+				"Permission required",
+				"Permission to access the media library is required.",
+			);
+			return;
+		}
+
+		const result = await launchImageLibraryAsync({
+			mediaTypes: ["images", "videos"],
+			allowsMultipleSelection: true,
+			quality: 1,
+		});
+
+		if (!result.canceled) {
+			upload({
+				images: result.assets,
+				albumId,
+			});
+		}
+	};
+
 	return (
-		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
+		<View className="flex-1 bg-neutral-950">
 			{/* Header */}
 			<Header
 				title="Uploads"
 				trailing={
-					<View className="flex-row gap-2">
-						{hasActive && (
-							<Pressable
-								onPress={() => cancelUpload()}
-								className="flex-row items-center bg-red-500/15 rounded-lg px-3 py-1.5"
-							>
-								<Ionicons name="close-circle" size={16} color="#ef4444" />
-								<Text className="text-red-400 text-xs font-semibold ml-1.5">
-									Cancel All
+					<View className="flex-row items-center gap-2">
+						{albumId && (
+							<View className="flex-row items-center bg-neutral-800/40 px-3 py-1 rounded-full">
+								<Text className="text-neutral-200 text-xs font-medium mr-2">
+									{albumQuery.data?.name ??
+										(albumQuery.isFetching ? "Loading..." : "Album")}
 								</Text>
-							</Pressable>
+								<Pressable
+									onPress={() => router.replace("/(tabs)/uploads")}
+									className="w-6 h-6 rounded-full items-center justify-center"
+								>
+									<Ionicons name="close" size={16} color="#a3a3a3" />
+								</Pressable>
+							</View>
 						)}
-						{hasData && (
-							<Pressable
-								onPress={clearAll}
-								className="flex-row items-center bg-neutral-800 rounded-lg px-3 py-1.5"
-							>
-								<Ionicons name="trash" size={16} color="#a3a3a3" />
-								<Text className="text-neutral-400 text-xs font-semibold ml-1.5">
-									Clear
-								</Text>
-							</Pressable>
-						)}
+						<View className="flex-row gap-2">
+							{hasActive && (
+								<Pressable
+									onPress={() => cancelUpload()}
+									className="flex-row items-center bg-red-500/15 rounded-lg px-3 py-1.5"
+								>
+									<Ionicons name="close-circle" size={16} color="#ef4444" />
+									<Text className="text-red-400 text-xs font-semibold ml-1.5">
+										Cancel All
+									</Text>
+								</Pressable>
+							)}
+							{hasData && (
+								<Pressable
+									onPress={clearAll}
+									className="flex-row items-center bg-neutral-800 rounded-lg px-3 py-1.5"
+								>
+									<Ionicons name="trash" size={16} color="#a3a3a3" />
+									<Text className="text-neutral-400 text-xs font-semibold ml-1.5">
+										Clear
+									</Text>
+								</Pressable>
+							)}
+						</View>
 					</View>
 				}
 			/>
@@ -186,9 +240,12 @@ export default function UploadsScreen() {
 							{uploading.length} uploading • {queued.length} queued
 						</Text>
 					</View>
-					<View className="w-12 h-12 rounded-full bg-amber-400/10 items-center justify-center">
+					<Pressable
+						onPress={onPickImage}
+						className="w-12 h-12 rounded-full bg-amber-400/10 items-center justify-center"
+					>
 						<Ionicons name="cloud-upload" size={24} color="#fbbf24" />
-					</View>
+					</Pressable>
 				</View>
 
 				{/* Overall progress bar */}
