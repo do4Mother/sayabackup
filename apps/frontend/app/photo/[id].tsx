@@ -3,7 +3,7 @@ import CustomImage from "@/components/app/CustomImage";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Dimensions,
@@ -15,6 +15,7 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppRouterOutput } from "../../../backend/src/routers/routers";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -56,7 +57,7 @@ const DUMMY_METADATA = {
 	location: "Bandung, Indonesia",
 };
 
-const DUMMY_ALBUMS_LIST = [
+const _DUMMY_ALBUMS_LIST = [
 	{ id: "1", name: "Favorites", icon: "heart" as const, color: "#ef4444" },
 	{ id: "3", name: "Camera", icon: "camera" as const, color: "#fbbf24" },
 	{ id: "5", name: "Travel 2025", icon: "airplane" as const, color: "#a78bfa" },
@@ -69,6 +70,8 @@ const DUMMY_ALBUMS_LIST = [
 	{ id: "8", name: "Pets", icon: "paw" as const, color: "#ec4899" },
 ];
 
+type Photo = AppRouterOutput["gallery"]["get"]["items"][number];
+
 export default function PhotoDetailScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
@@ -79,10 +82,9 @@ export default function PhotoDetailScreen() {
 	}>();
 	const [showInfo, setShowInfo] = useState(false);
 	const [isFavorite, setIsFavorite] = useState(false);
-	const [showAlbumPicker, setShowAlbumPicker] = useState(false);
 	const [showShareSheet, setShowShareSheet] = useState(false);
 	const [showMoreMenu, setShowMoreMenu] = useState(false);
-	const [addedToAlbums, setAddedToAlbums] = useState<string[]>([]);
+	const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 	const flatListRef = useRef<FlatList>(null);
 	const trpcUtils = trpc.useUtils();
 	const removeMutation = trpc.gallery.remove.useMutation();
@@ -101,6 +103,15 @@ export default function PhotoDetailScreen() {
 	);
 	const photoColor = getPhotoColor(id ?? "0");
 
+	useEffect(() => {
+		if (id && items.length > 0) {
+			const photo = items.find((p) => p.id === id);
+			if (photo) {
+				setSelectedPhoto(photo);
+			}
+		}
+	}, [id, items]);
+
 	const handleDelete = () => {
 		alert(
 			"Delete Photo",
@@ -112,25 +123,10 @@ export default function PhotoDetailScreen() {
 					style: "destructive",
 					onPress: () => {
 						removeMutation.mutate(
-							{ id: id as string },
+							{ id: selectedPhoto?.id ?? "" },
 							{
 								onSuccess: () => {
 									trpcUtils.gallery.get.invalidate({ albumId });
-
-									/**
-									 * After deletion, we want to navigate to the next photo in the list. We find the index of the deleted photo, and if there's a next photo, we navigate to it. Otherwise, we go back to the album or gallery view.
-									 */
-									const deletedIndex = items.findIndex((p) => p.id === id);
-									if (deletedIndex !== -1) {
-										const nextPhoto =
-											items[deletedIndex + 1] || items[deletedIndex - 1];
-										if (nextPhoto) {
-											flatListRef.current?.scrollToIndex({
-												index: deletedIndex + 1,
-												animated: true,
-											});
-										}
-									}
 								},
 							},
 						);
@@ -142,14 +138,6 @@ export default function PhotoDetailScreen() {
 
 	const handleShare = () => {
 		setShowShareSheet(true);
-	};
-
-	const handleToggleAlbum = (albumId: string) => {
-		setAddedToAlbums((prev) =>
-			prev.includes(albumId)
-				? prev.filter((a) => a !== albumId)
-				: [...prev, albumId],
-		);
 	};
 
 	const toggleInfo = () => {
@@ -221,6 +209,15 @@ export default function PhotoDetailScreen() {
 					) {
 						photos.fetchNextPage();
 					}
+
+					/**
+					 * get the currently visible photo based on the scroll position, and update selectedPhoto state. This is used to update the info panel when user scrolls to a different photo.
+					 */
+					const currentIndex = Math.round(scrollPosition / (SCREEN_WIDTH + 16));
+					const currentPhoto = items[currentIndex];
+					if (currentPhoto) {
+						setSelectedPhoto(currentPhoto);
+					}
 				}}
 				renderItem={({ item }) => (
 					<View
@@ -263,16 +260,16 @@ export default function PhotoDetailScreen() {
 					</Pressable>
 
 					<Pressable
-						onPress={() => setShowAlbumPicker(true)}
+						onPress={() => router.push(`/photo/${id}/add-to-album`)}
 						className="items-center gap-1"
 					>
 						<Ionicons
-							name={addedToAlbums.length > 0 ? "albums" : "albums-outline"}
+							name={selectedPhoto?.album_id ? "albums" : "albums-outline"}
 							size={24}
-							color={addedToAlbums.length > 0 ? "#3b82f6" : "#a3a3a3"}
+							color={selectedPhoto?.album_id ? "#3b82f6" : "#a3a3a3"}
 						/>
 						<Text
-							className={`text-[10px] tracking-wider ${addedToAlbums.length > 0 ? "text-blue-400" : "text-neutral-500"}`}
+							className={`text-[10px] tracking-wider ${selectedPhoto?.album_id ? "text-blue-400" : "text-neutral-500"}`}
 						>
 							ALBUM
 						</Text>
@@ -373,83 +370,6 @@ export default function PhotoDetailScreen() {
 					</ScrollView>
 				)}
 			</View>
-
-			{/* Album Picker Modal */}
-			<Modal
-				visible={showAlbumPicker}
-				transparent
-				animationType="slide"
-				onRequestClose={() => setShowAlbumPicker(false)}
-			>
-				<Pressable
-					className="flex-1 bg-black/60"
-					onPress={() => setShowAlbumPicker(false)}
-				/>
-				<View
-					className="bg-neutral-950 rounded-t-3xl border-t border-neutral-800"
-					style={{ paddingBottom: insets.bottom + 16 }}
-				>
-					<View className="items-center pt-3 pb-1">
-						<View className="w-10 h-1 rounded-full bg-neutral-700" />
-					</View>
-					<View className="flex-row items-center justify-between px-5 py-3">
-						<Text className="text-white text-lg font-bold">Add to Album</Text>
-						<Pressable onPress={() => setShowAlbumPicker(false)}>
-							<Ionicons name="close" size={24} color="#737373" />
-						</Pressable>
-					</View>
-					<ScrollView className="max-h-80">
-						{DUMMY_ALBUMS_LIST.map((album) => {
-							const isAdded = addedToAlbums.includes(album.id);
-							return (
-								<Pressable
-									key={album.id}
-									onPress={() => handleToggleAlbum(album.id)}
-									className="flex-row items-center px-5 py-3.5 active:bg-neutral-900"
-								>
-									<View
-										className="w-10 h-10 rounded-xl items-center justify-center mr-3"
-										style={{
-											backgroundColor: isAdded
-												? album.color
-												: `${album.color}20`,
-										}}
-									>
-										<Ionicons
-											name={album.icon}
-											size={18}
-											color={isAdded ? "#fff" : album.color}
-										/>
-									</View>
-									<Text className="flex-1 text-white text-sm font-medium">
-										{album.name}
-									</Text>
-									<Ionicons
-										name={isAdded ? "checkmark-circle" : "add-circle-outline"}
-										size={24}
-										color={isAdded ? "#10b981" : "#525252"}
-									/>
-								</Pressable>
-							);
-						})}
-						{/* Create new album */}
-						<Pressable
-							onPress={() => {
-								setShowAlbumPicker(false);
-								alert("New Album", "Create album feature coming soon.");
-							}}
-							className="flex-row items-center px-5 py-3.5 active:bg-neutral-900 border-t border-neutral-900"
-						>
-							<View className="w-10 h-10 rounded-xl items-center justify-center mr-3 bg-amber-400/10">
-								<Ionicons name="add" size={20} color="#fbbf24" />
-							</View>
-							<Text className="flex-1 text-amber-400 text-sm font-medium">
-								Create New Album
-							</Text>
-						</Pressable>
-					</ScrollView>
-				</View>
-			</Modal>
 
 			{/* Share Sheet Modal */}
 			<Modal
