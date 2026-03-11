@@ -8,6 +8,7 @@
 		"android": "expo start --android",
 		"ios": "expo start --ios",
 		"dev": "EXPO_UNSTABLE_WEB_MODAL=1 expo start --web",
+		"deploy": "EXPO_UNSTABLE_WEB_MODAL=1 expo export -p web --output-dir ../backend/dist",
 		"lint": "expo lint"
 	},
 	"dependencies": {
