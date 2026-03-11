@@ -217,7 +217,11 @@ export default function PhotoDetailScreen() {
 				{/* Action Buttons */}
 				<View className="flex-row items-center justify-around py-3 px-6">
 					<Pressable
-						onPress={() => router.push(`/photo/${id}/add-to-album`)}
+						onPress={() =>
+							router.push(
+								`/photo/${id}/add-to-album?photoId=${selectedPhoto?.id}`,
+							)
+						}
 						className="items-center gap-1"
 					>
 						<Ionicons
