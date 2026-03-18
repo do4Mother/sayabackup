@@ -194,7 +194,6 @@ export default function S3CredentialsScreen() {
 				reader.onload = (e) => {
 					try {
 						const text = e.target?.result;
-						console.log("File content:", text);
 						if (typeof text === "string") {
 							localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, text);
 							alert(
