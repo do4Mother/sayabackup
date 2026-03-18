@@ -66,7 +66,8 @@ export default function SettingsScreen() {
 	const [notifications, setNotifications] = useState(false);
 	const logoutMutation = trpc.auth.logout.useMutation();
 	const setSessionState = useSessions((state) => state.setState);
-	const orgQuery = trpc.org.get.useQuery();
+	const activeOrgName = useSessions((s) => s.activeOrgName);
+	const orgQuery = trpc.org.list.useQuery();
 
 	const onLogout = () => {
 		logoutMutation.mutate(void 0, {
@@ -125,7 +126,7 @@ export default function SettingsScreen() {
 					iconColor="#fbbf24"
 					iconBg="#451a03"
 					title="Organization"
-					subtitle={orgQuery.data?.name ?? "Not in an organization"}
+					subtitle={activeOrgName ?? (orgQuery.data?.length ? orgQuery.data[0].name : "Not in an organization")}
 					onPress={() => router.push("/organization")}
 				/>
 

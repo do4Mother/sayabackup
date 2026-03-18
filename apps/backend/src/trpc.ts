@@ -14,6 +14,7 @@ export type Context = {
 	getCookie: (name: string) => string | null;
 	db: DrizzleD1Database;
 	request: Request;
+	organizationId: string | null;
 };
 
 export const t = initTRPC.context<Context>().create();

@@ -1,4 +1,5 @@
 import { generateThumbnail } from "@/lib/generate-thumbnail";
+import { useSessions } from "@/hooks/use-sessions";
 import { uploadToS3 } from "@/s3/upload";
 import { client, trpc } from "@/trpc/trpc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -105,6 +106,14 @@ export const createUploadStore = () =>
 
 						const key = await client.auth.me.query().then((me) => me.user.key);
 
+						const activeOrgId =
+							useSessions.getState().activeOrgId ?? undefined;
+						let orgKey: string | undefined;
+						if (activeOrgId) {
+							const orgs = await client.org.list.query();
+							orgKey = orgs.find((o) => o.id === activeOrgId)?.key;
+						}
+
 						set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
 
 						for await (const media of resolvedAssets) {
@@ -134,6 +143,8 @@ export const createUploadStore = () =>
 									path: thumbnailPath,
 									type: media.mimeType,
 									key: key,
+									orgKey,
+									orgId: activeOrgId,
 								});
 
 								// upload thumbnail
@@ -160,6 +171,8 @@ export const createUploadStore = () =>
 									path: filePath,
 									type: media.mimeType,
 									key: key,
+									orgKey,
+									orgId: activeOrgId,
 								});
 
 								// upload original file with progress tracking

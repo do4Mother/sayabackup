@@ -78,6 +78,7 @@ export const organizations = sqliteTable("organizations", {
 	owner_id: int()
 		.notNull()
 		.references(() => users.id),
+	key: text().notNull(),
 });
 
 export const organization_members = sqliteTable("organization_members", {

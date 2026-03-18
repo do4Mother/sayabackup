@@ -2,14 +2,15 @@ import { and, eq, isNull } from "drizzle-orm";
 import { organization_members, organizations } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
 
-export const get = protectedProcdure.query(async ({ ctx }) => {
-	const [result] = await ctx.db
+export const list = protectedProcdure.query(async ({ ctx }) => {
+	const results = await ctx.db
 		.select({
 			id: organizations.id,
 			name: organizations.name,
 			owner_id: organizations.owner_id,
 			created_at: organizations.created_at,
 			role: organization_members.role,
+			key: organizations.key,
 		})
 		.from(organization_members)
 		.innerJoin(
@@ -22,8 +23,7 @@ export const get = protectedProcdure.query(async ({ ctx }) => {
 				isNull(organization_members.deleted_at),
 				isNull(organizations.deleted_at),
 			),
-		)
-		.limit(1);
+		);
 
-	return result ?? null;
+	return results;
 });

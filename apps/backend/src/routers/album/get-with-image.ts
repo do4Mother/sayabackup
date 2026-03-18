@@ -12,7 +12,7 @@ import { protectedProcdure } from "../../middlewares/protected";
 import { getOrgMemberIds } from "../../utils/org-scope";
 
 export const getWithImage = protectedProcdure.query(async ({ ctx }) => {
-	const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
+	const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id, ctx.organizationId);
 	const albumsData = await ctx.db
 		.select({
 			...getTableColumns(albums),

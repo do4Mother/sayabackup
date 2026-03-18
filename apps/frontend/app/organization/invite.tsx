@@ -1,6 +1,7 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import { AppButton } from "@/components/button/AppButton";
 import { TextInputField } from "@/components/form/TextInputField";
+import { useSessions } from "@/hooks/use-sessions";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -18,7 +19,7 @@ type InviteForm = z.infer<typeof InviteForm>;
 
 export default function InviteScreen() {
 	const { alert } = useAlert();
-	const orgQuery = trpc.org.get.useQuery();
+	const activeOrgId = useSessions((s) => s.activeOrgId);
 	const inviteMutation = trpc.org.invite.useMutation();
 
 	const {
@@ -32,9 +33,9 @@ export default function InviteScreen() {
 	});
 
 	const onSubmit = handleSubmit((data) => {
-		if (!orgQuery.data) return;
+		if (!activeOrgId) return;
 		inviteMutation.mutate(
-			{ organizationId: orgQuery.data.id, email: data.email },
+			{ organizationId: activeOrgId, email: data.email },
 			{
 				onSuccess: ({ token }) => {
 					const origin =

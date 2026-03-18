@@ -6,7 +6,8 @@ import {
 	DropdownButtonItem,
 } from "@/components/button/DropdownButton";
 import { TextInputField } from "@/components/form/TextInputField";
-import { S3_CREDENTIALS_STORAGE_KEY } from "@/lib/constant";
+import { useSessions } from "@/hooks/use-sessions";
+import { s3CredentialsStorageKey } from "@/s3/credentials";
 import { testS3Connection } from "@/s3/test_connection";
 import { trpc } from "@/trpc/trpc";
 import { Ionicons } from "@expo/vector-icons";
@@ -88,15 +89,32 @@ export default function S3CredentialsScreen() {
 		boolean | null
 	>(null);
 	const { data: user } = trpc.auth.me.useQuery();
+	const activeOrgId = useSessions((s) => s.activeOrgId);
+	const activeOrgName = useSessions((s) => s.activeOrgName);
+	const orgList = trpc.org.list.useQuery();
+	const activeOrg = orgList.data?.find((o) => o.id === activeOrgId);
+
+	const encryptionKey = activeOrg?.key ?? user?.user.key ?? "";
+	const storageKey = s3CredentialsStorageKey(activeOrgId ?? undefined);
+
 	const data = useQuery({
 		enabled: !!user,
-		queryKey: ["s3.getCredentials"],
+		queryKey: ["s3.getCredentials", activeOrgId],
 		queryFn: async () => {
-			const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
+			const encrypted = localStorage.getItem(storageKey);
 			if (!encrypted) {
 				return null;
 			}
-			const value = decrypt(encrypted, user?.user.key ?? "");
+			let value: string;
+			if (activeOrg?.key) {
+				try {
+					value = decrypt(encrypted, activeOrg.key);
+				} catch {
+					value = decrypt(encrypted, user?.user.key ?? "");
+				}
+			} else {
+				value = decrypt(encrypted, user?.user.key ?? "");
+			}
 			return S3FormValues.parse(JSON.parse(value));
 		},
 	});
@@ -124,8 +142,8 @@ export default function S3CredentialsScreen() {
 	const saveMutation = useMutation({
 		mutationFn: async (values: S3FormValues) => {
 			localStorage.setItem(
-				S3_CREDENTIALS_STORAGE_KEY,
-				encrypt(JSON.stringify(values), user?.user.key ?? ""),
+				storageKey,
+				encrypt(JSON.stringify(values), encryptionKey),
 			);
 		},
 	});
@@ -195,7 +213,7 @@ export default function S3CredentialsScreen() {
 					try {
 						const text = e.target?.result;
 						if (typeof text === "string") {
-							localStorage.setItem(S3_CREDENTIALS_STORAGE_KEY, text);
+							localStorage.setItem(storageKey, text);
 							alert(
 								"Import Successful",
 								"S3 credentials have been imported successfully.",
@@ -223,7 +241,7 @@ export default function S3CredentialsScreen() {
 	};
 
 	const onExportConfig = () => {
-		const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
+		const encrypted = localStorage.getItem(storageKey);
 		if (!encrypted) {
 			alert("Export Failed", "No S3 credentials found to export.");
 			return;
@@ -239,6 +257,10 @@ export default function S3CredentialsScreen() {
 		document.body.removeChild(link);
 		URL.revokeObjectURL(url);
 	};
+
+	const contextLabel = activeOrgId
+		? `Org: ${activeOrgName}`
+		: "Personal";
 
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
@@ -269,6 +291,18 @@ export default function S3CredentialsScreen() {
 				contentContainerStyle={{ paddingBottom: 40 }}
 				keyboardShouldPersistTaps="handled"
 			>
+				{/* Context Indicator */}
+				<View className="mx-5 mt-2 mb-3 bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 flex-row items-center">
+					<Ionicons
+						name={activeOrgId ? "people" : "person"}
+						size={16}
+						color="#fbbf24"
+					/>
+					<Text className="text-neutral-300 text-xs font-medium ml-2">
+						{contextLabel} S3 Credentials
+					</Text>
+				</View>
+
 				{/* Security Notice */}
 				<View className="mx-5 mt-2 mb-5 bg-pink-950/40 border border-pink-900/40 rounded-2xl p-4 flex-row">
 					<Ionicons

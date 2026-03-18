@@ -13,7 +13,7 @@ export const update = protectedProcdure
 		}),
 	)
 	.mutation(async ({ ctx, input }) => {
-		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id, ctx.organizationId);
 		await ctx.db
 			.update(gallery)
 			.set({

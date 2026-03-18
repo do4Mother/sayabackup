@@ -6,9 +6,11 @@ import { s3Credentials } from "./credentials";
 export async function getFile(data: {
 	path: string;
 	key: string;
+	orgKey?: string;
+	orgId?: string;
 	isDownload?: boolean;
 }) {
-	const { client, bucketName } = s3Credentials(data.key);
+	const { client, bucketName } = s3Credentials(data.key, data.orgKey, data.orgId);
 
 	const response = await freezeSignedUrl({
 		url: data.path,

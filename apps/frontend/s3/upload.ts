@@ -6,8 +6,10 @@ export async function uploadToS3(data: {
 	path: string;
 	type: string;
 	key: string;
+	orgKey?: string;
+	orgId?: string;
 }) {
-	const { client, bucketName } = s3Credentials(data.key);
+	const { client, bucketName } = s3Credentials(data.key, data.orgKey, data.orgId);
 
 	const command = new PutObjectCommand({
 		Bucket: bucketName,

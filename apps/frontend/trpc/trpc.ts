@@ -4,6 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { z } from "zod";
+import { useSessions } from "../hooks/use-sessions";
 import type { AppRouter } from "../../backend/src/routers/routers";
 
 export const trpc = createTRPCReact<AppRouter>();
@@ -51,6 +52,13 @@ export const client = trpc.createClient({
 	links: [
 		httpBatchLink({
 			url: baseURL,
+			headers() {
+				const activeOrgId = useSessions.getState().activeOrgId;
+				if (activeOrgId) {
+					return { "x-organization-id": activeOrgId };
+				}
+				return {};
+			},
 			fetch: (url, options) =>
 				fetch(url, {
 					...options,

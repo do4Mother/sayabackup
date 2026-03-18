@@ -1,7 +1,8 @@
 import { useAlert } from "@/components/alert/AlertContext";
 import { Header } from "@/components/app/Header";
 import { AppButton } from "@/components/button/AppButton";
-import { trpc } from "@/trpc/trpc";
+import { useSessions } from "@/hooks/use-sessions";
+import { queryClient, trpc } from "@/trpc/trpc";
 import { toast } from "@backpackapp-io/react-native-toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -12,8 +13,24 @@ export default function OrganizationScreen() {
 	const insets = useSafeAreaInsets();
 	const router = useRouter();
 
-	const orgQuery = trpc.org.get.useQuery();
-	const org = orgQuery.data;
+	const orgQuery = trpc.org.list.useQuery();
+	const orgs = orgQuery.data ?? [];
+
+	const activeOrgId = useSessions((s) => s.activeOrgId);
+	const setActiveOrg = useSessions((s) => s.setActiveOrg);
+	const clearActiveOrg = useSessions((s) => s.clearActiveOrg);
+
+	const handleSelectOrg = (orgId: string, orgName: string) => {
+		setActiveOrg(orgId, orgName);
+		queryClient.invalidateQueries();
+		router.back();
+	};
+
+	const handleSelectPersonal = () => {
+		clearActiveOrg();
+		queryClient.invalidateQueries();
+		router.back();
+	};
 
 	if (orgQuery.isLoading) {
 		return (
@@ -26,50 +43,93 @@ export default function OrganizationScreen() {
 		);
 	}
 
-	if (!org) {
-		return (
-			<View
-				className="flex-1 bg-neutral-950"
-				style={{ paddingTop: insets.top }}
-			>
-				<Header title="Organization" />
-				<View className="flex-1 items-center justify-center px-8">
-					<View className="w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-800 items-center justify-center mb-6">
-						<Ionicons name="people" size={32} color="#fbbf24" />
-					</View>
-					<Text className="text-white text-lg font-bold mb-2">
-						No Organization
-					</Text>
-					<Text className="text-neutral-500 text-sm text-center mb-8">
-						Create an organization to share your galleries and albums with other
-						members.
-					</Text>
-					<AppButton
-						label="Create Organization"
-						icon={<Ionicons name="add" size={20} color="black" />}
-						onPress={() => router.push("/organization/create")}
-					/>
-				</View>
-			</View>
-		);
-	}
-
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
-			<Header
-				title={org.name}
-				trailing={
-					org.role === "owner" ? (
-						<Pressable
-							onPress={() => router.push("/organization/invite")}
-							className="w-9 h-9 rounded-full bg-neutral-900 border border-neutral-800 items-center justify-center"
-						>
-							<Ionicons name="person-add" size={16} color="#fbbf24" />
-						</Pressable>
-					) : undefined
-				}
-			/>
-			<MemberList organizationId={org.id} isOwner={org.role === "owner"} />
+			<Header title="Organization" />
+
+			<View className="px-5 mt-4">
+				{/* Personal option */}
+				<Pressable
+					onPress={handleSelectPersonal}
+					className="flex-row items-center py-3.5 border-b border-neutral-900"
+				>
+					<View className="w-10 h-10 rounded-full bg-amber-400 items-center justify-center mr-3">
+						<Ionicons name="person" size={18} color="#171717" />
+					</View>
+					<View className="flex-1">
+						<Text className="text-white text-sm font-medium">Personal</Text>
+						<Text className="text-neutral-500 text-xs mt-0.5">
+							Your personal galleries and albums
+						</Text>
+					</View>
+					{!activeOrgId && (
+						<Ionicons name="checkmark-circle" size={20} color="#fbbf24" />
+					)}
+				</Pressable>
+
+				{/* Org list */}
+				{orgs.length > 0 && (
+					<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mt-6 mb-3">
+						Organizations
+					</Text>
+				)}
+				{orgs.map((org) => (
+					<Pressable
+						key={org.id}
+						onPress={() => handleSelectOrg(org.id, org.name)}
+						className="flex-row items-center py-3.5 border-b border-neutral-900"
+					>
+						<View className="w-10 h-10 rounded-full bg-neutral-800 items-center justify-center mr-3">
+							<Ionicons name="people" size={18} color="#fbbf24" />
+						</View>
+						<View className="flex-1">
+							<Text className="text-white text-sm font-medium">
+								{org.name}
+							</Text>
+							<Text className="text-neutral-500 text-xs capitalize mt-0.5">
+								{org.role}
+							</Text>
+						</View>
+						<View className="flex-row items-center gap-2">
+							{org.role === "owner" && (
+								<Pressable
+									onPress={(e) => {
+										e.stopPropagation();
+										router.push("/organization/invite");
+									}}
+									className="w-8 h-8 rounded-full items-center justify-center active:bg-neutral-800"
+								>
+									<Ionicons name="person-add" size={14} color="#fbbf24" />
+								</Pressable>
+							)}
+							{activeOrgId === org.id && (
+								<Ionicons name="checkmark-circle" size={20} color="#fbbf24" />
+							)}
+						</View>
+					</Pressable>
+				))}
+
+				{/* Members section for active org */}
+				{activeOrgId && orgs.some((o) => o.id === activeOrgId) && (
+					<View className="mt-6">
+						<MemberList
+							organizationId={activeOrgId}
+							isOwner={
+								orgs.find((o) => o.id === activeOrgId)?.role === "owner"
+							}
+						/>
+					</View>
+				)}
+			</View>
+
+			{/* Create Organization button */}
+			<View className="px-5 mt-8">
+				<AppButton
+					label="Create Organization"
+					icon={<Ionicons name="add" size={20} color="black" />}
+					onPress={() => router.push("/organization/create")}
+				/>
+			</View>
 		</View>
 	);
 }
@@ -112,14 +172,14 @@ function MemberList({
 
 	if (membersQuery.isLoading) {
 		return (
-			<View className="flex-1 items-center justify-center">
+			<View className="items-center justify-center py-4">
 				<ActivityIndicator />
 			</View>
 		);
 	}
 
 	return (
-		<View className="px-5 mt-4">
+		<View>
 			<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mb-3">
 				Members
 			</Text>

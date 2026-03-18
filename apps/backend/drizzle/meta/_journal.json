@@ -57,6 +57,13 @@
       "when": 1773797133315,
       "tag": "0007_even_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1773800402133,
+      "tag": "0008_lovely_shen",
+      "breakpoints": true
     }
   ]
 }

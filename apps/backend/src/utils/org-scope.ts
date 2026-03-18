@@ -4,18 +4,25 @@ import { organization_members } from "../db/schema";
 
 /**
  * Returns all user IDs that share the same organization as the given user.
- * If the user is not in any org, returns only their own ID.
+ * If organizationId is provided, verifies the user is a member and returns that org's members.
+ * If organizationId is null, returns only the user's own ID (personal mode).
  */
 export async function getOrgMemberIds(
 	db: DrizzleD1Database,
 	userId: number,
+	organizationId: string | null,
 ): Promise<number[]> {
+	if (!organizationId) {
+		return [userId];
+	}
+
 	const [membership] = await db
 		.select({ organization_id: organization_members.organization_id })
 		.from(organization_members)
 		.where(
 			and(
 				eq(organization_members.user_id, userId),
+				eq(organization_members.organization_id, organizationId),
 				isNull(organization_members.deleted_at),
 			),
 		)
@@ -30,10 +37,7 @@ export async function getOrgMemberIds(
 		.from(organization_members)
 		.where(
 			and(
-				eq(
-					organization_members.organization_id,
-					membership.organization_id,
-				),
+				eq(organization_members.organization_id, organizationId),
 				isNull(organization_members.deleted_at),
 			),
 		);

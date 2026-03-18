@@ -7,7 +7,7 @@ import { updateAlbumDto } from "./dto/update.dto";
 export const update = protectedProcdure
 	.input(updateAlbumDto)
 	.mutation(async ({ ctx, input }) => {
-		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id, ctx.organizationId);
 		await ctx.db
 			.update(albums)
 			.set({

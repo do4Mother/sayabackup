@@ -51,13 +51,14 @@ export const acceptInvitation = protectedProcdure
 			});
 		}
 
-		// Check user is not already in another org
+		// Check user is not already a member of this specific org
 		const [existingMembership] = await ctx.db
 			.select()
 			.from(organization_members)
 			.where(
 				and(
 					eq(organization_members.user_id, ctx.user.id),
+					eq(organization_members.organization_id, invitation.organization_id),
 					isNull(organization_members.deleted_at),
 				),
 			)
@@ -66,7 +67,7 @@ export const acceptInvitation = protectedProcdure
 		if (existingMembership) {
 			throw new TRPCError({
 				code: "CONFLICT",
-				message: "You are already a member of an organization",
+				message: "You are already a member of this organization",
 			});
 		}
 

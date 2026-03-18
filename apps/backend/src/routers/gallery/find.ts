@@ -8,7 +8,7 @@ import { getOrgMemberIds } from "../../utils/org-scope";
 export const find = protectedProcdure
 	.input(z.object({ id: z.string() }))
 	.query(async ({ ctx, input }) => {
-		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id, ctx.organizationId);
 		const [item] = await ctx.db
 			.select()
 			.from(gallery)

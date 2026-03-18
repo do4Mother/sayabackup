@@ -11,17 +11,38 @@ const credentialsObj = z.object({
 	endpoint: z.string().min(1),
 });
 
-export function s3Credentials(key: string) {
+export function s3CredentialsStorageKey(orgId?: string) {
+	return orgId
+		? `${S3_CREDENTIALS_STORAGE_KEY}_${orgId}`
+		: S3_CREDENTIALS_STORAGE_KEY;
+}
+
+export function s3Credentials(
+	key: string,
+	orgKey?: string,
+	orgId?: string,
+) {
 	if (typeof window === "undefined") {
 		throw new Error("s3Credentials should only be used on the client side");
 	}
 
-	const encrypted = localStorage.getItem(S3_CREDENTIALS_STORAGE_KEY);
+	const storageKey = s3CredentialsStorageKey(orgId);
+	const encrypted = localStorage.getItem(storageKey);
 	if (!encrypted) {
 		throw new Error("S3 credentials not found in localStorage");
 	}
 
-	const decodedValue = decrypt(encrypted, key);
+	let decodedValue: string;
+	if (orgId && orgKey) {
+		try {
+			decodedValue = decrypt(encrypted, orgKey);
+		} catch {
+			// Fallback to user key if org key fails
+			decodedValue = decrypt(encrypted, key);
+		}
+	} else {
+		decodedValue = decrypt(encrypted, key);
+	}
 
 	const parsed = credentialsObj.safeParse(JSON.parse(decodedValue));
 	if (!parsed.success) {

@@ -9,7 +9,7 @@ import { getOrgMemberIds } from "../../utils/org-scope";
 export const move = protectedProcdure
 	.input(z.object({ id: z.string(), albumId: z.string().nullish() }))
 	.mutation(async ({ ctx, input }) => {
-		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id, ctx.organizationId);
 		const [file] = await ctx.db
 			.select()
 			.from(gallery)
