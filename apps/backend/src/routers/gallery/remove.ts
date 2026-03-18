@@ -1,7 +1,8 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import z from "zod";
 import { gallery } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
+import { getOrgMemberIds } from "../../utils/org-scope";
 
 export const remove = protectedProcdure
 	.input(
@@ -10,13 +11,14 @@ export const remove = protectedProcdure
 		}),
 	)
 	.mutation(async ({ ctx, input }) => {
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
 		await ctx.db
 			.update(gallery)
 			.set({ deleted_at: Date.now() })
 			.where(
 				and(
 					eq(gallery.id, input.id),
-					eq(gallery.user_id, ctx.user.id),
+					inArray(gallery.user_id, memberIds),
 					isNull(gallery.deleted_at),
 				),
 			);

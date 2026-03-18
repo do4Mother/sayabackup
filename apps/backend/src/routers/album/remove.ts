@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import z from "zod";
 import { albums } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
+import { getOrgMemberIds } from "../../utils/org-scope";
 
 export const remove = protectedProcdure
 	.input(
@@ -11,13 +12,14 @@ export const remove = protectedProcdure
 		}),
 	)
 	.mutation(async ({ ctx, input }) => {
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
 		const [album] = await ctx.db
 			.select()
 			.from(albums)
 			.where(
 				and(
 					eq(albums.id, input.id),
-					eq(albums.user_id, ctx.user.id),
+					inArray(albums.user_id, memberIds),
 					isNull(albums.deleted_at),
 				),
 			);
@@ -37,7 +39,7 @@ export const remove = protectedProcdure
 			.where(
 				and(
 					eq(albums.id, album.id),
-					eq(albums.user_id, ctx.user.id),
+					inArray(albums.user_id, memberIds),
 					isNull(albums.deleted_at),
 				),
 			);

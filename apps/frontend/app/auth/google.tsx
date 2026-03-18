@@ -1,5 +1,5 @@
 import { useSessions } from "@/hooks/use-sessions";
-import { trpc } from "@/trpc/trpc";
+import { client, trpc } from "@/trpc/trpc";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -28,8 +28,23 @@ export default function GoogleAuthScreen() {
 		mutation.mutate(
 			{ code, state },
 			{
-				onSuccess() {
+				async onSuccess() {
 					setSessionState("authenticated");
+
+					// Check for pending invitation token
+					const pendingToken =
+						localStorage.getItem("pending_invite_token");
+					if (pendingToken) {
+						localStorage.removeItem("pending_invite_token");
+						try {
+							await client.org.acceptInvitation.mutate({
+								token: pendingToken,
+							});
+						} catch {
+							// Invitation may have expired or been invalid — proceed to gallery
+						}
+					}
+
 					router.replace("/(tabs)/gallery");
 				},
 			},

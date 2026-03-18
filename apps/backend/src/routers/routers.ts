@@ -3,11 +3,13 @@ import { router } from "../trpc";
 import { albumRouter } from "./album";
 import { authRouter } from "./auth";
 import { galleryRouter } from "./gallery";
+import { organizationRouter } from "./organization";
 
 const appRouter = router({
 	auth: authRouter,
 	gallery: galleryRouter,
 	album: albumRouter,
+	org: organizationRouter,
 });
 
 type AppRouter = typeof appRouter;

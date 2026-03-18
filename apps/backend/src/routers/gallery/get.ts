@@ -1,9 +1,10 @@
-import { and, desc, eq, isNull, lte } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lte } from "drizzle-orm";
 import { match, P } from "ts-pattern";
 import z from "zod";
 import { gallery } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
 import { defaultCursorParamsDto } from "../../utils/default_params";
+import { getOrgMemberIds } from "../../utils/org-scope";
 
 export const get = protectedProcdure
 	.input(
@@ -12,13 +13,14 @@ export const get = protectedProcdure
 		}),
 	)
 	.query(async ({ ctx, input }) => {
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
 		const items = await ctx.db
 			.select()
 			.from(gallery)
 			.where(
 				and(
 					isNull(gallery.deleted_at),
-					eq(gallery.user_id, ctx.user.id),
+					inArray(gallery.user_id, memberIds),
 					match(input.albumId)
 						.with(P.string, (v) => eq(gallery.album_id, v))
 						.otherwise(() => undefined),

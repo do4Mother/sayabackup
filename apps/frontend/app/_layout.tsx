@@ -85,6 +85,7 @@ function Routers() {
 		>
 			<Stack.Screen name="index" />
 			<Stack.Screen name="login" />
+			<Stack.Screen name="invite/[token]" options={{ animation: "fade" }} />
 			<Stack.Protected guard={state === "authenticated"}>
 				<Stack.Screen name="(tabs)" />
 				<Stack.Screen
@@ -116,6 +117,24 @@ function Routers() {
 				<Stack.Screen
 					name="settings/s3-credentials"
 					options={{ animation: "slide_from_right" }}
+				/>
+				<Stack.Screen
+					name="organization/index"
+					options={{ animation: "slide_from_right" }}
+				/>
+				<Stack.Screen
+					name="organization/create"
+					options={{
+						presentation: "modal",
+						sheetAllowedDetents: [0.5, 1],
+					}}
+				/>
+				<Stack.Screen
+					name="organization/invite"
+					options={{
+						presentation: "modal",
+						sheetAllowedDetents: [0.6, 1],
+					}}
 				/>
 			</Stack.Protected>
 		</Stack>

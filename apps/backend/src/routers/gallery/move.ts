@@ -1,20 +1,22 @@
 import { sanitizeFilename } from "@sayabackup/utils";
 import { TRPCError } from "@trpc/server";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import z from "zod";
 import { albums, gallery } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
+import { getOrgMemberIds } from "../../utils/org-scope";
 
 export const move = protectedProcdure
 	.input(z.object({ id: z.string(), albumId: z.string().nullish() }))
 	.mutation(async ({ ctx, input }) => {
+		const memberIds = await getOrgMemberIds(ctx.db, ctx.user.id);
 		const [file] = await ctx.db
 			.select()
 			.from(gallery)
 			.where(
 				and(
 					eq(gallery.id, input.id),
-					eq(gallery.user_id, ctx.user.id),
+					inArray(gallery.user_id, memberIds),
 					isNull(gallery.deleted_at),
 				),
 			);
@@ -35,7 +37,7 @@ export const move = protectedProcdure
 				.where(
 					and(
 						eq(albums.id, input.albumId),
-						eq(albums.user_id, ctx.user.id),
+						inArray(albums.user_id, memberIds),
 						isNull(albums.deleted_at),
 					),
 				);
