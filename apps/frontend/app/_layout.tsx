@@ -96,14 +96,12 @@ function Routers() {
 					name="album/create"
 					options={{
 						presentation: "modal",
-						sheetAllowedDetents: [0.75, 1],
 					}}
 				/>
 				<Stack.Screen
 					name="album/[id]/rename"
 					options={{
 						presentation: "modal",
-						sheetAllowedDetents: [0.75, 1],
 					}}
 				/>
 				<Stack.Screen name="photo/[id]" options={{ animation: "fade" }} />
@@ -111,7 +109,6 @@ function Routers() {
 					name="photo/[id]/add-to-album"
 					options={{
 						presentation: "modal",
-						sheetAllowedDetents: [0.75, 1],
 					}}
 				/>
 				<Stack.Screen
@@ -126,14 +123,12 @@ function Routers() {
 					name="organization/create"
 					options={{
 						presentation: "modal",
-						sheetAllowedDetents: [0.5, 1],
 					}}
 				/>
 				<Stack.Screen
 					name="organization/invite"
 					options={{
 						presentation: "modal",
-						sheetAllowedDetents: [0.6, 1],
 					}}
 				/>
 			</Stack.Protected>
