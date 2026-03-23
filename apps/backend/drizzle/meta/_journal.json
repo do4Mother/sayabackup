@@ -64,6 +64,13 @@
       "when": 1773800402133,
       "tag": "0008_lovely_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1774235796192,
+      "tag": "0009_magenta_warpath",
+      "breakpoints": true
     }
   ]
 }

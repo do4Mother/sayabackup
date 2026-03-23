@@ -21,6 +21,9 @@ export default function InviteScreen() {
 	const { alert } = useAlert();
 	const activeOrgId = useSessions((s) => s.activeOrgId);
 	const inviteMutation = trpc.org.invite.useMutation();
+	const personalOrgQuery = trpc.org.getPersonalOrg.useQuery();
+
+	const isPersonal = activeOrgId === personalOrgQuery.data?.id;
 
 	const {
 		control,
@@ -66,7 +69,7 @@ export default function InviteScreen() {
 	return (
 		<View className="flex-1 bg-neutral-900 px-4 pt-6">
 			<Text className="text-white text-left text-2xl font-bold tracking-tight mb-6">
-				Invite Member
+				{isPersonal ? "Invite to Personal Space" : "Invite Member"}
 			</Text>
 			<ScrollView>
 				<TextInputField

@@ -15,10 +15,16 @@ export default function OrganizationScreen() {
 
 	const orgQuery = trpc.org.list.useQuery();
 	const orgs = orgQuery.data ?? [];
+	const personalOrgQuery = trpc.org.getPersonalOrg.useQuery();
+
+	const regularOrgs = orgs.filter((o) => !o.is_personal);
+	const sharedSpaces = orgs.filter((o) => o.is_personal);
 
 	const activeOrgId = useSessions((s) => s.activeOrgId);
 	const setActiveOrg = useSessions((s) => s.setActiveOrg);
-	const clearActiveOrg = useSessions((s) => s.clearActiveOrg);
+
+	const isPersonalActive =
+		activeOrgId != null && activeOrgId === personalOrgQuery.data?.id;
 
 	const handleSelectOrg = (orgId: string, orgName: string) => {
 		setActiveOrg(orgId, orgName);
@@ -27,7 +33,9 @@ export default function OrganizationScreen() {
 	};
 
 	const handleSelectPersonal = () => {
-		clearActiveOrg();
+		if (personalOrgQuery.data) {
+			setActiveOrg(personalOrgQuery.data.id, personalOrgQuery.data.name);
+		}
 		queryClient.invalidateQueries();
 		router.back();
 	};
@@ -62,18 +70,39 @@ export default function OrganizationScreen() {
 							Your personal galleries and albums
 						</Text>
 					</View>
-					{!activeOrgId && (
-						<Ionicons name="checkmark-circle" size={20} color="#fbbf24" />
-					)}
+					<View className="flex-row items-center gap-2">
+						<Pressable
+							onPress={(e) => {
+								e.stopPropagation();
+								router.push("/organization/invite");
+							}}
+							className="w-8 h-8 rounded-full items-center justify-center active:bg-neutral-800"
+						>
+							<Ionicons name="person-add" size={14} color="#fbbf24" />
+						</Pressable>
+						{isPersonalActive && (
+							<Ionicons name="checkmark-circle" size={20} color="#fbbf24" />
+						)}
+					</View>
 				</Pressable>
 
-				{/* Org list */}
-				{orgs.length > 0 && (
+				{/* Members section for personal space */}
+				{isPersonalActive && personalOrgQuery.data && (
+					<View className="mt-6">
+						<MemberList
+							organizationId={personalOrgQuery.data.id}
+							isOwner={true}
+						/>
+					</View>
+				)}
+
+				{/* Regular organizations */}
+				{regularOrgs.length > 0 && (
 					<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mt-6 mb-3">
 						Organizations
 					</Text>
 				)}
-				{orgs.map((org) => (
+				{regularOrgs.map((org) => (
 					<Pressable
 						key={org.id}
 						onPress={() => handleSelectOrg(org.id, org.name)}
@@ -109,17 +138,48 @@ export default function OrganizationScreen() {
 					</Pressable>
 				))}
 
-				{/* Members section for active org */}
-				{activeOrgId && orgs.some((o) => o.id === activeOrgId) && (
-					<View className="mt-6">
-						<MemberList
-							organizationId={activeOrgId}
-							isOwner={
-								orgs.find((o) => o.id === activeOrgId)?.role === "owner"
-							}
-						/>
-					</View>
+				{/* Shared Spaces (other users' personal spaces) */}
+				{sharedSpaces.length > 0 && (
+					<Text className="text-neutral-500 text-xs font-semibold tracking-wider uppercase mt-6 mb-3">
+						Shared Spaces
+					</Text>
 				)}
+				{sharedSpaces.map((org) => (
+					<Pressable
+						key={org.id}
+						onPress={() => handleSelectOrg(org.id, org.name)}
+						className="flex-row items-center py-3.5 border-b border-neutral-900"
+					>
+						<View className="w-10 h-10 rounded-full bg-neutral-800 items-center justify-center mr-3">
+							<Ionicons name="person" size={18} color="#fbbf24" />
+						</View>
+						<View className="flex-1">
+							<Text className="text-white text-sm font-medium">
+								{org.name}
+							</Text>
+							<Text className="text-neutral-500 text-xs capitalize mt-0.5">
+								{org.role}
+							</Text>
+						</View>
+						{activeOrgId === org.id && (
+							<Ionicons name="checkmark-circle" size={20} color="#fbbf24" />
+						)}
+					</Pressable>
+				))}
+
+				{/* Members section for active org */}
+				{activeOrgId &&
+					!isPersonalActive &&
+					orgs.some((o) => o.id === activeOrgId) && (
+						<View className="mt-6">
+							<MemberList
+								organizationId={activeOrgId}
+								isOwner={
+									orgs.find((o) => o.id === activeOrgId)?.role === "owner"
+								}
+							/>
+						</View>
+					)}
 			</View>
 
 			{/* Create Organization button */}

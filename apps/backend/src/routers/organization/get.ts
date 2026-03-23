@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, not } from "drizzle-orm";
 import { organization_members, organizations } from "../../db/schema";
 import { protectedProcdure } from "../../middlewares/protected";
 
@@ -11,6 +11,7 @@ export const list = protectedProcdure.query(async ({ ctx }) => {
 			created_at: organizations.created_at,
 			role: organization_members.role,
 			key: organizations.key,
+			is_personal: organizations.is_personal,
 		})
 		.from(organization_members)
 		.innerJoin(
@@ -22,6 +23,13 @@ export const list = protectedProcdure.query(async ({ ctx }) => {
 				eq(organization_members.user_id, ctx.user.id),
 				isNull(organization_members.deleted_at),
 				isNull(organizations.deleted_at),
+				// Exclude user's own personal org (accessed via Personal toggle)
+				not(
+					and(
+						eq(organizations.is_personal, 1),
+						eq(organizations.owner_id, ctx.user.id),
+					)!,
+				),
 			),
 		);
 

@@ -1,0 +1,1 @@
+ALTER TABLE `organizations` ADD `is_personal` integer DEFAULT 0 NOT NULL;

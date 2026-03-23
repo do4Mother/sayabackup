@@ -19,7 +19,12 @@ export default function CustomImage(props: ComponentProps<typeof Image>) {
 
 	const activeOrgId = useSessions((s) => s.activeOrgId);
 	const orgList = trpc.org.list.useQuery();
-	const activeOrg = orgList.data?.find((o) => o.id === activeOrgId);
+	const personalOrgQuery = trpc.org.getPersonalOrg.useQuery();
+	const activeOrg =
+		orgList.data?.find((o) => o.id === activeOrgId) ??
+		(personalOrgQuery.data?.id === activeOrgId
+			? personalOrgQuery.data
+			: undefined);
 
 	const source = props.source;
 

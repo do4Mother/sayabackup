@@ -6,6 +6,7 @@ import { z } from "zod";
 import { user_providers, users } from "../../db/schema";
 import { publicProcedure } from "../../middlewares/public";
 import { AUTH_COOKIE_NAME, USER_PROVIDERS } from "../../utils/constants";
+import { getOrCreatePersonalOrg } from "../../utils/personal-org";
 
 export const google = publicProcedure
 	.input(
@@ -110,6 +111,12 @@ export const google = publicProcedure
 			});
 
 			user = newUser;
+
+			// Auto-create personal organization for new users
+			await getOrCreatePersonalOrg(ctx.db, {
+				id: newUser.id,
+				email: newUser.email,
+			});
 		}
 
 		const secret = new TextEncoder().encode(ctx.env.JWT_SECRET);

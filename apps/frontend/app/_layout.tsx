@@ -60,8 +60,20 @@ function Routers() {
 	useEffect(() => {
 		client.auth.me
 			.query()
-			.then(() => {
+			.then(async () => {
 				setState("authenticated");
+
+				// Ensure personal org is set as default context
+				const activeOrgId = useSessions.getState().activeOrgId;
+				if (!activeOrgId) {
+					const personalOrg = await client.org.getPersonalOrg.query();
+					if (personalOrg) {
+						useSessions
+							.getState()
+							.setActiveOrg(personalOrg.id, personalOrg.name);
+					}
+				}
+
 				if (pathname === "/login") {
 					router.replace("/(tabs)/gallery");
 				}

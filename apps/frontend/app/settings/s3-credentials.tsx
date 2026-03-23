@@ -92,7 +92,12 @@ export default function S3CredentialsScreen() {
 	const activeOrgId = useSessions((s) => s.activeOrgId);
 	const activeOrgName = useSessions((s) => s.activeOrgName);
 	const orgList = trpc.org.list.useQuery();
-	const activeOrg = orgList.data?.find((o) => o.id === activeOrgId);
+	const personalOrgQuery = trpc.org.getPersonalOrg.useQuery();
+	const activeOrg =
+		orgList.data?.find((o) => o.id === activeOrgId) ??
+		(personalOrgQuery.data?.id === activeOrgId
+			? personalOrgQuery.data
+			: undefined);
 
 	const encryptionKey = activeOrg?.key ?? user?.user.key ?? "";
 	const storageKey = s3CredentialsStorageKey(activeOrgId ?? undefined);
@@ -258,9 +263,12 @@ export default function S3CredentialsScreen() {
 		URL.revokeObjectURL(url);
 	};
 
-	const contextLabel = activeOrgId
-		? `Org: ${activeOrgName}`
-		: "Personal";
+	const isPersonalOrg = personalOrgQuery.data?.id === activeOrgId;
+	const contextLabel = isPersonalOrg
+		? "Personal"
+		: activeOrgId
+			? `Org: ${activeOrgName}`
+			: "Personal";
 
 	return (
 		<View className="flex-1 bg-neutral-950" style={{ paddingTop: insets.top }}>
@@ -294,7 +302,7 @@ export default function S3CredentialsScreen() {
 				{/* Context Indicator */}
 				<View className="mx-5 mt-2 mb-3 bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 flex-row items-center">
 					<Ionicons
-						name={activeOrgId ? "people" : "person"}
+						name={isPersonalOrg || !activeOrgId ? "person" : "people"}
 						size={16}
 						color="#fbbf24"
 					/>

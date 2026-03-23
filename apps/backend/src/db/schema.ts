@@ -79,6 +79,7 @@ export const organizations = sqliteTable("organizations", {
 		.notNull()
 		.references(() => users.id),
 	key: text().notNull(),
+	is_personal: int().notNull().default(0),
 });
 
 export const organization_members = sqliteTable("organization_members", {

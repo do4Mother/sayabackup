@@ -111,7 +111,16 @@ export const createUploadStore = () =>
 						let orgKey: string | undefined;
 						if (activeOrgId) {
 							const orgs = await client.org.list.query();
-							orgKey = orgs.find((o) => o.id === activeOrgId)?.key;
+							const org = orgs.find((o) => o.id === activeOrgId);
+							if (org) {
+								orgKey = org.key;
+							} else {
+								const personalOrg =
+									await client.org.getPersonalOrg.query();
+								if (personalOrg?.id === activeOrgId) {
+									orgKey = personalOrg.key;
+								}
+							}
 						}
 
 						set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
