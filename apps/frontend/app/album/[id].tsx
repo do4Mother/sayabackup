@@ -64,6 +64,12 @@ export default function AlbumDetailScreen() {
 						}
 					>
 						<DropdownButtonItem
+							label="Upload Photo"
+							onPress={() =>
+								router.push({ pathname: "/uploads", params: { albumId: id } })
+							}
+						/>
+						<DropdownButtonItem
 							label="Rename Album"
 							onPress={() =>
 								router.push({ pathname: "/album/[id]/rename", params: { id } })
