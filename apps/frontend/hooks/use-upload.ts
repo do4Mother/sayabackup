@@ -119,7 +119,7 @@ export const createUploadStore = () =>
 							}
 						}
 
-						set((prev) => ({ data: [...prev.data, ...assets] }));
+						set((prev) => ({ data: prev.data.concat(assets) }));
 
 						for await (const media of assets) {
 							try {
