@@ -1,5 +1,5 @@
-import { generateThumbnail } from "@/lib/generate-thumbnail";
 import { useSessions } from "@/hooks/use-sessions";
+import { generateThumbnail } from "@/lib/generate-thumbnail";
 import { uploadToS3 } from "@/s3/upload";
 import { client, trpc } from "@/trpc/trpc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -88,7 +88,7 @@ export const createUploadStore = () =>
 						});
 					},
 					upload: async (data) => {
-						const assets = data.images.map(async (asset) => {
+						const assets = data.images.map((asset) => {
 							return {
 								id: randomString(12),
 								file: asset.file!,
@@ -102,12 +102,9 @@ export const createUploadStore = () =>
 							} as UploadItem;
 						});
 
-						const resolvedAssets = await Promise.all(assets);
-
 						const key = await client.auth.me.query().then((me) => me.user.key);
 
-						const activeOrgId =
-							useSessions.getState().activeOrgId ?? undefined;
+						const activeOrgId = useSessions.getState().activeOrgId ?? undefined;
 						let orgKey: string | undefined;
 						if (activeOrgId) {
 							const orgs = await client.org.list.query();
@@ -115,17 +112,16 @@ export const createUploadStore = () =>
 							if (org) {
 								orgKey = org.key;
 							} else {
-								const personalOrg =
-									await client.org.getPersonalOrg.query();
+								const personalOrg = await client.org.getPersonalOrg.query();
 								if (personalOrg?.id === activeOrgId) {
 									orgKey = personalOrg.key;
 								}
 							}
 						}
 
-						set((prev) => ({ data: [...prev.data, ...resolvedAssets] }));
+						set((prev) => ({ data: [...prev.data, ...assets] }));
 
-						for await (const media of resolvedAssets) {
+						for await (const media of assets) {
 							try {
 								/**
 								 * set status to uploading
