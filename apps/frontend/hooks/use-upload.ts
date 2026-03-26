@@ -19,7 +19,7 @@ axiosRetry(axios, {
 
 export type UploadItem = {
 	id: string;
-	file: Blob;
+	file: File;
 	uri: string;
 	mimeType: string;
 	name: string;
@@ -88,26 +88,20 @@ export const createUploadStore = () =>
 						});
 					},
 					upload: async (data) => {
-						const assets = await Promise.all(
-							data.images.map(async (asset) => {
-								const mimeType = asset.mimeType || "image/jpeg";
-								const blob = new Blob(
-									[await asset.file!.arrayBuffer()],
-									{ type: mimeType },
-								);
-								return {
-									id: randomString(12),
-									file: blob,
-									uri: asset.uri,
-									mimeType,
-									name: asset.fileName || `media-${Date.now()}`,
-									size: asset.fileSize || 0,
-									processedBytes: 0,
-									abortController: new AbortController(),
-									status: "queued",
-								} as UploadItem;
-							}),
-						);
+						const assets = data.images.map((asset) => {
+							const mimeType = asset.mimeType || "image/jpeg";
+							return {
+								id: randomString(12),
+								file: asset.file!,
+								uri: asset.uri,
+								mimeType,
+								name: asset.fileName || `media-${Date.now()}`,
+								size: asset.fileSize || 0,
+								processedBytes: 0,
+								abortController: new AbortController(),
+								status: "queued",
+							} as UploadItem;
+						});
 
 						const key = await client.auth.me.query().then((me) => me.user.key);
 
@@ -144,10 +138,15 @@ export const createUploadStore = () =>
 										?.name ?? "unknown",
 								);
 
+								const fileBlob = new Blob(
+									[await media.file.arrayBuffer()],
+									{ type: media.mimeType },
+								);
+
 								const { thumbnailBlob } = await generateThumbnail({
 									uri: media.uri,
 									mimeType: media.mimeType,
-									file: media.file,
+									file: fileBlob,
 								});
 
 								/**
@@ -198,7 +197,7 @@ export const createUploadStore = () =>
 								});
 
 								// upload original file with progress tracking
-								await axios.put(uploadFile, media.file, {
+								await axios.put(uploadFile, fileBlob, {
 									headers: {
 										"Content-Type": media.mimeType,
 									},
