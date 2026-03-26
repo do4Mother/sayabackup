@@ -1,10 +1,10 @@
-import { ALL_FORMATS, BlobSource, CanvasSink, Input } from "mediabunny";
 import { ImageManipulator } from "expo-image-manipulator";
+import { ALL_FORMATS, BlobSource, CanvasSink, Input } from "mediabunny";
 
 export async function generateThumbnail(asset: {
 	uri: string;
 	mimeType?: string;
-	file?: Blob;
+	file?: File;
 }): Promise<{ uri: string; thumbnailBlob: Blob }> {
 	let uri = asset.uri;
 	let thumbnailBlob: Blob | null = null;

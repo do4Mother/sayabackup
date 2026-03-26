@@ -138,15 +138,10 @@ export const createUploadStore = () =>
 										?.name ?? "unknown",
 								);
 
-								const fileBlob = new Blob(
-									[await media.file.arrayBuffer()],
-									{ type: media.mimeType },
-								);
-
 								const { thumbnailBlob } = await generateThumbnail({
 									uri: media.uri,
 									mimeType: media.mimeType,
-									file: fileBlob,
+									file: media.file,
 								});
 
 								/**
@@ -197,7 +192,7 @@ export const createUploadStore = () =>
 								});
 
 								// upload original file with progress tracking
-								await axios.put(uploadFile, fileBlob, {
+								await axios.put(uploadFile, media.file, {
 									headers: {
 										"Content-Type": media.mimeType,
 									},
