@@ -1,12 +1,14 @@
+import { ALL_FORMATS, BlobSource, CanvasSink, Input } from "mediabunny";
 import { ImageManipulator } from "expo-image-manipulator";
-import { Platform } from "react-native";
 
 export async function generateThumbnail(asset: {
 	uri: string;
 	mimeType?: string;
+	file?: Blob;
 }): Promise<{ uri: string; thumbnailBlob: Blob }> {
 	let uri = asset.uri;
 	let thumbnailBlob: Blob | null = null;
+
 	if (asset.mimeType?.startsWith("image")) {
 		const manipulate = ImageManipulator.manipulate(asset.uri);
 		const image = await manipulate.resize({ width: 800 }).renderAsync();
@@ -15,48 +17,32 @@ export async function generateThumbnail(asset: {
 	}
 
 	if (asset.mimeType?.startsWith("video")) {
-		if (Platform.OS === "web") {
-			const video = document.createElement("video");
-			video.preload = "auto";
-			video.muted = true;
-			video.playsInline = true;
-			video.crossOrigin = "anonymous";
-			video.src = asset.uri;
-
-			await new Promise<void>((resolve, reject) => {
-				video.addEventListener("loadedmetadata", () => resolve(), {
-					once: true,
-				});
-				video.addEventListener("error", () => reject(video.error), {
-					once: true,
-				});
-			});
-
-			// Seek to 1s or half duration if shorter
-			video.currentTime = Math.min(1, video.duration / 2);
-
-			await new Promise<void>((resolve, reject) => {
-				video.addEventListener("seeked", () => resolve(), { once: true });
-				video.addEventListener("error", () => reject(video.error), {
-					once: true,
-				});
-			});
-
-			// Wait for the frame to be fully rendered
-			await new Promise((resolve) => setTimeout(resolve, 200));
-
-			const canvas = document.createElement("canvas");
-			canvas.width = 1024;
-			canvas.height = (video.videoHeight / video.videoWidth) * 1024;
-			const ctx = canvas.getContext("2d");
-			ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-			const image = canvas.toDataURL("image/jpeg");
-			uri = image;
-			thumbnailBlob = await fetch(image).then((res) => res.blob());
-
-			// Clean up
-			video.removeAttribute("src");
-			video.load();
+		if (!asset.file) {
+			throw new Error("file blob required for video thumbnail generation");
+		}
+		const input = new Input({
+			source: new BlobSource(asset.file),
+			formats: ALL_FORMATS,
+		});
+		const track = await input.getPrimaryVideoTrack();
+		if (!track) {
+			throw new Error("no video track found");
+		}
+		const sink = new CanvasSink(track, { width: 800 });
+		const result = await sink.getCanvas(1.0);
+		if (!result) {
+			throw new Error("could not extract video frame");
+		}
+		const { canvas } = result;
+		if (canvas instanceof OffscreenCanvas) {
+			thumbnailBlob = await canvas.convertToBlob({ type: "image/jpeg" });
+		} else {
+			thumbnailBlob = await new Promise<Blob>((resolve, reject) =>
+				canvas.toBlob(
+					(b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
+					"image/jpeg",
+				),
+			);
 		}
 	}
 

@@ -12,6 +12,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 const statusConfig = {
+	processing: {
+		icon: "hourglass" as const,
+		color: "#f59e0b",
+		bg: "#451a03",
+		label: "Processing",
+	},
 	uploading: {
 		icon: "cloud-upload" as const,
 		color: "#3b82f6",
@@ -68,7 +74,7 @@ function UploadItemRow({
 }) {
 	if (!item.status) return null;
 	const config = statusConfig[item.status];
-	const isVideo = item.name.toLowerCase().endsWith(".mp4");
+	const isVideo = item.mimeType.startsWith("video");
 	const isCancellable = item.status === "uploading" || item.status === "queued";
 
 	return (
@@ -146,7 +152,8 @@ export default function UploadsScreen() {
 	const completed = uploads.filter((u) => u.status === "completed");
 	const failed = uploads.filter((u) => u.status === "failed");
 
-	const hasActive = uploading.length > 0 || queued.length > 0;
+	const processing = uploads.filter((u) => u.status === "processing");
+	const hasActive = processing.length > 0 || uploading.length > 0 || queued.length > 0;
 	const hasData = uploads.length > 0;
 
 	const processedBytes = uploads.reduce((acc, u) => acc + u.processedBytes, 0);

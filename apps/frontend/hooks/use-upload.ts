@@ -19,14 +19,14 @@ axiosRetry(axios, {
 
 export type UploadItem = {
 	id: string;
-	file: File;
+	file: Blob;
 	uri: string;
 	mimeType: string;
 	name: string;
 	size: number;
 	processedBytes: number;
 	abortController?: AbortController;
-	status?: "uploading" | "completed" | "failed" | "queued";
+	status?: "processing" | "uploading" | "completed" | "failed" | "queued";
 	error?: string;
 };
 
@@ -88,19 +88,26 @@ export const createUploadStore = () =>
 						});
 					},
 					upload: async (data) => {
-						const assets = data.images.map((asset) => {
-							return {
-								id: randomString(12),
-								file: asset.file!,
-								uri: asset.uri,
-								mimeType: asset.mimeType || "image/jpeg",
-								name: asset.fileName || `media-${Date.now()}`,
-								size: asset.fileSize || 0,
-								processedBytes: 0,
-								abortController: new AbortController(),
-								status: "queued",
-							} as UploadItem;
-						});
+						const assets = await Promise.all(
+							data.images.map(async (asset) => {
+								const mimeType = asset.mimeType || "image/jpeg";
+								const blob = new Blob(
+									[await asset.file!.arrayBuffer()],
+									{ type: mimeType },
+								);
+								return {
+									id: randomString(12),
+									file: blob,
+									uri: asset.uri,
+									mimeType,
+									name: asset.fileName || `media-${Date.now()}`,
+									size: asset.fileSize || 0,
+									processedBytes: 0,
+									abortController: new AbortController(),
+									status: "queued",
+								} as UploadItem;
+							}),
+						);
 
 						const key = await client.auth.me.query().then((me) => me.user.key);
 
@@ -124,11 +131,11 @@ export const createUploadStore = () =>
 						for await (const media of assets) {
 							try {
 								/**
-								 * set status to uploading
+								 * set status to processing (thumbnail generation)
 								 */
 								set((state) => ({
 									data: state.data.map((m) =>
-										m.id === media.id ? { ...m, status: "uploading" } : m,
+										m.id === media.id ? { ...m, status: "processing" } : m,
 									),
 								}));
 
@@ -140,7 +147,17 @@ export const createUploadStore = () =>
 								const { thumbnailBlob } = await generateThumbnail({
 									uri: media.uri,
 									mimeType: media.mimeType,
+									file: media.file,
 								});
+
+								/**
+								 * set status to uploading
+								 */
+								set((state) => ({
+									data: state.data.map((m) =>
+										m.id === media.id ? { ...m, status: "uploading" } : m,
+									),
+								}));
 
 								const thumbnailPath = `thumbnails/${media.name}`;
 								const filePath = `${albumPath}/${media.name}`;
